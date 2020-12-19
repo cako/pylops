@@ -27,6 +27,7 @@ Templates
 
     LinearOperator
     FunctionOperator
+    MemoizeOperator
 
 Basic operators
 ~~~~~~~~~~~~~~~
@@ -94,6 +95,8 @@ Signal processing
     Seislet
     Radon2D
     Radon3D
+    ChirpRadon2D
+    ChirpRadon3D
     Sliding2D
     Sliding3D
     Fredholm1
@@ -115,8 +118,8 @@ Wave-Equation processing
     Demigration
 
 
-Geophysicical subsurface characterization
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Geophysical subsurface characterization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: pylops.avo
 
@@ -131,6 +134,17 @@ Geophysicical subsurface characterization
 
 Solvers
 -------
+
+Basic
+~~~~~
+
+.. currentmodule:: pylops.optimization
+
+.. autosummary::
+   :toctree: generated/
+
+    solver.cg
+    solver.cgls
 
 Least-squares
 ~~~~~~~~~~~~~

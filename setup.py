@@ -30,8 +30,8 @@ setup(
         'Topic :: Scientific/Engineering :: Mathematics'
     ],
     author='mrava',
-    author_email='mrava@equinor.com',
-    install_requires=['numpy >= 1.15.0', 'scipy'],
+    author_email='matteoravasi@gmail.com',
+    install_requires=['numpy >= 1.15.0', 'scipy >= 1.4.0'],
     extras_require={'advanced': ['llvmlite', 'numba',
                                  'pyfftw', 'PyWavelets',
                                  'scikit-fmm', 'spgl1']},

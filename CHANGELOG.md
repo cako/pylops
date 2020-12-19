@@ -1,3 +1,29 @@
+# 1.12.0
+* Modified all operators and solvers to work with cupy arrays
+* Added ``eigs`` and ``solver`` submodules to ``optimization``
+* Added ``deps`` and ``backend`` submodules to ``utils``
+* Fixed bug in ``Convolve2D`` and ``ConvolveND`` when dealing with
+  filters that have less dimensions than the input vector.
+
+# 1.11.1
+* Fixed import of ``pyfttw`` when not available in
+  ``pylops.signalprocessing.ChirpRadon3D``
+
+# 1.11.0
+* Added ``pylops.signalprocessing.ChirpRadon2D`` and
+  ``pylops.signalprocessing.ChirpRadon3D`` operators.
+* Fixed bug in the inferred dimensions for regularization data creation
+  in ``pylops.optimization.leastsquares.NormalEquationsInversion``,
+  ``pylops.optimization.leastsquares.RegularizedInversion``, and
+  ``pylops.optimization.sparsity.SplitBregman``.
+* Changed dtype of ``pylops.HStack`` to allow automatic inference from
+  dtypes of input operator.
+* Modified dtype of ``pylops.waveeqprocessing.Marchenko`` operator to
+  ensure that outputs of forward and adjoint are real arrays.
+* Reverted to previous complex-friendly implementation of
+  ``pylops.optimization.sparsity._softthreshold`` to avoid division by 0.
+
+
 # 1.10.0
 * Added ``tosparse`` method to ``pylops.LinearOperator``.
 * Added ``kind=linear`` in ``pylops.signalprocessing.Seislet`` operator.
