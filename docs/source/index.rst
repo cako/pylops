@@ -103,7 +103,6 @@ PyLops is a `NUMFOCUS <https://numfocus.org/sponsored-projects/affiliated-projec
    addingsolver.rst
    contributing.rst
    changelog.rst
-   roadmap.rst
    papers.rst
    citing.rst
    credits.rst

@@ -9,9 +9,6 @@ The best way to get in touch with the core developers and maintainers is to
 join the `PyLops slack channel <https://pylops.slack.com/>`_ as well as
 open new *Issues* directly from the `GitHub repo <https://github.com/PyLops/pylops>`_.
 
-Moreover, take a look at the :ref:`roadmap` page for a list of current ideas
-for improvements and additions to the PyLops library.
-
 Welcomed contributions
 **********************
 
