@@ -45,11 +45,11 @@ advanced = [
     "scikit-fmm",
     "spgl1",
     "dtcwt",
-    "astra-toolbox; sys_platform == 'linux'"
+    "astra-toolbox; sys_platform == 'linux'",
+    "devito"
 ]
 deep = ["torch", "jax"]
 stat = ["pytensor", "pymc"]
-seis = ["devito"]
 
 [dependency-groups]
 dev = [

@@ -20,6 +20,7 @@ pooch
 shibuya
 sphinx-design
 sphinx-gallery
+sphinx-iconify
 sphinxemoji
 numpydoc
 nbsphinx

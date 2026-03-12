@@ -2849,6 +2849,7 @@ dependencies = [
 [package.optional-dependencies]
 advanced = [
     { name = "astra-toolbox", marker = "sys_platform == 'linux'" },
+    { name = "devito" },
     { name = "dtcwt" },
     { name = "llvmlite" },
     { name = "numba" },
@@ -2864,9 +2865,6 @@ deep = [
     { name = "jax", version = "0.9.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "torch", version = "2.10.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
     { name = "torch", version = "2.10.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
-]
-seis = [
-    { name = "devito" },
 ]
 stat = [
     { name = "pymc", version = "5.25.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
@@ -2904,7 +2902,7 @@ doc = [
 [package.metadata]
 requires-dist = [
     { name = "astra-toolbox", marker = "sys_platform == 'linux' and extra == 'advanced'" },
-    { name = "devito", marker = "extra == 'seis'" },
+    { name = "devito", marker = "extra == 'advanced'" },
     { name = "dtcwt", marker = "extra == 'advanced'" },
     { name = "jax", marker = "extra == 'deep'" },
     { name = "llvmlite", marker = "extra == 'advanced'" },
@@ -2919,7 +2917,7 @@ requires-dist = [
     { name = "spgl1", marker = "extra == 'advanced'" },
     { name = "torch", marker = "extra == 'deep'", index = "https://download.pytorch.org/whl/cpu" },
 ]
-provides-extras = ["advanced", "deep", "stat", "seis"]
+provides-extras = ["advanced", "deep", "stat"]
 
 [package.metadata.requires-dev]
 dev = [
