@@ -29,6 +29,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Mathematics",
 ]
+requires-python = ">=3.10"
 dependencies = [
     "numpy >= 1.21.0",
     "scipy >= 1.11.0",
@@ -44,11 +45,53 @@ advanced = [
     "scikit-fmm",
     "spgl1",
     "dtcwt",
-    "astra-toolbox",
+    "astra-toolbox; sys_platform == 'linux'"
 ]
+deep = ["torch", "jax"]
+stat = ["pytensor", "pymc"]
+seis = ["devito"]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pre-commit",
+    "autopep8",
+    "ruff",
+    "mypy",
+    "coverage"
+]
+doc = [
+    "matplotlib",
+    "pooch",
+    "sphinx",
+    "sphinx-design",
+    "sphinx-gallery",
+    "sphinx-iconify",
+    "shibuya",
+    "sphinxemoji",
+    "numpydoc",
+    "nbsphinx",
+    "image",
+]
+
+[project.urls]
+Homepage = "https://github.com/PyLops/pylops"
+Documentation = "https://pylops.readthedocs.io/en/stable"
+Discussions = "https://github.com/PyLops/pylops/discussions"
+Issues = "https://github.com/PyLops/pylops/issues"
 
 [tool.setuptools.packages.find]
 exclude = ["pytests"]
 
 [tool.setuptools_scm]
 version_file = "pylops/version.py"
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
