@@ -1,5 +1,6 @@
-Overview
-========
+PyLops
+======
+
 PyLops is an open-source Python library focused on providing a backend-agnostic, idiomatic, matrix-free library of linear operators and related computations.
 It is inspired by the iconic MATLAB `Spot – A Linear-Operator Toolbox <http://www.cs.ubc.ca/labs/scl/spot/>`_ project.
 
@@ -72,23 +73,23 @@ It is a flexible and scalable python library for large-scale optimization with l
 that can be tailored to our needs, and as contribution to the free software community. Since June 2021,
 PyLops is a `NUMFOCUS <https://numfocus.org/sponsored-projects/affiliated-projects>`_ Affiliated Project.
 
+
 .. toctree::
    :maxdepth: 1
    :hidden:
-   :caption: Getting started
+   :caption: Getting started:
 
-   self
    installation.rst
    gpu.rst
    extensions.rst
    tutorials/index.rst
    gallery/index.rst
-   FAQs <faq.rst>
+   faq.rst
 
 .. toctree::
    :maxdepth: 2
    :hidden:
-   :caption: Reference documentation
+   :caption: Reference documentation:
 
    api/index.rst
    api/others.rst
@@ -96,13 +97,13 @@ PyLops is a `NUMFOCUS <https://numfocus.org/sponsored-projects/affiliated-projec
 .. toctree::
    :maxdepth: 1
    :hidden:
-   :caption: Getting involved
+   :caption: Getting involved:
 
-   Implementing new operators  <adding.rst>
-   Implementing new solvers  <addingsolver.rst>
-   Contributing <contributing.rst>
-   Changelog <changelog.rst>
-   Roadmap <roadmap.rst>
-   Papers using PyLops <papers.rst>
-   How to cite  <citing.rst>
-   Credits <credits.rst>
+   adding.rst
+   addingsolver.rst
+   contributing.rst
+   changelog.rst
+   roadmap.rst
+   papers.rst
+   citing.rst
+   credits.rst

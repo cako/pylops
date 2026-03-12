@@ -1,8 +1,8 @@
 .. _others:
 
+|:nut_and_bolt:| PyLops Utilities
+=================================
 
-PyLops Utilities
-================
 Alongside with its *Linear Operators* and *Solvers*, PyLops contains also a number of auxiliary routines
 performing universal tasks that are used by several operators or simply within one or more :ref:`tutorials` for
 the preparation of input data and subsequent visualization of results.

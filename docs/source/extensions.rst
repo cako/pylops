@@ -1,7 +1,7 @@
 .. _extensions:
 
-Extensions
-==========
+|:link:| Extensions
+###################
 
 PyLops brings to users the power of linear operators in a simple and easy
 to use programming interface.

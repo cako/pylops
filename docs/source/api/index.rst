@@ -1,7 +1,7 @@
 .. _api:
 
-PyLops API
-==========
+|:wrench:| PyLops API
+=====================
 
 The Application Programming Interface (API) of PyLops can be loosely seen
 as composed of a stack of three main layers:

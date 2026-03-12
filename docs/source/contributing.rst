@@ -1,7 +1,7 @@
 .. _contributing:
 
-Contributing
-############
+|:heart:| Contributing
+######################
 
 Contributions are welcome and greatly appreciated!
 
@@ -11,7 +11,6 @@ open new *Issues* directly from the `GitHub repo <https://github.com/PyLops/pylo
 
 Moreover, take a look at the :ref:`roadmap` page for a list of current ideas
 for improvements and additions to the PyLops library.
-
 
 Welcomed contributions
 **********************
@@ -37,13 +36,11 @@ If you are proposing a new operator or a new feature:
 * Explain in detail how it should work.
 * Keep the scope as narrow as possible, to make it easier to implement.
 
-
 Fix issues
 ==========
 
 There is always a backlog of issues that need to be dealt with.
 Look through the `GitHub Issues <https://github.com/PyLops/pylops/issues>`_ for operator/feature requests or bugfixes.
-
 
 Add examples or improve documentation
 =====================================
@@ -124,8 +121,9 @@ Before you submit a pull request, check that it meets these guidelines:
 2. If the pull request adds functionality, the docs should be updated accordingly.
 3. Ensure that the updated code passes all tests.
 
+
 Project structure
-#################
+*****************
 This repository is organized as follows:
 
 * **pylops**:     Python library containing various linear operators and auxiliary routines

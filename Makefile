@@ -1,7 +1,10 @@
 PIP := $(shell command -v pip3 2> /dev/null || command which pip 2> /dev/null)
 PYTHON := $(shell command -v python3 2> /dev/null || command which python 2> /dev/null)
+UV := $(shell command -v uv 2> /dev/null || command which uv 2> /dev/null)
+NOX := $(shell command -v nox 2> /dev/null || command which nox 2> /dev/null)
 
-.PHONY: install dev-install dev-install_intel_mkl dev-install_gpu install_conda dev-install_conda dev-install_conda_intel_mkl dev-install_conda_arm tests tests_cpu_ongpu tests_gpu doc docupdate servedoc lint typeannot coverage
+.PHONY: install dev-install dev-install_intel_mkl dev-install_gpu install_conda dev-install_conda dev-install_conda_intel_mkl dev-install_conda_arm
+.PHONY: tests tests_cpu_ongpu tests_gpu doc docupdate servedoc lint typeannot coverage
 
 pipcheck:
 ifndef PIP
@@ -14,6 +17,18 @@ ifndef PYTHON
 	$(error "Ensure python or python3 are in your PATH")
 endif
 	@echo Using python: $(PYTHON)
+
+uvcheck:
+ifndef UV
+	$(error "Ensure uv is in your PATH")
+endif
+	@echo Using uv: $(UV)
+
+noxcheck:
+ifndef NOX
+	$(error "Ensure nox is in your PATH")
+endif
+	@echo Using nox: $(NOX)
 
 install:
 	make pipcheck
@@ -51,10 +66,19 @@ dev-install_conda_arm:
 dev-install_conda_gpu:
 	conda env create -f environment-dev-gpu.yml && source ${CONDA_PREFIX}/etc/profile.d/conda.sh && conda activate pylops_gpu && pip install -e .
 
+dev-install_uv:
+	make uvcheck
+	$(UV) sync --locked --all-extras --all-groups
+
 tests:
 	# Run tests with CPU
 	make pythoncheck
 	pytest
+
+tests_uv:
+	# Run tests with CPU
+	make uvcheck
+	$(UV) run pytest
 
 tests_cpu_ongpu:
 	# Run tests with CPU on a system with GPU (and CuPy installed)

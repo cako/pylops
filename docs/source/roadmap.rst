@@ -3,8 +3,8 @@
 .. role:: strike
     :class: strike
 
-Roadmap
-=======
+|:construction:| Roadmap
+########################
 
 This roadmap is aimed at providing an high-level overview on the bug fixes, improvements
 and new functionality that are planned for the PyLops library.
@@ -17,7 +17,7 @@ such a fix/addition.
 with more details regarding how this task has been carried out.
 
 Library structure
------------------
+*****************
 
 * Create a child repository and python library called ``geolops`` (just a suggestion)
   where geoscience-related operators and examples are moved across, keeping the core
@@ -25,8 +25,8 @@ Library structure
   `Issue #22 <https://github.com/Statoil/pylops/issues/22>`_.
 
 
-Code cleaning
--------------
+Code style
+**********
 
 * :strike:`Change all ``np.flatten()``` :strike:`into ``np.ravel()``` -
   `Issue #24 <https://github.com/Statoil/pylops/issues/24>`_.
@@ -38,7 +38,7 @@ Code cleaning
 
 
 Code optimization
------------------
+*****************
 
 * Investigate speed-up given by decorating ``_matvec`` and ``_rmatvec`` methods with
   `numba <http://numba.pydata.org>`_ ``@jit`` and ``@stencil`` decorators -
@@ -50,16 +50,17 @@ Code optimization
 
 
 Modules
--------
+*******
 
 avo
-~~~
+===
 
 * Add possibility to choose different damping factors for each elastic parameter to invert for in
   :py:class:`pylops.avo.prestack.PrestackInversion` - `Issue #25 <https://github.com/Statoil/pylops/issues/25>`_.
 
+
 basicoperators
-~~~~~~~~~~~~~~
+==============
 
 * :strike:`Create Kronecker operator` -
   `Issue #28 <https://github.com/Statoil/pylops/issues/28>`_.
@@ -67,15 +68,16 @@ basicoperators
 * :strike:`Deal with edges in FirstDerivative and SecondDerivative operators` -
   `Issue #34 <https://github.com/Statoil/pylops/issues/34>`_.
 
+
 optimization
-~~~~~~~~~~~~
+============
 
 * :strike:`Sparse solvers` -
   `Issue #44 <https://github.com/Statoil/pylops/issues/44>`_.
 
 
 signalprocessing
-~~~~~~~~~~~~~~~~
+================
 
 * :strike:`Compare performance in FTT operator of performing
   np.swap+np.fft.fft(..., axis=-1) versus np.fft.fft(..., axis=chosen)`
@@ -90,14 +92,15 @@ signalprocessing
 * :strike:`Fredholm2 operators applying Fredholm integrals
   of second kind`  - `Issue #31 <https://github.com/Statoil/pylops/issues/31>`_.
 
+
 utils
-~~~~~
+=====
 
 Nothing so far
 
 
 waveeqprocessing
-~~~~~~~~~~~~~~~~
+================
 
 * :strike:`numpy.matmul as a way to speed up integral computation (i.e., inner for loop)
   in MDC operator` - `Issue #32 <https://github.com/Statoil/pylops/issues/32>`_.

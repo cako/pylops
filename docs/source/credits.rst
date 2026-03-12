@@ -1,7 +1,7 @@
 .. _credits:
 
-Contributors
-============
+|:people_holding_hands:| Contributors
+#####################################
 
 *  `Matteo Ravasi <https://github.com/mrava87>`_, mrava87
 *  `Carlos da Costa <https://github.com/cako>`_, cako

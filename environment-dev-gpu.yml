@@ -26,11 +26,14 @@ dependencies:
     - torch
     - pytest-runner
     - setuptools_scm
-    - pydata-sphinx-theme
-    - pooch
+    - shibuya
+    - sphinx-design
     - sphinx-gallery
+    - sphinx-iconify
+    - pooch
     - nbsphinx
     - sphinxemoji
     - image
     - flake8
     - mypy
+    - coverage

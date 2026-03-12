@@ -22,9 +22,10 @@ extensions = [
     "matplotlib.sphinxext.plot_directive",
     "numpydoc",
     "nbsphinx",
+    "sphinx_design",
+    "sphinx_iconify",
     "sphinx_gallery.gen_gallery",
     "sphinxemoji.sphinxemoji",
-    # 'sphinx.ext.napoleon',
 ]
 
 # intersphinx configuration
@@ -124,15 +125,12 @@ html_show_sphinx = True
 html_show_copyright = True
 
 # Theme config
-html_theme = "pydata_sphinx_theme"
+html_theme = "shibuya"
 html_theme_options = {
+    "accent_color": "teal",
     "github_url": "https://github.com/PyLops/pylops",
-    # "logo_only": True,
-    # "display_version": True,
-    "logo": {
-        "image_light": "pylops_b.png",
-        "image_dark": "pylops.png",
-    }
+    "light_logo": "_static/pylops_b.png",
+    "dark_logo": "_static/pylops.png",
 }
 html_css_files = [
     "css/custom.css",
@@ -161,8 +159,3 @@ html_context = {
     "github_repo": "pylops",
     "github_version": "master",
 }
-
-
-# Load the custom CSS files (needs sphinx >= 1.6 for this to work)
-def setup(app):
-    app.add_css_file("style.css")
