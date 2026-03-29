@@ -91,14 +91,19 @@ jobs:
       architecture: 'x64'
 
   - script: |
-      python -m pip install --upgrade pip setuptools wheel django
-      pip install -r requirements-dev.txt
-      pip install -r requirements-pyfftw.txt
-      pip install -r requirements-torch.txt
-      pip install .
-    displayName: 'Install prerequisites and library'
+      curl -LsSf https://astral.sh/uv/install.sh | sh
+      echo "##vso[task.prependpath]$HOME/.cargo/bin"
+    displayName: 'Install uv'
 
   - script: |
-      pytest
+      uv sync --locked \
+        --extra advanced \
+        --extra stat \
+        --extra deep \
+        --all-groups
+    displayName: 'Install dependencies andn pylops'
+
+  - script: |
+      uv run pytest --color=yes pytests/
     condition: succeededOrFailed()
     displayName: 'Run tests'
