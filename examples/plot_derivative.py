@@ -12,6 +12,7 @@ is expect to be smooth in one or more directions. As shown in the
 *Optimization* tutorial, these operators will be used as part of the
 regularization term to obtain a smooth solution.
 """
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -223,9 +224,9 @@ vertlayers = vertlayers[vertlayers < nx]
 nvertlayers = len(vertlayers)
 
 A = 1500 * np.ones((nz, nx))
-for top, base in zip(horlayers[:-1], horlayers[1:]):
+for top, base in zip(horlayers[:-1], horlayers[1:], strict=True):
     A[top:base] = np.random.normal(2000, 200)
-for top, base in zip(vertlayers[:-1], vertlayers[1:]):
+for top, base in zip(vertlayers[:-1], vertlayers[1:], strict=True):
     A[horlayers[-1] :, top:base] = np.random.normal(2000, 200)
 
 v = np.zeros((2, nz, nx))

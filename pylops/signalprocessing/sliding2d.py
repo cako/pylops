@@ -4,7 +4,6 @@ __all__ = [
 ]
 
 import logging
-from typing import Optional, Tuple
 
 import numpy as np
 
@@ -26,7 +25,7 @@ def _slidingsteps(
     ntr: int,
     nwin: int,
     nover: int,
-) -> Tuple[NDArray, NDArray]:
+) -> tuple[NDArray, NDArray]:
     """Identify sliding window initial and end points given overall
     trace length, window length and overlap
 
@@ -48,7 +47,8 @@ def _slidingsteps(
 
     """
     if nwin > ntr:
-        raise ValueError(f"nwin={nwin} is bigger than ntr={ntr}...")
+        msg = f"nwin={nwin} is bigger than ntr={ntr}..."
+        raise ValueError(msg)
     step = nwin - nover
     starts = np.arange(0, ntr - nwin + 1, step, dtype=int)
     ends = starts + nwin
@@ -56,12 +56,12 @@ def _slidingsteps(
 
 
 def sliding2d_design(
-    dimsd: Tuple[int, int],
+    dimsd: tuple[int, int],
     nwin: int,
     nover: int,
-    nop: Tuple[int, int],
+    nop: tuple[int, int],
     verb: bool = True,
-) -> Tuple[int, Tuple[int, int], Tuple[NDArray, NDArray], Tuple[NDArray, NDArray]]:
+) -> tuple[int, tuple[int, int], tuple[NDArray, NDArray], tuple[NDArray, NDArray]]:
     """Design Sliding2D operator
 
     This routine can be used prior to creating the :class:`pylops.signalprocessing.Sliding2D`
@@ -210,13 +210,12 @@ class Sliding2D(LinearOperator):
         dimsd: InputDimsLike,
         nwin: int,
         nover: int,
-        tapertype: Optional[Ttaper] = "hanning",
+        tapertype: Ttaper | None = "hanning",
         savetaper: bool = True,
         name: str = "S",
     ) -> None:
-
-        dims: Tuple[int, ...] = _value_or_sized_to_tuple(dims)
-        dimsd: Tuple[int, ...] = _value_or_sized_to_tuple(dimsd)
+        dims: tuple[int, ...] = _value_or_sized_to_tuple(dims)
+        dimsd: tuple[int, ...] = _value_or_sized_to_tuple(dimsd)
 
         # data windows
         dwin_ins, dwin_ends = _slidingsteps(dimsd[0], nwin, nover)
@@ -227,12 +226,11 @@ class Sliding2D(LinearOperator):
 
         # check patching
         if nwins * Op.shape[1] // dims[1] != dims[0] and Op.shape[1] != np.prod(dims):
-            raise ValueError(
-                f"Model shape (dims={dims}) is not consistent with chosen "
-                f"number of windows. Run sliding2d_design to identify the "
-                f"correct number of windows for the current "
-                "model size..."
+            msg = (
+                f"Model shape (dims={dims}) is not consistent with chosen number of windows. "
+                "Run sliding2d_design to identify the correct number of windows for the current model size..."
             )
+            raise ValueError(msg)
 
         # create tapers
         self.tapertype = tapertype

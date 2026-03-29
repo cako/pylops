@@ -4,7 +4,8 @@ __all__ = [
     "preconditioned_inversion",
 ]
 
-from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Optional
 
 from pylops.optimization.cls_leastsquares import (
     NormalEquationsInversion,
@@ -20,18 +21,18 @@ if TYPE_CHECKING:
 def normal_equations_inversion(
     Op: "LinearOperator",
     y: NDArray,
-    Regs: List["LinearOperator"],
-    x0: Optional[NDArray] = None,
+    Regs: list["LinearOperator"],
+    x0: NDArray | None = None,
     Weight: Optional["LinearOperator"] = None,
-    dataregs: Optional[List[NDArray]] = None,
+    dataregs: list[NDArray] | None = None,
     epsI: float = 0.0,
-    epsRs: Optional[SamplingLike] = None,
-    NRegs: Optional[Sequence["LinearOperator"]] = None,
-    epsNRs: Optional[SamplingLike] = None,
+    epsRs: SamplingLike | None = None,
+    NRegs: Sequence["LinearOperator"] | None = None,
+    epsNRs: SamplingLike | None = None,
     engine: Tsolverengine = "scipy",
     show: bool = False,
     **kwargs_solver,
-) -> Tuple[NDArray, int]:
+) -> tuple[NDArray, int]:
     r"""Inversion of normal equations.
 
     Solve the regularized normal equations for a system of equations
@@ -124,15 +125,15 @@ def normal_equations_inversion(
 def regularized_inversion(
     Op,
     y: NDArray,
-    Regs: List["LinearOperator"],
-    x0: Optional[NDArray] = None,
+    Regs: list["LinearOperator"],
+    x0: NDArray | None = None,
     Weight: Optional["LinearOperator"] = None,
-    dataregs: Optional[List[NDArray]] = None,
-    epsRs: Optional[SamplingLike] = None,
+    dataregs: list[NDArray] | None = None,
+    epsRs: SamplingLike | None = None,
     engine: Tsolverengine = "scipy",
     show: bool = False,
     **kwargs_solver,
-) -> Tuple[NDArray, int, int, float, float]:
+) -> tuple[NDArray, int, int, float, float]:
     r"""Regularized inversion.
 
     Solve a system of regularized equations given the operator ``Op``,
@@ -218,11 +219,11 @@ def preconditioned_inversion(
     Op: "LinearOperator",
     y: NDArray,
     P: "LinearOperator",
-    x0: Optional[NDArray] = None,
+    x0: NDArray | None = None,
     engine: Tsolverengine = "scipy",
     show: bool = False,
     **kwargs_solver,
-) -> Tuple[NDArray, int, int, float, float]:
+) -> tuple[NDArray, int, int, float, float]:
     r"""Preconditioned inversion.
 
     Solve a system of preconditioned equations given the operator

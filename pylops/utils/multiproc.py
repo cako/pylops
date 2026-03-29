@@ -2,7 +2,6 @@ __all__ = ["scalability_test"]
 
 import logging
 import time
-from typing import List, Optional, Tuple
 
 import numpy.typing as npt
 
@@ -12,10 +11,10 @@ logger = logging.getLogger(__name__)
 def scalability_test(
     Op,
     x: npt.ArrayLike,
-    workers: Optional[List[int]] = None,
+    workers: list[int] | None = None,
     forward: bool = True,
     ntimes: int = 1,
-) -> Tuple[List[float], List[float]]:
+) -> tuple[list[float], list[float]]:
     r"""Scalability test.
 
     Small auxiliary routine to test the performance of operators using

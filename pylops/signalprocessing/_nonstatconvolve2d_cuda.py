@@ -64,11 +64,14 @@ def _matvec_rmatvec(x, y, hs, hshape, xdims, ohx, ohz, dhx, dhz, nhx, nhz, rmatv
         )
         # place filter in output
         for ixx, hxx in zip(
-            range(xextremes[0], xextremes[1]), range(hxextremes[0], hxextremes[1])
+            range(xextremes[0], xextremes[1]),
+            range(hxextremes[0], hxextremes[1]),
+            strict=True,
         ):
             for izz, hzz in zip(
                 range(zextremes[0], zextremes[1]),
                 range(hzextremes[0], hzextremes[1]),
+                strict=True,
             ):
                 h = (
                     dhz_t * dhx_l * h_tl[hxx, hzz]

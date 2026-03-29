@@ -1,7 +1,8 @@
 __all__ = ["FFTND"]
 
 import warnings
-from typing import Literal, Optional, Sequence, Union
+from collections.abc import Sequence
+from typing import Literal
 
 import numpy as np
 import scipy.fft
@@ -25,10 +26,10 @@ class _FFTND_numpy(_BaseFFTND):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
-        axes: Union[int, InputDimsLike] = (-3, -2, -1),
-        nffts: Optional[Union[int, InputDimsLike]] = None,
-        sampling: Union[float, Sequence[float]] = 1.0,
+        dims: int | InputDimsLike,
+        axes: int | InputDimsLike = (-3, -2, -1),
+        nffts: int | InputDimsLike | None = None,
+        sampling: float | Sequence[float] = 1.0,
         norm: Tfftnorm = "ortho",
         real: bool = False,
         ifftshift_before: bool = False,
@@ -49,7 +50,9 @@ class _FFTND_numpy(_BaseFFTND):
         )
         if self.cdtype != np.complex128:
             warnings.warn(
-                f"numpy backend always returns complex128 dtype. To respect the passed dtype, data will be cast to {self.cdtype}."
+                "numpy backend always returns complex128 dtype. "
+                "To respect the passed dtype, data will be cast to {self.cdtype}.",
+                stacklevel=2,
             )
 
         self._kwargs_fft = kwargs_fft
@@ -107,7 +110,7 @@ class _FFTND_numpy(_BaseFFTND):
             )
         if self.norm is _FFTNorms.NONE:
             y *= self._scale
-        for ax, nfft in zip(self.axes, self.nffts):
+        for ax, nfft in zip(self.axes, self.nffts, strict=True):
             if nfft > self.dims[ax]:
                 y = ncp.take(y, np.arange(self.dims[ax]), axis=ax)
         if self.doifftpad:
@@ -130,10 +133,10 @@ class _FFTND_scipy(_BaseFFTND):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
-        axes: Union[int, InputDimsLike] = (-3, -2, -1),
-        nffts: Optional[Union[int, InputDimsLike]] = None,
-        sampling: Union[float, Sequence[float]] = 1.0,
+        dims: int | InputDimsLike,
+        axes: int | InputDimsLike = (-3, -2, -1),
+        nffts: int | InputDimsLike | None = None,
+        sampling: float | Sequence[float] = 1.0,
         norm: Tfftnorm = "ortho",
         real: bool = False,
         ifftshift_before: bool = False,
@@ -206,7 +209,7 @@ class _FFTND_scipy(_BaseFFTND):
             )
         if self.norm is _FFTNorms.NONE:
             y *= self._scale
-        for ax, nfft in zip(self.axes, self.nffts):
+        for ax, nfft in zip(self.axes, self.nffts, strict=True):
             if nfft > self.dims[ax]:
                 y = np.take(y, range(self.dims[ax]), axis=ax)
         if self.doifftpad:
@@ -228,10 +231,10 @@ class _FFTND_mklfft(_BaseFFTND):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
-        axes: Union[int, InputDimsLike] = (-3, -2, -1),
-        nffts: Optional[Union[int, InputDimsLike]] = None,
-        sampling: Union[float, Sequence[float]] = 1.0,
+        dims: int | InputDimsLike,
+        axes: int | InputDimsLike = (-3, -2, -1),
+        nffts: int | InputDimsLike | None = None,
+        sampling: float | Sequence[float] = 1.0,
         norm: Tfftnorm = "ortho",
         real: bool = False,
         ifftshift_before: bool = False,
@@ -306,7 +309,7 @@ class _FFTND_mklfft(_BaseFFTND):
             )
         if self.norm is _FFTNorms.NONE:
             y *= self._scale
-        for ax, nfft in zip(self.axes, self.nffts):
+        for ax, nfft in zip(self.axes, self.nffts, strict=True):
             if nfft > self.dims[ax]:
                 y = np.take(y, range(self.dims[ax]), axis=ax)
         if self.doifftpad:
@@ -324,10 +327,10 @@ class _FFTND_mklfft(_BaseFFTND):
 
 
 def FFTND(
-    dims: Union[int, InputDimsLike],
-    axes: Union[int, InputDimsLike] = (-3, -2, -1),
-    nffts: Optional[Union[int, InputDimsLike]] = None,
-    sampling: Union[float, Sequence[float]] = 1.0,
+    dims: int | InputDimsLike,
+    axes: int | InputDimsLike = (-3, -2, -1),
+    nffts: int | InputDimsLike | None = None,
+    sampling: float | Sequence[float] = 1.0,
     norm: Tfftnorm = "ortho",
     real: bool = False,
     ifftshift_before: bool = False,
@@ -554,6 +557,7 @@ def FFTND(
             **kwargs_fft,
         )
     else:
-        raise ValueError("engine must be numpy, scipy or mkl_fft")
+        msg = "`engine` must be numpy, scipy or mkl_fft"
+        raise ValueError(msg)
     f.name = name
     return f

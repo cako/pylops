@@ -4,7 +4,6 @@ __all__ = [
 ]
 
 import os
-from typing import Tuple, Union
 
 import numpy as np
 
@@ -149,27 +148,32 @@ class NonStationaryConvolve2D(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         hs: NDArray,
         ihx: InputDimsLike,
         ihz: InputDimsLike,
         engine: Tengine_nnc = "numpy",
-        num_threads_per_blocks: Tuple[int, int] = (32, 32),
+        num_threads_per_blocks: tuple[int, int] = (32, 32),
         dtype: DTypeLike = "float64",
         name: str = "C",
     ) -> None:
         if engine not in ["numpy", "numba", "cuda"]:
-            raise ValueError("engine must be numpy or numba or cuda")
+            msg = "`engine` must be numpy or numba or cuda"
+            raise ValueError(msg)
         if hs.shape[2] % 2 == 0 or hs.shape[3] % 2 == 0:
-            raise ValueError("filters hs must have odd length")
+            msg = "The filters `hs` must have odd length"
+            raise ValueError(msg)
         if len(np.unique(np.diff(ihx))) > 1 or len(np.unique(np.diff(ihz))) > 1:
-            raise ValueError(
-                "the indices of filters 'ih' are must be regularly sampled"
+            msg = (
+                "The indices `ihx` and `ihz` of the filters must be regularly sampled."
             )
+            raise ValueError(msg)
         if min(ihx) < 0 or min(ihz) < 0 or max(ihx) >= dims[0] or max(ihz) >= dims[1]:
-            raise ValueError(
-                "the indices of filters 'ih' must be larger than 0 and smaller than `dims`"
+            msg = (
+                "The indices `ihx` and `ihz` of the filters "
+                "must be larger than 0 and smaller than `dims`."
             )
+            raise ValueError(msg)
         self.hs = hs
         self.hshape = hs.shape[2:]
         self.ohx, self.dhx, self.nhx = ihx[0], ihx[1] - ihx[0], len(ihx)
@@ -207,8 +211,8 @@ class NonStationaryConvolve2D(LinearOperator):
         x: NDArray,
         y: NDArray,
         hs: NDArray,
-        hshape: Tuple[int, int],
-        xdims: Tuple[int, int],
+        hshape: tuple[int, int],
+        xdims: tuple[int, int],
         ohx: float,
         ohz: float,
         dhx: float,
@@ -305,7 +309,7 @@ class NonStationaryConvolve2D(LinearOperator):
             self.nhx,
             self.nhz,
             rmatvec=False,
-            **self.kwargs_cuda
+            **self.kwargs_cuda,
         )
         return y
 
@@ -326,7 +330,7 @@ class NonStationaryConvolve2D(LinearOperator):
             self.nhx,
             self.nhz,
             rmatvec=True,
-            **self.kwargs_cuda
+            **self.kwargs_cuda,
         )
         return y
 
@@ -393,27 +397,32 @@ class NonStationaryFilters2D(LinearOperator):
         ihx: InputDimsLike,
         ihz: InputDimsLike,
         engine: str = "numpy",
-        num_threads_per_blocks: Tuple[int, int] = (32, 32),
+        num_threads_per_blocks: tuple[int, int] = (32, 32),
         dtype: DTypeLike = "float64",
         name: str = "C",
     ) -> None:
         if engine not in ["numpy", "numba", "cuda"]:
-            raise ValueError("engine must be numpy or numba or cuda")
+            msg = "`engine` must be numpy or numba or cuda"
+            raise ValueError(msg)
         if hshape[0] % 2 == 0 or hshape[1] % 2 == 0:
-            raise ValueError("filters hs must have odd length")
+            msg = "The filters `hs` must have odd length"
+            raise ValueError(msg)
         if len(np.unique(np.diff(ihx))) > 1 or len(np.unique(np.diff(ihz))) > 1:
-            raise ValueError(
-                "the indices of filters 'ih' are must be regularly sampled"
+            msg = (
+                "The indices `ihx` and `ihz` of the filters must be regularly sampled."
             )
+            raise ValueError(msg)
         if (
             min(ihx) < 0
             or min(ihz) < 0
             or max(ihx) >= inp.shape[0]
             or max(ihz) >= inp.shape[1]
         ):
-            raise ValueError(
-                "the indices of filters 'ih' must be larger than 0 and smaller than `dims`"
+            msg = (
+                "The indices `ihx` and `ihz` of the filters "
+                "must be larger than 0 and smaller than `dims`."
             )
+            raise ValueError(msg)
         self.inp = inp
         self.inpdims = inp.shape
         self.hshape = hshape
@@ -448,7 +457,8 @@ class NonStationaryFilters2D(LinearOperator):
             self._mv = jit(**numba_opts)(self.__matvec)
             self._rmv = jit(**numba_opts)(self.__rmatvec)
         elif engine == "cuda":
-            raise NotImplementedError("engine=cuda is currently not available")
+            msg = "`engine=cuda` is currently not available for NonStationaryFilters2D"
+            raise NotImplementedError(msg)
         else:
             self._mv = self.__matvec
             self._rmv = self.__rmatvec
@@ -461,8 +471,8 @@ class NonStationaryFilters2D(LinearOperator):
         x: NDArray,
         y: NDArray,
         hs: NDArray,
-        hshape: Tuple[int, int],
-        xdims: Tuple[int, int],
+        hshape: tuple[int, int],
+        xdims: tuple[int, int],
         ohx: float,
         ohz: float,
         dhx: float,
@@ -477,7 +487,6 @@ class NonStationaryFilters2D(LinearOperator):
         hstmp = np.zeros((xdims[0], *hs.shape))
         for ix in prange(xdims[0]):
             for iz in range(xdims[1]):
-
                 # find extremes of model where to apply h (in case h is going out of model)
                 xextremes = (
                     max(0, ix - hshape[0] // 2),
@@ -533,36 +542,28 @@ class NonStationaryFilters2D(LinearOperator):
                     ihz_t,
                     hxextremes[0] : hxextremes[1],
                     hzextremes[0] : hzextremes[1],
-                ] += (
-                    dhz_t * dhx_l * htmp
-                )
+                ] += dhz_t * dhx_l * htmp
                 hstmp[
                     ix,
                     ihx_l,
                     ihz_b,
                     hxextremes[0] : hxextremes[1],
                     hzextremes[0] : hzextremes[1],
-                ] += (
-                    dhz_b * dhx_l * htmp
-                )
+                ] += dhz_b * dhx_l * htmp
                 hstmp[
                     ix,
                     ihx_r,
                     ihz_t,
                     hxextremes[0] : hxextremes[1],
                     hzextremes[0] : hzextremes[1],
-                ] += (
-                    dhz_t * dhx_r * htmp
-                )
+                ] += dhz_t * dhx_r * htmp
                 hstmp[
                     ix,
                     ihx_r,
                     ihz_b,
                     hxextremes[0] : hxextremes[1],
                     hzextremes[0] : hzextremes[1],
-                ] += (
-                    dhz_b * dhx_r * htmp
-                )
+                ] += dhz_b * dhx_r * htmp
         hs = hstmp.sum(axis=0)
         return hs
 
@@ -582,7 +583,7 @@ class NonStationaryFilters2D(LinearOperator):
             self.dhz,
             self.nhx,
             self.nhz,
-            **self.kwargs_cuda
+            **self.kwargs_cuda,
         )
         return y
 
@@ -602,6 +603,6 @@ class NonStationaryFilters2D(LinearOperator):
             self.dhz,
             self.nhx,
             self.nhz,
-            **self.kwargs_cuda
+            **self.kwargs_cuda,
         )
         return hs

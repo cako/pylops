@@ -2,17 +2,14 @@ import os
 
 if int(os.environ.get("TEST_CUPY_PYLOPS", 0)):
     import cupy as np
-    from cupy.testing import assert_array_almost_equal, assert_array_equal
-    from cupyx.scipy.sparse import rand
+    from cupy.testing import assert_array_almost_equal
 
     backend = "cupy"
 else:
     import numpy as np
-    from numpy.testing import assert_array_almost_equal, assert_array_equal
-    from scipy.sparse import rand
+    from numpy.testing import assert_array_almost_equal
 
     backend = "numpy"
-import itertools
 
 import pytest
 
@@ -145,7 +142,7 @@ def test_ChirpRadon3D(par):
         (par["pymax"], par["pxmax"]),
         engine=par["engine"],
         dtype="float64",
-        **dict(flags=("FFTW_ESTIMATE",), threads=2)
+        **dict(flags=("FFTW_ESTIMATE",), threads=2),
     )
     assert dottest(
         Rop,

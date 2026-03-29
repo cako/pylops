@@ -1,6 +1,6 @@
 __all__ = ["Convolve2D"]
 
-from typing import Literal, Optional, Union
+from typing import Literal
 
 from pylops.signalprocessing import ConvolveND
 from pylops.utils.typing import DTypeLike, InputDimsLike, NDArray
@@ -96,16 +96,17 @@ class Convolve2D(ConvolveND):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         h: NDArray,
         offset: InputDimsLike = (0, 0),
         axes: InputDimsLike = (-2, -1),
-        method: Optional[Literal["auto", "direct", "fft"]] = "fft",
+        method: Literal["auto", "direct", "fft"] | None = "fft",
         dtype: DTypeLike = "float64",
         name: str = "C",
     ):
         if h.ndim != 2:
-            raise ValueError("h must be 2-dimensional")
+            msg = "`h` must be 2-dimensional"
+            raise ValueError(msg)
         super().__init__(
             dims=dims,
             h=h,

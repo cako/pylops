@@ -57,7 +57,7 @@ cax = make_axes_locatable(axs[1]).append_axes("right", size="5%", pad=0.05)
 cb = fig.colorbar(
     iax,
     ticks=MultipleLocator(30),
-    format=FuncFormatter(lambda x, pos: "{:.0f}°".format(x)),
+    format=FuncFormatter(lambda x, pos: f"{x:.0f}°"),
     cax=cax,
     orientation="vertical",
 )
@@ -180,7 +180,7 @@ cax = make_axes_locatable(axs[0, 1]).append_axes("right", size="5%", pad=0.05)
 cb = fig.colorbar(
     im,
     ticks=MultipleLocator(30),
-    format=FuncFormatter(lambda x, pos: "{:.0f}°".format(x)),
+    format=FuncFormatter(lambda x, pos: f"{x:.0f}°"),
     cax=cax,
     orientation="vertical",
 )
@@ -191,7 +191,7 @@ cax = make_axes_locatable(axs[1, 1]).append_axes("right", size="5%", pad=0.05)
 cb = fig.colorbar(
     im,
     ticks=MultipleLocator(30),
-    format=FuncFormatter(lambda x, pos: "{:.0f}°".format(x)),
+    format=FuncFormatter(lambda x, pos: f"{x:.0f}°"),
     cax=cax,
     orientation="vertical",
 )
@@ -249,7 +249,7 @@ cax = make_axes_locatable(axs[2]).append_axes("right", size="20%", pad=0.05)
 cb = fig.colorbar(
     im,
     ticks=MultipleLocator(30),
-    format=FuncFormatter(lambda x, pos: "{:.0f}°".format(x)),
+    format=FuncFormatter(lambda x, pos: f"{x:.0f}°"),
     cax=cax,
     orientation="vertical",
 )
@@ -260,7 +260,7 @@ cax = make_axes_locatable(axs[3]).append_axes("right", size="20%", pad=0.05)
 cb = fig.colorbar(
     im,
     ticks=MultipleLocator(30),
-    format=FuncFormatter(lambda x, pos: "{:.0f}°".format(x)),
+    format=FuncFormatter(lambda x, pos: f"{x:.0f}°"),
     cax=cax,
     orientation="vertical",
 )

@@ -12,7 +12,6 @@ else:
     from scipy.signal.windows import triang
 
     backend = "numpy"
-import itertools
 
 import pytest
 
@@ -144,7 +143,7 @@ def test_Convolve1D(par):
         Cop = Convolve1D(par["nx"], h=h1, offset=par["offset"], dtype="float64")
         assert dottest(Cop, par["nx"], par["nx"], backend=backend)
 
-        x = np.zeros((par["nx"]))
+        x = np.zeros(par["nx"])
         x[par["nx"] // 2] = 1.0
         xlsqr = lsqr(
             Cop,
@@ -230,7 +229,7 @@ def test_Convolve1D_long(par):
     np.random.seed(10)
     # 1D
     if par["axis"] == 0:
-        x = np.zeros((par["nx"]))
+        x = np.zeros(par["nx"])
         x[par["nx"] // 2] = 1.0
         Xop = Convolve1D(nfilt[0], h=x, offset=nfilt[0] // 2, dtype="float64")
         assert dottest(Xop, par["nx"], nfilt[0], backend=backend)

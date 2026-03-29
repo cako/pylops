@@ -3,7 +3,6 @@ __all__ = [
     "NonStationaryFilters1D",
 ]
 
-from typing import Union
 
 import numpy as np
 
@@ -108,7 +107,7 @@ class NonStationaryConvolve1D(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         hs: NDArray,
         ih: InputDimsLike,
         axis: int = -1,
@@ -116,16 +115,18 @@ class NonStationaryConvolve1D(LinearOperator):
         name: str = "C",
     ) -> None:
         if hs.shape[1] % 2 == 0:
-            raise ValueError("filters hs must have odd length")
+            msg = "The filters `hs` must have odd length"
+            raise ValueError(msg)
         if len(np.unique(np.diff(ih))) > 1:
-            raise ValueError(
-                "the indices of filters 'ih' are must be regularly sampled"
-            )
+            msg = "The indices `ih` of the filters must be regularly sampled."
+            raise ValueError(msg)
         dims = _value_or_sized_to_tuple(dims)
         if min(ih) < 0 or max(ih) >= dims[axis]:
-            raise ValueError(
-                "the indices of filters 'ih' must be larger than 0 and smaller than `dims`"
+            msg = (
+                "The indices `ih` of the filters "
+                "must be larger than 0 and smaller than `dims`."
             )
+            raise ValueError(msg)
         self.hs = hs
         self.hsize = hs.shape[1]
         self.oh, self.dh, self.nh, self.eh = ih[0], ih[1] - ih[0], len(ih), ih[-1]
@@ -327,15 +328,17 @@ class NonStationaryFilters1D(LinearOperator):
         name: str = "C",
     ) -> None:
         if hsize % 2 == 0:
-            raise ValueError("filters hs must have odd length")
+            msg = "The filters `hs` must have odd length"
+            raise ValueError(msg)
         if len(np.unique(np.diff(ih))) > 1:
-            raise ValueError(
-                "the indices of filters 'ih' are must be regularly sampled"
-            )
+            msg = "The indices `ih` of the filters must be regularly sampled."
+            raise ValueError(msg)
         if min(ih) < 0 or max(ih) >= inp.size:
-            raise ValueError(
-                "the indices of filters 'ih' must be larger than 0 and smaller than `dims`"
+            msg = (
+                "The indices `ihx` and `ihz` of the filters "
+                "must be larger than 0 and smaller than `dims`."
             )
+            raise ValueError(msg)
         self.inp = inp
         self.hsize = hsize
         self.oh, self.dh, self.nh, self.eh = ih[0], ih[1] - ih[0], len(ih), ih[-1]

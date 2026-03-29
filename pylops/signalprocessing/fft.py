@@ -2,7 +2,6 @@ __all__ = ["FFT"]
 
 import logging
 import warnings
-from typing import Optional, Union
 
 import numpy as np
 import scipy.fft
@@ -38,9 +37,9 @@ class _FFT_numpy(_BaseFFT):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         axis: int = -1,
-        nfft: Optional[int] = None,
+        nfft: int | None = None,
         sampling: float = 1.0,
         norm: Tfftnorm = "ortho",
         real: bool = False,
@@ -62,7 +61,9 @@ class _FFT_numpy(_BaseFFT):
         )
         if self.cdtype != np.complex128:
             warnings.warn(
-                f"numpy backend always returns complex128 dtype. To respect the passed dtype, data will be casted to {self.cdtype}."
+                "numpy backend always returns complex128 dtype. To respect the "
+                f"passed dtype, data will be casted to {self.cdtype}.",
+                stacklevel=2,
             )
 
         self._kwargs_fft = kwargs_fft
@@ -150,9 +151,9 @@ class _FFT_scipy(_BaseFFT):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         axis: int = -1,
-        nfft: Optional[int] = None,
+        nfft: int | None = None,
         sampling: float = 1.0,
         norm: Tfftnorm = "ortho",
         real: bool = False,
@@ -248,9 +249,9 @@ class _FFT_fftw(_BaseFFT):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         axis: int = -1,
-        nfft: Optional[int] = None,
+        nfft: int | None = None,
         sampling: float = 1.0,
         norm: Tfftnorm = "ortho",
         real: bool = False,
@@ -261,7 +262,8 @@ class _FFT_fftw(_BaseFFT):
     ) -> None:
         if np.dtype(dtype) == np.float16:
             warnings.warn(
-                "fftw backend is unavailable with float16 dtype. Will use float32."
+                "fftw backend is unavailable with float16 dtype. Will use float32.",
+                stacklevel=2,
             )
             dtype = np.float32
 
@@ -270,7 +272,8 @@ class _FFT_fftw(_BaseFFT):
                 if badop == "ortho" and norm == "ortho":
                     continue
                 warnings.warn(
-                    f"FFTW option '{badop}' will be overwritten by norm={norm}"
+                    f"FFTW option '{badop}' will be overwritten by norm={norm}",
+                    stacklevel=2,
                 )
                 del kwargs_fft[badop]
 
@@ -287,7 +290,9 @@ class _FFT_fftw(_BaseFFT):
         )
         if self.cdtype != np.complex128:
             warnings.warn(
-                f"fftw backend returns complex128 dtype. To respect the passed dtype, data will be cast to {self.cdtype}."
+                "fftw backend returns complex128 dtype. To respect the "
+                f"passed dtype, data will be cast to {self.cdtype}.",
+                stacklevel=2,
             )
 
         dims_t = list(self.dims)
@@ -409,9 +414,9 @@ class _FFT_mklfft(_BaseFFT):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         axis: int = -1,
-        nfft: Optional[int] = None,
+        nfft: int | None = None,
         sampling: float = 1.0,
         norm: Tfftnorm = "ortho",
         real: bool = False,
@@ -497,9 +502,9 @@ class _FFT_mklfft(_BaseFFT):
 
 
 def FFT(
-    dims: Union[int, InputDimsLike],
+    dims: int | InputDimsLike,
     axis: int = -1,
-    nfft: Optional[int] = None,
+    nfft: int | None = None,
     sampling: float = 1.0,
     norm: Tfftnorm = "ortho",
     real: bool = False,
@@ -725,6 +730,7 @@ def FFT(
             **kwargs_fft,
         )
     else:
-        raise ValueError("engine must be numpy, scipy, fftw, or mkl_fft")
+        msg = "`engine` must be numpy, scipy, fftw, or mkl_fft"
+        raise ValueError(msg)
     f.name = name
     return f

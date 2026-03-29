@@ -1,6 +1,6 @@
 __all__ = ["Interp"]
 
-from typing import Literal, Tuple, Union
+from typing import Literal
 
 import numpy as np
 
@@ -17,7 +17,7 @@ from pylops.utils.typing import DTypeLike, InputDimsLike, IntNDArray, SamplingLi
 
 
 def _nearestinterp(
-    dims: Union[int, InputDimsLike],
+    dims: int | InputDimsLike,
     iava: SamplingLike,
     axis: int = -1,
     dtype: DTypeLike = "float64",
@@ -99,13 +99,13 @@ def _sincinterp(
 
 
 def Interp(
-    dims: Union[int, InputDimsLike],
+    dims: int | InputDimsLike,
     iava: SamplingLike,
     axis: int = -1,
     kind: Literal["linear", "nearest", "sinc", "cubic_spline"] = "linear",
     dtype: DTypeLike = "float64",
     name: str = "I",
-) -> Tuple[LinearOperator, IntNDArray]:
+) -> tuple[LinearOperator, IntNDArray]:
     r"""Interpolation operator.
 
     Apply interpolation along ``axis`` from regularly sampled input
@@ -223,7 +223,8 @@ def Interp(
 
     kind = kind.lower()  # type: ignore
     if kind not in {"nearest", "linear", "sinc", "cubic_spline"}:
-        raise NotImplementedError(f"{kind} interpolation could not be found.")
+        msg = f"{kind} interpolation could not be found."
+        raise NotImplementedError(msg)
 
     dims = _value_or_sized_to_tuple(dims)
 

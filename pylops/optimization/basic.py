@@ -4,7 +4,8 @@ __all__ = [
     "lsqr",
 ]
 
-from typing import TYPE_CHECKING, Callable, Optional, Tuple
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from pylops.optimization.callback import CostToDataCallback, CostToInitialCallback
 from pylops.optimization.cls_basic import CG, CGLS, LSQR
@@ -19,16 +20,16 @@ if TYPE_CHECKING:
 def cg(
     Op: "LinearOperator",
     y: NDArray,
-    x0: Optional[NDArray] = None,
+    x0: NDArray | None = None,
     niter: int = 10,
     tol: float = 1e-4,
     rtol: float = 0.0,
     rtol1: float = 0.0,
     show: bool = False,
-    itershow: Tuple[int, int, int] = (10, 10, 10),
-    callback: Optional[Callable] = None,
+    itershow: tuple[int, int, int] = (10, 10, 10),
+    callback: Callable | None = None,
     preallocate: bool = False,
-) -> Tuple[NDArray, int, NDArray]:
+) -> tuple[NDArray, int, NDArray]:
     r"""Conjugate gradient
 
     Solve a square system of equations given an operator ``Op`` and
@@ -111,17 +112,17 @@ def cg(
 def cgls(
     Op: "LinearOperator",
     y: NDArray,
-    x0: Optional[NDArray] = None,
+    x0: NDArray | None = None,
     niter: int = 10,
     damp: float = 0.0,
     tol: float = 1e-4,
     rtol: float = 0.0,
     rtol1: float = 0.0,
     show: bool = False,
-    itershow: Tuple[int, int, int] = (10, 10, 10),
-    callback: Optional[Callable] = None,
+    itershow: tuple[int, int, int] = (10, 10, 10),
+    callback: Callable | None = None,
     preallocate: bool = False,
-) -> Tuple[NDArray, int, int, float, float, NDArray]:
+) -> tuple[NDArray, int, int, float, float, NDArray]:
     r"""Conjugate gradient least squares
 
     Solve an overdetermined system of equations given an operator ``Op`` and
@@ -221,7 +222,7 @@ def cgls(
 def lsqr(
     Op: "LinearOperator",
     y: NDArray,
-    x0: Optional[NDArray] = None,
+    x0: NDArray | None = None,
     damp: float = 0.0,
     atol: float = 1e-08,
     btol: float = 1e-08,
@@ -229,10 +230,10 @@ def lsqr(
     niter: int = 10,
     calc_var: bool = True,
     show: bool = False,
-    itershow: Tuple[int, int, int] = (10, 10, 10),
-    callback: Optional[Callable] = None,
+    itershow: tuple[int, int, int] = (10, 10, 10),
+    callback: Callable | None = None,
     preallocate: bool = False,
-) -> Tuple[NDArray, int, int, float, float, float, float, float, float, float, NDArray]:
+) -> tuple[NDArray, int, int, float, float, float, float, float, float, float, NDArray]:
     r"""LSQR
 
     Solve an overdetermined system of equations given an operator ``Op`` and

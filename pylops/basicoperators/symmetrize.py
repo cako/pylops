@@ -1,6 +1,5 @@
 __all__ = ["Symmetrize"]
 
-from typing import Union
 
 import numpy as np
 
@@ -77,7 +76,7 @@ class Symmetrize(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         axis: int = -1,
         dtype: DTypeLike = "float64",
         name: str = "S",

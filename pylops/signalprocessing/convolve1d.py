@@ -1,7 +1,8 @@
 __all__ = ["Convolve1D"]
 
+from collections.abc import Callable
 from functools import partial
-from typing import Callable, Literal, Optional, Tuple, Union
+from typing import Literal
 
 import numpy as np
 
@@ -20,10 +21,10 @@ from pylops.utils.typing import DTypeLike, InputDimsLike, NDArray
 
 def _choose_convfunc(
     x: NDArray,
-    method: Optional[Literal["direct", "fft", "overlapadd"]],
-    dims: Union[int, InputDimsLike],
+    method: Literal["direct", "fft", "overlapadd"] | None,
+    dims: int | InputDimsLike,
     axis: int = -1,
-) -> Tuple[Callable, str]:
+) -> tuple[Callable, str]:
     """Choose convolution function
 
     Choose and return the function handle to be used for convolution
@@ -32,7 +33,8 @@ def _choose_convfunc(
         if method is None:
             method = "direct"
         if method not in ("direct", "fft"):
-            raise ValueError("method must be direct or fft")
+            msg = "`method` must be direct or fft"
+            raise ValueError(msg)
         convfunc = get_convolve(x)
     else:
         if method is None:
@@ -42,7 +44,8 @@ def _choose_convfunc(
         elif method == "overlapadd":
             convfunc = partial(get_oaconvolve(x), axes=axis)(x)
         else:
-            raise ValueError("method must be fft or overlapadd")
+            msg = "`method` must be fft or overlapadd"
+            raise ValueError(msg)
     return convfunc, method
 
 
@@ -58,11 +61,11 @@ class _Convolve1Dshort(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         h: NDArray,
         offset: int = 0,
         axis: int = -1,
-        method: Optional[Literal["direct", "fft", "overlapadd"]] = None,
+        method: Literal["direct", "fft", "overlapadd"] | None = None,
         dtype: DTypeLike = "float64",
         name: str = "C",
     ) -> None:
@@ -72,7 +75,8 @@ class _Convolve1Dshort(LinearOperator):
         self.axis = axis
         self.nh = h.size if h.ndim == 1 else h.shape[axis]
         if offset > self.nh - 1:
-            raise ValueError("offset must be smaller than h.shape[axis] - 1")
+            msg = "`offset` must be smaller than h.shape[axis] - 1"
+            raise ValueError(msg)
         self.h = h
         self.offset = 2 * (self.nh // 2 - int(offset))
         if self.nh % 2 == 0:
@@ -119,11 +123,11 @@ class _Convolve1Dlong(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         h: NDArray,
         offset: int = 0,
         axis: int = -1,
-        method: Optional[Literal["direct", "fft", "overlapadd"]] = None,
+        method: Literal["direct", "fft", "overlapadd"] | None = None,
         dtype: DTypeLike = "float64",
         name: str = "C",
     ) -> None:
@@ -135,7 +139,8 @@ class _Convolve1Dlong(LinearOperator):
         # create filter
         self.axis = axis
         if offset > self.dims[self.axis] - 1:
-            raise ValueError("offset must be smaller than self.dims[self.axis] - 1")
+            msg = "`offset` must be smaller than dims[axis] - 1"
+            raise ValueError(msg)
         self.nh = h.size if h.ndim == 1 else h.shape[axis]
         self.h = h
         self.offset = 2 * (self.dims[self.axis] // 2 - int(offset))
@@ -304,11 +309,11 @@ class Convolve1D(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         h: NDArray,
         offset: int = 0,
         axis: int = -1,
-        method: Optional[Literal["direct", "fft", "overlapadd"]] = None,
+        method: Literal["direct", "fft", "overlapadd"] | None = None,
         dtype: DTypeLike = "float64",
         name: str = "C",
     ) -> None:

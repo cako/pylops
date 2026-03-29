@@ -1,4 +1,4 @@
-from typing import Final, Tuple
+from typing import Final
 
 import numpy as np
 import pytest
@@ -6,13 +6,13 @@ from scipy.interpolate import CubicSpline
 
 from pylops.signalprocessing import InterpCubicSpline
 
-TEST_ARRAY_SHAPE: Final[Tuple] = (
+TEST_ARRAY_SHAPE: Final[tuple] = (
     20,
     51,
     2,  # <- this dimension is exactly 2 because this triggers a special solver
     12,
 )
-TEST_X_RANGE: Final[Tuple[float, float]] = (-5.0, 5.0)
+TEST_X_RANGE: Final[tuple[float, float]] = (-5.0, 5.0)
 MIN_NUM_TEST_SAMPLES: Final[int] = 1
 
 

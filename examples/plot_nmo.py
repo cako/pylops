@@ -7,6 +7,7 @@ normal moveout (NMO) correction to a seismic record.
 We will perform classic NMO using an operator created from scratch,
 as well as using the :py:class:`pylops.Spread` operator.
 """
+
 from math import floor
 from time import time
 
@@ -179,7 +180,7 @@ def nmo_forward(data, taxis, haxis, vels_rms):
     # Parallel outer loop on slow axis
     for ih in prange(nh):
         h = haxis[ih]
-        for it0, (t0, vrms) in enumerate(zip(taxis, vels_rms)):
+        for it0, (t0, vrms) in enumerate(zip(taxis, vels_rms, strict=True)):
             # Compute NMO traveltime
             tx = np.sqrt(t0**2 + (h / vrms) ** 2)
             it_frac = (tx - ot) / dt  # Fractional index
@@ -199,7 +200,7 @@ start = time()
 nmo_forward(data, t, x, vel_t)
 end = time()
 
-print(f"Ran in {1e6*(end-start):.0f} μs")
+print(f"Ran in {1e6 * (end - start):.0f} μs")
 
 ###############################################################################
 
@@ -244,7 +245,7 @@ def nmo_adjoint(dnmo, taxis, haxis, vels_rms):
     # Parallel outer loop on slow axis; use range if Numba is not installed
     for ih in prange(nh):
         h = haxis[ih]
-        for it0, (t0, vrms) in enumerate(zip(taxis, vels_rms)):
+        for it0, (t0, vrms) in enumerate(zip(taxis, vels_rms, strict=True)):
             # Compute NMO traveltime
             tx = np.sqrt(t0**2 + (h / vrms) ** 2)
             it_frac = (tx - ot) / dt  # Fractional index
@@ -345,7 +346,7 @@ def create_tables(taxis, haxis, vels_rms):
     dtable = np.full((nh, nt, nh), fill_value=np.nan)
 
     for ih, h in enumerate(haxis):
-        for it0, (t0, vrms) in enumerate(zip(taxis, vels_rms)):
+        for it0, (t0, vrms) in enumerate(zip(taxis, vels_rms, strict=True)):
             # Compute NMO traveltime
             tx = np.sqrt(t0**2 + (h / vrms) ** 2)
             it_frac = (tx - ot) / dt
@@ -379,7 +380,7 @@ start = time()
 SpreadNMO @ data
 end = time()
 
-print(f"Ran in {1e6*(end-start):.0f} μs")
+print(f"Ran in {1e6 * (end - start):.0f} μs")
 ###############################################################################
 # Note that since v2.0, we do not need to pass a flattened array. Consequently,
 # the output will not be flattened, but will have ``SpreadNMO.dimsd`` as shape.

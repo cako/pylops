@@ -1,5 +1,4 @@
 __all__ = ["Real"]
-from typing import Union
 
 import numpy as np
 
@@ -58,7 +57,7 @@ class Real(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         dtype: DTypeLike = "complex128",
         name: str = "R",
     ) -> None:

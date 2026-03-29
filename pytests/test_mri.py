@@ -49,7 +49,7 @@ par6 = {
 )
 def test_MRI2D_invalid_mask():
     """Test MRI2D operator with invalid mask string"""
-    with pytest.raises(ValueError, match="mask must be"):
+    with pytest.raises(ValueError, match="`mask` must be"):
         MRI2D(
             dims=(32, 64),
             mask="invalid-mask",
@@ -61,13 +61,14 @@ def test_MRI2D_invalid_mask():
 @pytest.mark.skipif(
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
-def test_MRI2D_invalid_engine():
-    """Test MRI2D operator with invalid engine"""
-    with pytest.raises(ValueError, match="engine must be"):
+def test_MRI2D_vertical_mask_invalid_nlines():
+    """Test MRI2D operator with vertical mask and invalid nlines"""
+    with pytest.raises(ValueError, match="`nlines` and `perc_center`"):
         MRI2D(
             dims=(32, 64),
-            mask="vertical-reg",
-            fft_engine="invalid-engine",
+            mask="vertical-uni",
+            nlines=60,
+            perc_center=0.5,
             dtype="complex128",
         )
 
@@ -77,7 +78,7 @@ def test_MRI2D_invalid_engine():
 )
 def test_MRI2D_vertical_reg_invalid_perc_center():
     """Test MRI2D operator with vertical-reg mask and non-zero perc_center"""
-    with pytest.raises(ValueError, match="perc_center must be 0.0"):
+    with pytest.raises(ValueError, match="`perc_center` must be 0.0"):
         MRI2D(
             dims=(32, 64),
             mask="vertical-reg",
@@ -90,14 +91,15 @@ def test_MRI2D_vertical_reg_invalid_perc_center():
 @pytest.mark.skipif(
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
-def test_MRI2D_vertical_mask_invalid_nlines():
-    """Test MRI2D operator with vertical mask and invalid nlines"""
-    with pytest.raises(ValueError, match="nlines and perc_center"):
+def test_MRI2D_invalid_fft_engine():
+    """Test MRI2D operator with invalid fft_engine"""
+    with pytest.raises(ValueError, match="`fft_engine` must be"):
         MRI2D(
             dims=(32, 64),
-            mask="vertical-uni",
-            nlines=60,
-            perc_center=0.5,
+            mask="vertical-reg",
+            nlines=16,
+            perc_center=0.0,
+            fft_engine="invalid-engine",
             dtype="complex128",
         )
 

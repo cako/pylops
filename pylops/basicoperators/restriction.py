@@ -1,7 +1,7 @@
 __all__ = ["Restriction"]
 
 import logging
-from typing import Optional, Sequence, Union
+from collections.abc import Sequence
 
 import numpy as np
 import numpy.ma as np_ma
@@ -116,11 +116,11 @@ class Restriction(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
-        iava: Union[IntNDArray, Sequence[int]],
+        dims: int | InputDimsLike,
+        iava: IntNDArray | Sequence[int],
         axis: int = -1,
         inplace: bool = True,
-        forceflat: Optional[bool] = None,
+        forceflat: bool | None = None,
         dtype: DTypeLike = "float64",
         name: str = "R",
     ) -> None:

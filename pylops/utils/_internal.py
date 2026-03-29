@@ -1,4 +1,4 @@
-from typing import Sized, Tuple
+from collections.abc import Sized
 
 import numpy as np
 
@@ -30,7 +30,7 @@ def _value_or_sized_to_array(value_or_sized, repeat: int = 1) -> NDArray:
     )
 
 
-def _value_or_sized_to_tuple(value_or_sized, repeat: int = 1) -> Tuple:
+def _value_or_sized_to_tuple(value_or_sized, repeat: int = 1) -> tuple:
     """Convert an object which is either single value or a list-like to a tuple.
 
     Parameters
@@ -70,9 +70,5 @@ def _raise_on_wrong_dtype(arr: ArrayLike, dtype: DTypeLike, name: str) -> None:
 
     """
     if not np.issubdtype(arr.dtype, dtype):
-        raise TypeError(
-            (
-                f"Wrong input type for `{name}`. "
-                f'Must be "{dtype}", but received to "{arr.dtype}".'
-            )
-        )
+        msg = f"Wrong input type for `{name}`. Must be {dtype}, but received to {arr.dtype}."
+        raise TypeError(msg)

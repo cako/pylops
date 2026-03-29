@@ -17,11 +17,10 @@ __all__ = [
 
 import os
 from importlib import import_module, util
-from typing import Optional
 
 
 # error message at import of available package
-def cupy_import(message: Optional[str] = None) -> str | None:
+def cupy_import(message: str | None = None) -> str | None:
     # detect if cupy is available and the user is expecting to be used
     cupy_test = (
         util.find_spec("cupy") is not None and int(os.getenv("CUPY_PYLOPS", 1)) == 1
@@ -55,7 +54,7 @@ def cupy_import(message: Optional[str] = None) -> str | None:
     return cupy_message
 
 
-def jax_import(message: Optional[str] = None) -> str | None:
+def jax_import(message: str | None = None) -> str | None:
     jax_test = (
         util.find_spec("jax") is not None and int(os.getenv("JAX_PYLOPS", 1)) == 1
     )
@@ -83,7 +82,7 @@ def jax_import(message: Optional[str] = None) -> str | None:
     return jax_message
 
 
-def astra_import(message: Optional[str] = None) -> str | None:
+def astra_import(message: str | None = None) -> str | None:
     if astra_enabled:
         try:
             import_module("astra")  # noqa: F401
@@ -101,7 +100,7 @@ def astra_import(message: Optional[str] = None) -> str | None:
     return astra_message
 
 
-def devito_import(message: Optional[str] = None) -> str | None:
+def devito_import(message: str | None = None) -> str | None:
     if devito_enabled:
         try:
             import_module("devito")  # noqa: F401
@@ -118,7 +117,7 @@ def devito_import(message: Optional[str] = None) -> str | None:
     return devito_message
 
 
-def dtcwt_import(message: Optional[str] = None) -> str | None:
+def dtcwt_import(message: str | None = None) -> str | None:
     if dtcwt_enabled:
         try:
             import_module("dtcwt")  # noqa: F401
@@ -135,7 +134,7 @@ def dtcwt_import(message: Optional[str] = None) -> str | None:
     return dtcwt_message
 
 
-def numba_import(message: Optional[str] = None) -> str | None:
+def numba_import(message: str | None = None) -> str | None:
     if numba_enabled:
         try:
             import_module("numba")  # noqa: F401
@@ -154,7 +153,7 @@ def numba_import(message: Optional[str] = None) -> str | None:
     return numba_message
 
 
-def pyfftw_import(message: Optional[str] = None) -> str | None:
+def pyfftw_import(message: str | None = None) -> str | None:
     if pyfftw_enabled:
         try:
             import_module("pyfftw")  # noqa: F401
@@ -173,7 +172,7 @@ def pyfftw_import(message: Optional[str] = None) -> str | None:
     return pyfftw_message
 
 
-def pywt_import(message: Optional[str] = None) -> str | None:
+def pywt_import(message: str | None = None) -> str | None:
     if pywt_enabled:
         try:
             import_module("pywt")  # noqa: F401
@@ -192,7 +191,7 @@ def pywt_import(message: Optional[str] = None) -> str | None:
     return pywt_message
 
 
-def skfmm_import(message: Optional[str] = None) -> str | None:
+def skfmm_import(message: str | None = None) -> str | None:
     if skfmm_enabled:
         try:
             import_module("skfmm")  # noqa: F401
@@ -210,7 +209,7 @@ def skfmm_import(message: Optional[str] = None) -> str | None:
     return skfmm_message
 
 
-def spgl1_import(message: Optional[str] = None) -> str | None:
+def spgl1_import(message: str | None = None) -> str | None:
     if spgl1_enabled:
         try:
             import_module("spgl1")  # noqa: F401
@@ -227,7 +226,7 @@ def spgl1_import(message: Optional[str] = None) -> str | None:
     return spgl1_message
 
 
-def sympy_import(message: Optional[str] = None) -> str | None:
+def sympy_import(message: str | None = None) -> str | None:
     if sympy_enabled:
         try:
             import_module("sympy")  # noqa: F401
@@ -244,7 +243,7 @@ def sympy_import(message: Optional[str] = None) -> str | None:
     return sympy_message
 
 
-def pytensor_import(message: Optional[str] = None) -> str | None:
+def pytensor_import(message: str | None = None) -> str | None:
     if pytensor_enabled:
         try:
             import_module("pytensor")  # noqa: F401
@@ -261,7 +260,7 @@ def pytensor_import(message: Optional[str] = None) -> str | None:
     return pytensor_message
 
 
-def mkl_fft_import(message: Optional[str]) -> str | None:
+def mkl_fft_import(message: str | None) -> str | None:
     if mkl_fft_enabled:
         try:
             import_module("mkl_fft")  # noqa: F401

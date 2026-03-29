@@ -1,6 +1,7 @@
 __all__ = ["FirstDerivative"]
 
-from typing import Callable, Literal, Union
+from collections.abc import Callable
+from typing import Literal
 
 import numpy as np
 
@@ -91,7 +92,7 @@ class FirstDerivative(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         axis: int = -1,
         sampling: float = 1.0,
         kind: Tderivkind = "centered",
@@ -139,14 +140,14 @@ class FirstDerivative(LinearOperator):
                 self._hmatvec = self._matvec_centered5
                 self._hrmatvec = self._rmatvec_centered5
             else:
-                raise NotImplementedError("'order' must be '3, or '5'")
+                msg = "order must be '3', or '5'"
+                raise NotImplementedError(msg)
         elif kind == "backward":
             self._hmatvec = self._matvec_backward
             self._hrmatvec = self._rmatvec_backward
         else:
-            raise NotImplementedError(
-                "'kind' must be 'forward', 'centered', or 'backward'"
-            )
+            msg = "kind must be 'forward', 'centered', or 'backward'"
+            raise NotImplementedError(msg)
 
     def _matvec(self, x: NDArray) -> NDArray:
         return self._hmatvec(x)

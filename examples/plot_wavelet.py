@@ -5,6 +5,7 @@ This example shows how to use the :py:class:`pylops.DWT`,
 :py:class:`pylops.DWT2D`, and :py:class:`pylops.DWTND` operators
 to perform 1-, 2-, and N-dimensional DWT.
 """
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -21,7 +22,10 @@ dt = 0.004
 t = np.arange(nt) * dt
 freqs = [10, 7, 9]
 amps = [1, -2, 0.5]
-x = np.sum([amp * np.sin(2 * np.pi * f * t) for (f, amp) in zip(freqs, amps)], axis=0)
+x = np.sum(
+    [amp * np.sin(2 * np.pi * f * t) for (f, amp) in zip(freqs, amps, strict=True)],
+    axis=0,
+)
 
 Wop = pylops.signalprocessing.DWT(nt, wavelet="dmey", level=5)
 y = Wop * x

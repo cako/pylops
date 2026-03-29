@@ -2,7 +2,6 @@ __all__ = [
     "TorchOperator",
 ]
 
-from typing import Optional
 
 import numpy as np
 
@@ -62,7 +61,7 @@ class TorchOperator:
         self,
         Op: LinearOperator,
         batch: bool = False,
-        flatten: Optional[bool] = True,
+        flatten: bool | None = True,
         device: str = "cpu",
         devicetorch: str = "cpu",
     ) -> None:

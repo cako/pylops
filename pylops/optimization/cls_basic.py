@@ -5,7 +5,7 @@ __all__ = [
 ]
 
 import time
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -132,8 +132,8 @@ class CG(Solver):
     def setup(
         self,
         y: NDArray,
-        x0: Optional[NDArray] = None,
-        niter: Optional[int] = None,
+        x0: NDArray | None = None,
+        niter: int | None = None,
         tol: float = 1e-4,
         preallocate: bool = False,
         show: bool = False,
@@ -196,7 +196,7 @@ class CG(Solver):
             self.c1 = self.ncp.empty_like(x)
 
         # create variables to track the residual norm and iterations
-        self.cost: List = []
+        self.cost: list = []
         self.cost.append(float(np.sqrt(self.kold)))
         self.iiter = 0
 
@@ -249,9 +249,9 @@ class CG(Solver):
     def run(
         self,
         x: NDArray,
-        niter: Optional[int] = None,
+        niter: int | None = None,
         show: bool = False,
-        itershow: Tuple[int, int, int] = (10, 10, 10),
+        itershow: tuple[int, int, int] = (10, 10, 10),
     ) -> NDArray:
         r"""Run solver
 
@@ -277,7 +277,8 @@ class CG(Solver):
         """
         niter = self.niter if niter is None else niter
         if niter is None:
-            raise ValueError("niter must not be None")
+            msg = "`niter` must not be None"
+            raise ValueError(msg)
         while self.iiter < niter and self.kold > self.tol:
             showstep = (
                 True
@@ -315,13 +316,13 @@ class CG(Solver):
     def solve(
         self,
         y: NDArray,
-        x0: Optional[NDArray] = None,
+        x0: NDArray | None = None,
         niter: int = 10,
         tol: float = 1e-4,
         preallocate: bool = False,
         show: bool = False,
-        itershow: Tuple[int, int, int] = (10, 10, 10),
-    ) -> Tuple[NDArray, int, NDArray]:
+        itershow: tuple[int, int, int] = (10, 10, 10),
+    ) -> tuple[NDArray, int, NDArray]:
         r"""Run entire solver
 
         Parameters
@@ -498,8 +499,8 @@ class CGLS(Solver):
     def setup(
         self,
         y: NDArray,
-        x0: Optional[NDArray] = None,
-        niter: Optional[int] = None,
+        x0: NDArray | None = None,
+        niter: int | None = None,
         damp: float = 0.0,
         tol: float = 1e-4,
         preallocate: bool = False,
@@ -649,9 +650,9 @@ class CGLS(Solver):
     def run(
         self,
         x: NDArray,
-        niter: Optional[int] = None,
+        niter: int | None = None,
         show: bool = False,
-        itershow: Tuple[int, int, int] = (10, 10, 10),
+        itershow: tuple[int, int, int] = (10, 10, 10),
     ) -> NDArray:
         r"""Run solver
 
@@ -677,7 +678,8 @@ class CGLS(Solver):
         """
         self.niter = self.niter if niter is None else niter
         if self.niter is None:
-            raise ValueError("niter must not be None")
+            msg = "`niter` must not be None"
+            raise ValueError(msg)
         while self.iiter < self.niter and self.kold > self.tol:
             showstep = (
                 True
@@ -724,14 +726,14 @@ class CGLS(Solver):
     def solve(
         self,
         y: NDArray,
-        x0: Optional[NDArray] = None,
+        x0: NDArray | None = None,
         niter: int = 10,
         damp: float = 0.0,
         tol: float = 1e-4,
         preallocate: bool = False,
         show: bool = False,
-        itershow: Tuple[int, int, int] = (10, 10, 10),
-    ) -> Tuple[NDArray, int, int, float, float, NDArray]:
+        itershow: tuple[int, int, int] = (10, 10, 10),
+    ) -> tuple[NDArray, int, int, float, float, NDArray]:
         r"""Run entire solver
 
         Parameters
@@ -1018,7 +1020,7 @@ class LSQR(Solver):
     def setup(
         self,
         y: NDArray,
-        x0: Optional[NDArray] = None,
+        x0: NDArray | None = None,
         damp: float = 0.0,
         atol: float = 1e-08,
         btol: float = 1e-08,
@@ -1321,9 +1323,9 @@ class LSQR(Solver):
     def run(
         self,
         x: NDArray,
-        niter: Optional[int] = None,
+        niter: int | None = None,
         show: bool = False,
-        itershow: Tuple[int, int, int] = (10, 10, 10),
+        itershow: tuple[int, int, int] = (10, 10, 10),
     ) -> NDArray:
         r"""Run solver
 
@@ -1386,7 +1388,7 @@ class LSQR(Solver):
     def solve(
         self,
         y: NDArray,
-        x0: Optional[NDArray] = None,
+        x0: NDArray | None = None,
         damp: float = 0.0,
         atol: float = 1e-08,
         btol: float = 1e-08,
@@ -1395,8 +1397,8 @@ class LSQR(Solver):
         calc_var: bool = True,
         preallocate: bool = False,
         show: bool = False,
-        itershow: Tuple[int, int, int] = (10, 10, 10),
-    ) -> Tuple[
+        itershow: tuple[int, int, int] = (10, 10, 10),
+    ) -> tuple[
         NDArray,
         int,
         int,
@@ -1406,7 +1408,7 @@ class LSQR(Solver):
         float,
         float,
         float,
-        Union[None, NDArray],
+        None | NDArray,
         NDArray,
     ]:
         r"""Run entire solver

@@ -1,6 +1,5 @@
 __all__ = ["PWSprayer2D", "PWSmoother2D"]
 
-from typing import Tuple
 
 import numpy as np
 
@@ -70,7 +69,7 @@ class PWSprayer2D(LinearOperator):
 
     def __init__(
         self,
-        dims: Tuple[int, int],
+        dims: tuple[int, int],
         sigma: NDArray,
         radius: int = 8,
         alpha: float = 0.9,
@@ -78,7 +77,8 @@ class PWSprayer2D(LinearOperator):
         name: str = "P",
     ):
         if len(dims) != 2:
-            raise ValueError("dims must contain exactly two elements (nz, nx)")
+            msg = f"Wrong number of dimensions. Expected 2, but received {len(dims)}."
+            raise ValueError(msg)
         self._radius = int(radius)
         self._alpha = float(alpha)
         self._sigma = np.ascontiguousarray(sigma)
@@ -162,7 +162,7 @@ class PWSmoother2D(LinearOperator):
 
     def __init__(
         self,
-        dims: Tuple[int, int],
+        dims: tuple[int, int],
         sigma: NDArray,
         radius: int = 8,
         alpha: float = 0.9,
@@ -170,7 +170,8 @@ class PWSmoother2D(LinearOperator):
         name: str = "P",
     ):
         if len(dims) != 2:
-            raise ValueError("dims must contain exactly two elements (nz, nx)")
+            msg = f"Wrong number of dimensions. Expected 2, but received {len(dims)}."
+            raise ValueError(msg)
         self._sprayer = PWSprayer2D(
             dims=dims, sigma=sigma, radius=radius, alpha=alpha, dtype=dtype
         )

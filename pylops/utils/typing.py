@@ -9,7 +9,8 @@ __all__ = [
     "TensorTypeLike",
 ]
 
-from typing import Literal, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -26,9 +27,9 @@ IntNDArray = npt.NDArray[np.integer]
 FloatingNDArray = npt.NDArray[np.floating]
 InexactNDArray = npt.NDArray[np.inexact]  # float or complex
 
-InputDimsLike = Union[Sequence[int], IntNDArray]
-SamplingLike = Union[Sequence[float], FloatingNDArray]
-ShapeLike = Tuple[int, ...]
+InputDimsLike = Sequence[int] | IntNDArray
+SamplingLike = Sequence[float] | FloatingNDArray
+ShapeLike = tuple[int, ...]
 DTypeLike = npt.DTypeLike
 
 # torch generic types
@@ -46,7 +47,7 @@ Tfftengine_ns = Literal["numpy", "scipy"]
 Tfftengine_nsf = Literal["numpy", "scipy", "fftw"]
 Tfftengine_nsm = Literal["numpy", "scipy", "mkl_fft"]
 Tfftengine_nfsm = Literal["numpy", "fftw", "scipy", "mkl_fft"]
-Tinoutengine = Tuple[Tfftengine_ncj, Tfftengine_ncj]
+Tinoutengine = tuple[Tfftengine_ncj, Tfftengine_ncj]
 Tmriengine = Literal["numpy", "jax"]
 
 Tavolinearization = Literal["akirich", "fatti", "PS"]

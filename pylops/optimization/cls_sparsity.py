@@ -9,8 +9,9 @@ __all__ = [
 
 import logging
 import time
+from collections.abc import Callable, Sequence
 from math import sqrt
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Optional
 
 import numpy as np
 from scipy.sparse.linalg import lsqr
@@ -417,7 +418,7 @@ class IRLS(Solver):
     def setup(
         self,
         y: NDArray,
-        nouter: Optional[int] = None,
+        nouter: int | None = None,
         threshR: bool = False,
         epsR: float = 1e-10,
         epsI: float = 1e-10,
@@ -487,7 +488,8 @@ class IRLS(Solver):
             self.epsI = 0.0  # as epsI is added to the augmented system already
             self.y = self.ncp.hstack([self.y, self.ncp.zeros(self.Op.shape[1])])
         else:
-            raise NotImplementedError("kind must be model, data or datamodel")
+            msg = f"`kind` must be model, data or datamodel, got {kind}"
+            raise NotImplementedError(msg)
 
         if self.preallocate:
             self.r = self.ncp.empty_like(self.y)
@@ -674,11 +676,11 @@ class IRLS(Solver):
 
     def run(
         self,
-        x: Optional[NDArray],
+        x: NDArray | None,
         nouter: int = 10,
         engine: Tsolverengine = "scipy",
         show: bool = False,
-        itershow: Tuple[int, int, int] = (10, 10, 10),
+        itershow: tuple[int, int, int] = (10, 10, 10),
         **kwargs_solver,
     ) -> NDArray:
         r"""Run solver
@@ -764,7 +766,7 @@ class IRLS(Solver):
     def solve(
         self,
         y: NDArray,
-        x0: Optional[NDArray] = None,
+        x0: NDArray | None = None,
         nouter: int = 10,
         threshR: bool = False,
         epsR: float = 1e-10,
@@ -775,7 +777,7 @@ class IRLS(Solver):
         engine: Tsolverengine = "scipy",
         preallocate: bool = False,
         show: bool = False,
-        itershow: Tuple[int, int, int] = (10, 10, 10),
+        itershow: tuple[int, int, int] = (10, 10, 10),
         **kwargs_solver,
     ) -> NDArray:
         r"""Run entire solver
@@ -1220,8 +1222,8 @@ class OMP(Solver):
         cols: InputDimsLike,
         engine: Tsolverengine = "scipy",
         show: bool = False,
-        itershow: Tuple[int, int, int] = (10, 10, 10),
-    ) -> Tuple[NDArray, InputDimsLike]:
+        itershow: tuple[int, int, int] = (10, 10, 10),
+    ) -> tuple[NDArray, InputDimsLike]:
         r"""Run solver
 
         Parameters
@@ -1315,8 +1317,8 @@ class OMP(Solver):
         engine: Tsolverengine = "scipy",
         preallocate: bool = False,
         show: bool = False,
-        itershow: Tuple[int, int, int] = (10, 10, 10),
-    ) -> Tuple[NDArray, int, NDArray]:
+        itershow: tuple[int, int, int] = (10, 10, 10),
+    ) -> tuple[NDArray, int, NDArray]:
         r"""Run entire solver
 
         Parameters
@@ -1382,8 +1384,8 @@ class OMP(Solver):
             preallocate=preallocate,
             show=show,
         )
-        x: List[NDArray] = []
-        cols: List[InputDimsLike] = []
+        x: list[NDArray] = []
+        cols: list[InputDimsLike] = []
         x, cols = self.run(x, cols, engine=engine, show=show, itershow=itershow)
         x = self.finalize(x, cols, show)
         return x, self.nouter, self.cost
@@ -1594,16 +1596,16 @@ class ISTA(Solver):
     def setup(
         self,
         y: NDArray,
-        x0: Optional[NDArray] = None,
-        niter: Optional[int] = None,
-        SOp: Optional[LinearOperator] = None,
+        x0: NDArray | None = None,
+        niter: int | None = None,
+        SOp: LinearOperator | None = None,
         eps: float = 0.1,
-        alpha: Optional[float] = None,
-        eigsdict: Optional[Dict[str, Any]] = None,
+        alpha: float | None = None,
+        eigsdict: dict[str, Any] | None = None,
         tol: float = 1e-10,
         threshkind: Tthreshkind = "soft",
-        perc: Optional[float] = None,
-        decay: Optional[NDArray] = None,
+        perc: float | None = None,
+        decay: NDArray | None = None,
         monitorres: bool = False,
         preallocate: bool = False,
         show: bool = False,
@@ -1699,19 +1701,21 @@ class ISTA(Solver):
             "soft-percentile",
             "half-percentile",
         ]:
-            raise ValueError(
-                "threshkind must be hard, soft, half,"
+            msg = (
+                "`threshkind` must be hard, soft, half, "
                 "hard-percentile, soft-percentile, "
-                "or half-percentile"
+                f"or half-percentile, got {threshkind}"
             )
+            raise ValueError(msg)
         if (
             threshkind in ["hard-percentile", "soft-percentile", "half-percentile"]
             and perc is None
         ):
-            raise ValueError(
-                "Provide a percentile when choosing hard-percentile,"
+            msg = (
+                "Provide a percentile when choosing hard-percentile, "
                 "soft-percentile, or half-percentile thresholding"
             )
+            raise ValueError(msg)
 
         self.threshf: Callable[[NDArray, float], NDArray]
         if threshkind == "soft":
@@ -1770,10 +1774,12 @@ class ISTA(Solver):
         else:
             if y.ndim != x0.ndim:
                 # error for wrong dimensions
-                raise ValueError("Number of columns of x0 and data are not the same")
+                msg = "Number of columns of x0 and data are not the same"
+                raise ValueError(msg)
             elif x0.shape[0] != self.Op.shape[1]:
-                # error for wrong dimensions
-                raise ValueError("Operator and input vector have different dimensions")
+                # error for wrong shapes
+                msg = "Operator and input vector have different shapes"
+                raise ValueError(msg)
             else:
                 x = x0.copy()
 
@@ -1796,7 +1802,7 @@ class ISTA(Solver):
         self.t = 1.0
 
         # create variables to track the residual norm and iterations
-        self.cost: List[float] = []
+        self.cost: list[float] = []
         self.iiter = 0
 
         # print setup
@@ -1804,7 +1810,7 @@ class ISTA(Solver):
             self._print_setup()
         return x
 
-    def step(self, x: NDArray, show: bool = False) -> Tuple[NDArray, float]:
+    def step(self, x: NDArray, show: bool = False) -> tuple[NDArray, float]:
         r"""Run one step of solver
 
         Parameters
@@ -1837,11 +1843,12 @@ class ISTA(Solver):
         if self.monitorres:
             self.normres = np.linalg.norm(self.res if self.preallocate else res)
             if self.normres > self.normresold:
-                raise ValueError(
+                msg = (
                     f"ISTA stopped at iteration {self.iiter} due to "
                     "residual increasing, consider modifying "
                     "eps and/or alpha..."
                 )
+                raise ValueError(msg)
             else:
                 self.normresold = self.normres
 
@@ -1917,9 +1924,9 @@ class ISTA(Solver):
     def run(
         self,
         x: NDArray,
-        niter: Optional[int] = None,
+        niter: int | None = None,
         show: bool = False,
-        itershow: Tuple[int, int, int] = (10, 10, 10),
+        itershow: tuple[int, int, int] = (10, 10, 10),
     ) -> NDArray:
         r"""Run solver
 
@@ -1946,7 +1953,8 @@ class ISTA(Solver):
         xupdate = np.inf
         niter = self.niter if niter is None else niter
         if niter is None:
-            raise ValueError("niter must not be None")
+            msg = "`niter` must not be None"
+            raise ValueError(msg)
         while self.iiter < niter and xupdate > self.tol:
             showstep = (
                 True
@@ -1986,21 +1994,21 @@ class ISTA(Solver):
     def solve(
         self,
         y: NDArray,
-        x0: Optional[NDArray] = None,
-        niter: Optional[int] = None,
-        SOp: Optional[LinearOperator] = None,
+        x0: NDArray | None = None,
+        niter: int | None = None,
+        SOp: LinearOperator | None = None,
         eps: float = 0.1,
-        alpha: Optional[float] = None,
-        eigsdict: Optional[Dict[str, Any]] = None,
+        alpha: float | None = None,
+        eigsdict: dict[str, Any] | None = None,
         tol: float = 1e-10,
         threshkind: Tthreshkind = "soft",
-        perc: Optional[float] = None,
-        decay: Optional[NDArray] = None,
+        perc: float | None = None,
+        decay: NDArray | None = None,
         monitorres: bool = False,
         preallocate: bool = False,
         show: bool = False,
-        itershow: Tuple[int, int, int] = (10, 10, 10),
-    ) -> Tuple[NDArray, int, NDArray]:
+        itershow: tuple[int, int, int] = (10, 10, 10),
+    ) -> tuple[NDArray, int, NDArray]:
         r"""Run entire solver
 
         Parameters
@@ -2268,11 +2276,12 @@ class FISTA(ISTA):
         if self.monitorres:
             self.normres = np.linalg.norm(self.res if self.preallocate else res)
             if self.normres > self.normresold:
-                raise ValueError(
+                msg = (
                     f"FISTA stopped at iteration {self.iiter} due to "
                     "residual increasing, consider modifying "
                     "eps and/or alpha..."
                 )
+                raise ValueError(msg)
             else:
                 self.normresold = self.normres
 
@@ -2357,9 +2366,9 @@ class FISTA(ISTA):
     def run(
         self,
         x: NDArray,
-        niter: Optional[int] = None,
+        niter: int | None = None,
         show: bool = False,
-        itershow: Tuple[int, int, int] = (10, 10, 10),
+        itershow: tuple[int, int, int] = (10, 10, 10),
     ) -> NDArray:
         r"""Run solver
 
@@ -2387,7 +2396,8 @@ class FISTA(ISTA):
         xupdate = np.inf
         niter = self.niter if niter is None else niter
         if niter is None:
-            raise ValueError("niter must not be None")
+            msg = "`niter` must not be None"
+            raise ValueError(msg)
         while self.iiter < niter and xupdate > self.tol:
             showstep = (
                 True
@@ -2406,9 +2416,7 @@ class FISTA(ISTA):
             if stop:
                 break
         if xupdate <= self.tol:
-            logger.warning(
-                "Update smaller that tolerance for " "iteration %d", self.iiter
-            )
+            logger.warning("Update smaller that tolerance for iteration %d", self.iiter)
         return x
 
 
@@ -2490,7 +2498,7 @@ class SPGL1(Solver):
     def setup(
         self,
         y: NDArray,
-        SOp: Optional[LinearOperator] = None,
+        SOp: LinearOperator | None = None,
         tau: int = 0,
         sigma: int = 0,
         show: bool = False,
@@ -2527,18 +2535,19 @@ class SPGL1(Solver):
             self._print_setup()
 
     def step(self) -> None:
-        raise NotImplementedError(
-            "SPGL1 uses as default the"
-            "spgl1.spgl1 solver, therefore the "
-            "step method is not implemented. Use directly run or solve."
+        msg = (
+            "SPGL1 uses as default the spgl1.spgl1"
+            "solver, therefore the step method is not "
+            " implemented. Use directly run or solve."
         )
+        raise NotImplementedError(msg)
 
     def run(
         self,
         x: NDArray,
         show: bool = False,
         **kwargs_spgl1,
-    ) -> Tuple[NDArray, NDArray, Dict[str, Any]]:
+    ) -> tuple[NDArray, NDArray, dict[str, Any]]:
         r"""Run solver
 
         Parameters
@@ -2617,13 +2626,13 @@ class SPGL1(Solver):
     def solve(
         self,
         y: NDArray,
-        x0: Optional[NDArray] = None,
-        SOp: Optional[LinearOperator] = None,
+        x0: NDArray | None = None,
+        SOp: LinearOperator | None = None,
         tau: float = 0.0,
         sigma: float = 0,
         show: bool = False,
         **kwargs_spgl1,
-    ) -> Tuple[NDArray, NDArray, Dict[str, Any]]:
+    ) -> tuple[NDArray, NDArray, dict[str, Any]]:
         r"""Run entire solver
 
         Parameters
@@ -2827,8 +2836,8 @@ class SplitBregman(Solver):
 
     def memory_usage(
         self,
-        nopRegsL1: Optional[Tuple[int]] = None,
-        nopRegsL2: Optional[Tuple[int]] = None,
+        nopRegsL1: tuple[int] | None = None,
+        nopRegsL2: tuple[int] | None = None,
         show: bool = False,
         unit: Tmemunit = "B",
     ) -> float:
@@ -2882,15 +2891,15 @@ class SplitBregman(Solver):
     def setup(
         self,
         y: NDArray,
-        RegsL1: List[LinearOperator],
-        x0: Optional[NDArray] = None,
+        RegsL1: list[LinearOperator],
+        x0: NDArray | None = None,
         niter_outer: int = 3,
         niter_inner: int = 5,
-        RegsL2: Optional[List[LinearOperator]] = None,
-        dataregsL2: Optional[Sequence[NDArray]] = None,
+        RegsL2: list[LinearOperator] | None = None,
+        dataregsL2: Sequence[NDArray] | None = None,
         mu: float = 1.0,
-        epsRL1s: Optional[SamplingLike] = None,
-        epsRL2s: Optional[SamplingLike] = None,
+        epsRL1s: SamplingLike | None = None,
+        epsRL2s: SamplingLike | None = None,
         tol: float = 1e-10,
         tau: float = 1.0,
         restart: bool = False,
@@ -2994,7 +3003,7 @@ class SplitBregman(Solver):
             self.dataregsL2 = []
 
         # Rescale dampings
-        self.epsRs: List[float] = []
+        self.epsRs: list[float] = []
         if epsRL2s is not None:
             self.epsRs += [
                 sqrt(epsRL2s[ireg] / 2) / sqrt(mu / 2) for ireg in range(self.nregsL2)
@@ -3008,7 +3017,7 @@ class SplitBregman(Solver):
         x = self.ncp.zeros(self.Op.shape[1], dtype=self.Op.dtype) if x0 is None else x0
 
         # create variables to track the residual norm and iterations
-        self.cost: List[float] = []
+        self.cost: list[float] = []
         self.iiter = 0
 
         if show:
@@ -3102,13 +3111,13 @@ class SplitBregman(Solver):
             else [
                 epsRL2 * self.ncp.linalg.norm(dataregL2 - RegL2.matvec(x)) ** 2
                 for epsRL2, RegL2, dataregL2 in zip(
-                    self.epsRL2s, self.RegsL2, self.dataregsL2
+                    self.epsRL2s, self.RegsL2, self.dataregsL2, strict=True
                 )
             ]
         )
         self.costregL1 = [
             self.ncp.linalg.norm(RegL1.matvec(x), ord=1)
-            for _, RegL1 in zip(self.epsRL1s, self.RegsL1)
+            for _, RegL1 in zip(self.epsRL1s, self.RegsL1, strict=True)
         ]
         self.costtot = (
             self.costdata
@@ -3128,7 +3137,7 @@ class SplitBregman(Solver):
         x: NDArray,
         engine: Tsolverengine = "scipy",
         show: bool = False,
-        itershow: Tuple[int, int, int] = (10, 10, 10),
+        itershow: tuple[int, int, int] = (10, 10, 10),
         show_inner: bool = False,
         **kwargs_lsqr,
     ) -> NDArray:
@@ -3206,25 +3215,25 @@ class SplitBregman(Solver):
     def solve(
         self,
         y: NDArray,
-        RegsL1: List[LinearOperator],
-        x0: Optional[NDArray] = None,
+        RegsL1: list[LinearOperator],
+        x0: NDArray | None = None,
         niter_outer: int = 3,
         niter_inner: int = 5,
-        RegsL2: Optional[List[LinearOperator]] = None,
-        dataregsL2: Optional[List[NDArray]] = None,
+        RegsL2: list[LinearOperator] | None = None,
+        dataregsL2: list[NDArray] | None = None,
         mu: float = 1.0,
-        epsRL1s: Optional[SamplingLike] = None,
-        epsRL2s: Optional[SamplingLike] = None,
+        epsRL1s: SamplingLike | None = None,
+        epsRL2s: SamplingLike | None = None,
         tol: float = 1e-10,
         tau: float = 1.0,
         restart: bool = False,
         engine: Tsolverengine = "scipy",
         preallocate: bool = False,
         show: bool = False,
-        itershow: Tuple[int, int, int] = (10, 10, 10),
+        itershow: tuple[int, int, int] = (10, 10, 10),
         show_inner: bool = False,
         **kwargs_lsqr,
-    ) -> Tuple[NDArray, int, NDArray]:
+    ) -> tuple[NDArray, int, NDArray]:
         r"""Run entire solver
 
         Parameters

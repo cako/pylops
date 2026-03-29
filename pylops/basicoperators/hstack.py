@@ -14,12 +14,12 @@ if int(sp_version[0]) <= 1 and int(sp_version[1]) < 8:
     from scipy.sparse.linalg.interface import LinearOperator as spLinearOperator
     from scipy.sparse.linalg.interface import _get_dtype
 else:
-    from scipy.sparse.linalg._interface import _get_dtype
     from scipy.sparse.linalg._interface import (
         LinearOperator as spLinearOperator,
     )
+    from scipy.sparse.linalg._interface import _get_dtype
 
-from typing import Callable, Optional, Sequence
+from collections.abc import Callable, Sequence
 
 from pylops import LinearOperator
 from pylops.basicoperators import MatrixMult, Zero
@@ -152,13 +152,14 @@ class HStack(LinearOperator):
         self,
         ops: Sequence[LinearOperator],
         nproc: int = 1,
-        forceflat: Optional[bool] = None,
-        inoutengine: Optional[Tinoutengine] = None,
+        forceflat: bool | None = None,
+        inoutengine: Tinoutengine | None = None,
         parallel_kind: Tparallel_kind = "multiproc",
-        dtype: Optional[str] = None,
+        dtype: str | None = None,
     ) -> None:
         if parallel_kind not in ["multiproc", "multithread"]:
-            raise ValueError("parallel_kind must be 'multiproc' or 'multithread'")
+            msg = "parallel_kind must be 'multiproc' or 'multithread'"
+            raise ValueError(msg)
         # identify dimensions
         self.ops = ops
         mops = np.zeros(len(ops), dtype=int)
@@ -169,7 +170,8 @@ class HStack(LinearOperator):
         self.mops = int(mops.sum())
         nops = [oper.shape[0] for oper in self.ops]
         if len(set(nops)) > 1:
-            raise ValueError("operators have different number of rows")
+            msg = "Operators have different number of rows"
+            raise ValueError(msg)
         self.nops = int(nops[0])
         self.mmops = np.insert(np.cumsum(mops), 0, 0)
         # define dimsd (check if all operators have the same,

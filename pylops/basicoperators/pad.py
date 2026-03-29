@@ -1,6 +1,6 @@
 __all__ = ["Pad"]
 
-from typing import Sequence, Tuple, Union
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -76,17 +76,21 @@ class Pad(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
-        pad: Union[Tuple[int, int], Sequence[Tuple[int, int]]],
+        dims: int | InputDimsLike,
+        pad: tuple[int, int] | Sequence[tuple[int, int]],
         dtype: DTypeLike = "float64",
         name: str = "P",
     ) -> None:
         if np.any(np.array(pad) < 0):
-            raise ValueError("Padding must be positive or zero")
+            msg = "Padding must be positive or zero"
+            raise ValueError(msg)
         dims = _value_or_sized_to_tuple(dims)
         # Accept (padbeg, padend) and [(padbeg, padend)]
         self.pad: Sequence = [pad] if len(dims) == 1 and len(pad) == 2 else pad
-        dimsd = [dim + before + after for dim, (before, after) in zip(dims, self.pad)]
+        dimsd = [
+            dim + before + after
+            for dim, (before, after) in zip(dims, self.pad, strict=True)
+        ]
         super().__init__(dtype=np.dtype(dtype), dims=dims, dimsd=dimsd, name=name)
 
     @reshaped

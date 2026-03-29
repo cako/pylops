@@ -161,7 +161,7 @@ def test_Patch2D(par):
         par["ny"] * par["nt"] * nwins[0] * nwins[1],
         backend=backend,
     )
-    x = np.ones((par["ny"] * nwins[0] * par["nt"] * nwins[1]))
+    x = np.ones(par["ny"] * nwins[0] * par["nt"] * nwins[1])
     y = Pop * x.ravel()
 
     xinv = Pop / y
@@ -197,7 +197,7 @@ def test_Patch2D_scalings(par):
         par["ny"] * par["nt"] * nwins[0] * nwins[1],
         backend=backend,
     )
-    x = np.ones((par["ny"] * nwins[0] * par["nt"] * nwins[1]))
+    x = np.ones(par["ny"] * nwins[0] * par["nt"] * nwins[1])
     y = Pop * x.ravel()
 
     xinv = Pop / y
@@ -233,7 +233,7 @@ def test_Patch2D_singlepatch1(par):
         par["npy"] * par["nt"] * nwins[0] * nwins[1],
         backend=backend,
     )
-    x = np.ones((par["npy"] * nwins[0] * par["nt"] * nwins[1]))
+    x = np.ones(par["npy"] * nwins[0] * par["nt"] * nwins[1])
     y = Pop * x.ravel()
 
     xinv = Pop / y
@@ -268,7 +268,7 @@ def test_Patch2D_singlepatch2(par):
         par["ny"] * par["npt"] * nwins[0] * nwins[1],
         backend=backend,
     )
-    x = np.ones((par["ny"] * nwins[0] * par["npt"] * nwins[1]))
+    x = np.ones(par["ny"] * nwins[0] * par["npt"] * nwins[1])
     y = Pop * x.ravel()
 
     xinv = Pop / y

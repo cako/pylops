@@ -88,10 +88,10 @@ class Solver(metaclass=ABCMeta):
             f"The Operator Op has {self.Op.shape[0]} rows and {self.Op.shape[1]} cols"
         )
 
-    def _print_setup(self, *args: Any, **kwargs: Any) -> None:
+    def _print_setup(self, *args: Any, **kwargs: Any) -> None:  # noqa: B027
         pass
 
-    def _print_step(self, *args: Any, **kwargs: Any) -> None:
+    def _print_step(self, *args: Any, **kwargs: Any) -> None:  # noqa: B027
         pass
 
     def _print_finalize(self, *args: Any, nbar: int = 80, **kwargs: Any) -> None:
@@ -153,7 +153,8 @@ class Solver(metaclass=ABCMeta):
         if preallocate and self.isjax:
             warnings.warn(
                 "Preallocation is not supported for JAX arrays. "
-                "Setting preallocate to False."
+                "Setting preallocate to False.",
+                stacklevel=2,
             )
 
     @abstractmethod
@@ -309,7 +310,7 @@ class Solver(metaclass=ABCMeta):
         """
         pass
 
-    def callback(
+    def callback(  # noqa: B027
         self,
         x: NDArray,
         *args,

@@ -6,7 +6,7 @@ __all__ = [
 ]
 
 import warnings
-from typing import Callable, Optional, Sequence, Tuple
+from collections.abc import Callable, Sequence
 
 import numpy as np
 import numpy.typing as npt
@@ -18,14 +18,14 @@ def _tcrop(t: npt.ArrayLike) -> npt.ArrayLike:
     """Crop time axis with even number of samples"""
     if len(t) % 2 == 0:
         t = t[:-1]
-        warnings.warn("One sample removed from time axis...")
+        warnings.warn("One sample removed from time axis...", stacklevel=2)
     return t
 
 
 def gaussian(
     t: npt.ArrayLike,
     std: float = 1.0,
-) -> Tuple[npt.ArrayLike, npt.ArrayLike, int]:
+) -> tuple[npt.ArrayLike, npt.ArrayLike, int]:
     r"""Gaussian wavelet
 
     Create a Gaussian wavelet given time axis ``t``
@@ -61,8 +61,8 @@ def gaussian(
 def klauder(
     t: npt.ArrayLike,
     f: Sequence[float] = (5.0, 20.0),
-    taper: Optional[Callable] = None,
-) -> Tuple[npt.ArrayLike, npt.ArrayLike, int]:
+    taper: Callable | None = None,
+) -> tuple[npt.ArrayLike, npt.ArrayLike, int]:
     r"""Klauder wavelet
 
     Create a Klauder wavelet given time axis ``t``
@@ -109,8 +109,8 @@ def klauder(
 def ormsby(
     t: npt.ArrayLike,
     f: Sequence[float] = (5.0, 10.0, 45.0, 50.0),
-    taper: Optional[Callable] = None,
-) -> Tuple[npt.ArrayLike, npt.ArrayLike, int]:
+    taper: Callable | None = None,
+) -> tuple[npt.ArrayLike, npt.ArrayLike, int]:
     r"""Ormsby wavelet
 
     Create a Ormsby wavelet given time axis ``t`` and frequency range
@@ -167,8 +167,8 @@ def ormsby(
 def ricker(
     t: npt.ArrayLike,
     f0: float = 10,
-    taper: Optional[Callable] = None,
-) -> Tuple[npt.ArrayLike, npt.ArrayLike, int]:
+    taper: Callable | None = None,
+) -> tuple[npt.ArrayLike, npt.ArrayLike, int]:
     r"""Ricker wavelet
 
     Create a Ricker wavelet given time axis ``t`` and central frequency ``f_0``

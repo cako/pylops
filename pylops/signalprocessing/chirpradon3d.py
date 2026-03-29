@@ -113,7 +113,8 @@ class ChirpRadon3D(LinearOperator):
         self.pmax = pmax
         self.engine = engine
         if self.engine not in ["fftw", "numpy"]:
-            raise ValueError("engine must be 'numpy' or 'fftw'")
+            msg = "`engine` must be numpy or fftw"
+            raise ValueError(msg)
         self.kwargs_fftw = kwargs_fftw
 
     @reshaped

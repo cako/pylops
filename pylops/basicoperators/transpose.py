@@ -75,7 +75,11 @@ class Transpose(LinearOperator):
 
         # find out if all axes are present only once in axes
         if len(np.unique(self.axes)) != ndims:
-            raise ValueError("axes must contain each direction once")
+            msg = (
+                "axes must contain all dimensions, "
+                f"and each dimension at least once, got {self.axes}, instead"
+            )
+            raise ValueError(msg)
 
         # find out how axes should be transposed in adjoint mode
         axesd = np.empty(ndims, dtype=int)

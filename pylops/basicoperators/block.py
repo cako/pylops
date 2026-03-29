@@ -1,6 +1,6 @@
 __all__ = ["Block"]
 
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 from pylops import LinearOperator
 from pylops.basicoperators import HStack, VStack
@@ -17,12 +17,12 @@ class _Block(LinearOperator):
     def __init__(
         self,
         ops: Iterable[Iterable[LinearOperator]],
-        forceflat: Optional[bool] = None,
-        dtype: Optional[DTypeLike] = None,
+        forceflat: bool | None = None,
+        dtype: DTypeLike | None = None,
         _HStack=HStack,
         _VStack=VStack,
-        _args_HStack: Optional[dict] = None,
-        _args_VStack: Optional[dict] = None,
+        _args_HStack: dict | None = None,
+        _args_VStack: dict | None = None,
         name: str = "B",
     ):
         if _args_HStack is None:
@@ -153,9 +153,9 @@ class Block(_Block):
         self,
         ops: Iterable[Iterable[LinearOperator]],
         nproc: int = 1,
-        forceflat: Optional[bool] = None,
+        forceflat: bool | None = None,
         parallel_kind: Tparallel_kind = "multiproc",
-        dtype: Optional[DTypeLike] = None,
+        dtype: DTypeLike | None = None,
     ):
         super().__init__(
             ops=ops,

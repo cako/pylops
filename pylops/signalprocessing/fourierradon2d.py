@@ -1,6 +1,6 @@
 __all__ = ["FourierRadon2D"]
 
-from typing import Literal, Optional, Tuple
+from typing import Literal
 
 import numpy as np
 import scipy as sp
@@ -145,16 +145,17 @@ class FourierRadon2D(LinearOperator):
         haxis: NDArray,
         pxaxis: NDArray,
         nfft: int,
-        flims: Optional[Tuple[int, int]] = None,
+        flims: tuple[int, int] | None = None,
         kind: Literal["linear", "parabolic"] = "linear",
         engine: Tengine_nnc = "numpy",
-        num_threads_per_blocks: Tuple[int, int] = (32, 32),
+        num_threads_per_blocks: tuple[int, int] = (32, 32),
         dtype: DTypeLike = "float64",
         name: str = "R",
     ) -> None:
         # engine
         if engine not in ["numpy", "numba", "cuda"]:
-            raise ValueError("engine must be numpy or numba or cuda")
+            msg = "`engine` must be numpy or numba or cuda"
+            raise ValueError(msg)
         if engine == "numba" and jit_message is not None:
             engine = "numpy"
 

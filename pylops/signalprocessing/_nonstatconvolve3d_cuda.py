@@ -16,7 +16,6 @@ def _matvec_rmatvec(
     ix, iy, iz = cuda.grid(3)
 
     if ix < xdims[0] and iy < xdims[1] and iz < xdims[2]:
-
         # find closest filters and interpolate h
         ihx_l = int(floor((ix - ohx) / dhx))  # id number of left for hs_arr
         ihy_b = int(floor((iy - ohy) / dhy))  # id number of back for hs_arr
@@ -96,14 +95,19 @@ def _matvec_rmatvec(
 
         # place filter in output
         for ixx, hxx in zip(
-            range(xextremes[0], xextremes[1]), range(hxextremes[0], hxextremes[1])
+            range(xextremes[0], xextremes[1]),
+            range(hxextremes[0], hxextremes[1]),
+            strict=True,
         ):
             for iyy, hyy in zip(
-                range(yextremes[0], yextremes[1]), range(hyextremes[0], hyextremes[1])
+                range(yextremes[0], yextremes[1]),
+                range(hyextremes[0], hyextremes[1]),
+                strict=True,
             ):
                 for izz, hzz in zip(
                     range(zextremes[0], zextremes[1]),
                     range(hzextremes[0], hzextremes[1]),
+                    strict=True,
                 ):
                     h = (
                         dhx_l * dhy_b * dhz_t * h_lbt[hxx, hyy, hzz]

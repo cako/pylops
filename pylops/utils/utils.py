@@ -1,7 +1,6 @@
 __all__ = ["Report"]
 
 # scooby is a soft dependency for pylops
-from typing import Optional
 
 try:
     from scooby import Report as ScoobyReport
@@ -67,7 +66,7 @@ class Report(ScoobyReport):
 
     def __init__(
         self,
-        add_pckg: Optional[list] = None,
+        add_pckg: list | None = None,
         ncol: int = 3,
         text_width: int = 80,
         sort: bool = False,

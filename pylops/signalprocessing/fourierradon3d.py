@@ -1,6 +1,6 @@
 __all__ = ["FourierRadon3D"]
 
-from typing import Literal, Optional, Tuple
+from typing import Literal
 
 import numpy as np
 import scipy as sp
@@ -165,25 +165,27 @@ class FourierRadon3D(LinearOperator):
         pyaxis: NDArray,
         pxaxis: NDArray,
         nfft: int,
-        flims: Optional[Tuple[int, int]] = None,
-        kind: Tuple[Literal["linear", "parabolic"], Literal["linear", "parabolic"]] = (
+        flims: tuple[int, int] | None = None,
+        kind: tuple[Literal["linear", "parabolic"], Literal["linear", "parabolic"]] = (
             "linear",
             "linear",
         ),
         engine: Tengine_nnc = "numpy",
-        num_threads_per_blocks: Tuple[int, int, int] = (2, 16, 16),
+        num_threads_per_blocks: tuple[int, int, int] = (2, 16, 16),
         dtype: DTypeLike = "float64",
         name: str = "R",
     ) -> None:
         # engine
         if engine not in ["numpy", "numba", "cuda"]:
-            raise ValueError("engine must be numpy or numba or cuda")
+            msg = "`engine` must be numpy or numba or cuda"
+            raise ValueError(msg)
         if engine == "numba" and jit_message is not None:
             engine = "numpy"
 
         # kind
         if len(kind) != 2:
-            raise ValueError("kind must be a tuple of two elements")
+            msg = "kind must be a tuple of two elements"
+            raise ValueError(msg)
 
         # dimensions and super
         dims = len(pyaxis), len(pxaxis), len(taxis)
