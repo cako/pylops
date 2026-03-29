@@ -1,3 +1,5 @@
+# flake8: noqa: B905
+
 from math import floor
 
 from numba import cuda
@@ -97,17 +99,14 @@ def _matvec_rmatvec(
         for ixx, hxx in zip(
             range(xextremes[0], xextremes[1]),
             range(hxextremes[0], hxextremes[1]),
-            strict=True,
         ):
             for iyy, hyy in zip(
                 range(yextremes[0], yextremes[1]),
                 range(hyextremes[0], hyextremes[1]),
-                strict=True,
             ):
                 for izz, hzz in zip(
                     range(zextremes[0], zextremes[1]),
                     range(hzextremes[0], hzextremes[1]),
-                    strict=True,
                 ):
                     h = (
                         dhx_l * dhy_b * dhz_t * h_lbt[hxx, hyy, hzz]
