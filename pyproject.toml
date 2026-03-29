@@ -27,7 +27,6 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Mathematics",
 ]
 requires-python = ">=3.10"
@@ -57,11 +56,6 @@ deep = ["torch", "jax"]
 deep-cu126 = ["torch", "jax[cuda12]"]
 deep-cu128 = ["torch", "jax[cuda12]"]
 deep-cu13 = ["torch>=2.11", "jax[cuda13]"]
-intel = [
-  "numpy>=2.0.0; sys_platform != 'darwin'",
-  "scipy>=1.13.0; sys_platform != 'darwin'",
-  "mkl_fft; sys_platform != 'darwin'",
-]
 
 [dependency-groups]
 dev = [
@@ -110,13 +104,6 @@ conflicts = [
     { extra = "deep-cu128" },
   ],
 ]
-environments = [
-    "sys_platform == 'darwin'",
-    "sys_platform == 'linux' and python_version == '3.10'",
-    "sys_platform == 'linux' and python_version == '3.11'",
-    "sys_platform == 'linux' and python_version == '3.12'",
-    "sys_platform == 'linux' and python_version == '3.13'",
-]
 
 [tool.uv.sources]
 torch = [
@@ -124,9 +111,6 @@ torch = [
   { index = "pytorch-cu126", extra = "deep-cu126" },
   { index = "pytorch-cu128", extra = "deep-cu128" },
 ]
-numpy = [{ index = "intel", extra = "intel", marker = "sys_platform != 'darwin'" }]
-scipy = [{ index = "intel", extra = "intel", marker = "sys_platform != 'darwin'" }]
-mkl_fft = [{ index = "intel", extra = "intel", marker = "sys_platform != 'darwin'" }]
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
@@ -141,11 +125,6 @@ explicit = true
 [[tool.uv.index]]
 name = "pytorch-cu128"
 url = "https://download.pytorch.org/whl/cu128"
-explicit = true
-
-[[tool.uv.index]]
-name = "intel"
-url = "https://software.repos.intel.com/python/pypi"
 explicit = true
 
 [tool.pytest.ini_options]
