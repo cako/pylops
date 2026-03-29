@@ -48,8 +48,12 @@ advanced = [
     "astra-toolbox; sys_platform == 'linux'",
     "devito"
 ]
-deep = ["torch", "jax"]
 stat = ["pytensor", "pymc"]
+deep = ["torch", "jax"]
+deep-cu126 = ["torch", "jax[cuda12]"]
+deep-cu128 = ["torch", "jax[cuda12]"]
+# deep-cu13 = ["torch>=2.11", "jax[cuda13]"]
+
 
 [dependency-groups]
 dev = [
@@ -86,12 +90,102 @@ exclude = ["pytests"]
 [tool.setuptools_scm]
 version_file = "pylops/version.py"
 
+[tool.uv]
+conflicts = [
+  [
+    { extra = "deep" },
+    { extra = "deep-cu126" },
+    { extra = "deep-cu128" },
+  ],
+]
+
 [tool.uv.sources]
 torch = [
-  { index = "pytorch-cpu" },
+  { index = "pytorch-cpu", extra = "deep" },
+  { index = "pytorch-cu126", extra = "deep-cu126" },
+  { index = "pytorch-cu128", extra = "deep-cu128" },
 ]
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.pytest.ini_options]
+addopts = "--verbose"
+python_files = ["pytests/*.py"]
+
+[tool.ruff]
+src = ["pylops"]
+exclude = ["pylops/version.py", ]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle errors
+  "F",   # pyflakes
+  "W",   # pycodestyle warnings
+  "B",   # flake8-bugbear
+  "EM",  # flake8-errmsg
+  "UP",  # pyupgrade
+  "I"    # isort
+]
+ignore = [
+  "E501",  # line too long (for comments and strings)
+  "UP031", # use of old '%' formatting instead of f-strings
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = [
+  "F401",  # imported but unused (re-exports)
+  "F403",  # star import used for public API
+  "F405",  # name may be undefined from star import
+  "I001",  # allow usorted imports
+]
+"tutorials/*.py" = [
+  "E731",  # do not assign a lambda expression, use def
+]
+"pylops/linearoperator.py" = [
+  "E402",  # allow module level import not at top of file
+]
+"pylops/basicoperators/blockdiag.py" = [
+  "E402",  # allow module level import not at top of file
+]
+"pylops/basicoperators/hstack.py" = [
+  "E402",  # allow module level import not at top of file
+]
+"pylops/basicoperators/vstack.py" = [
+  "E402",  # allow module level import not at top of file
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["pylops"]
+
+[tool.mypy]
+files = ["pylops", ]
+python_version = "3.11"
+mypy_path = "pylops"
+strict = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+disable_error_code = ["untyped-decorator"]
+allow_redefinition = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+warn_unreachable = false
+
+[[tool.mypy.overrides]]
+module = ["cupy.*", "devito.*", "examples.*", # devito-examples
+          "numpy.*", "numba.*", "pyfftw.*",  "pywt.*", "scipy.*",
+          "scooby.*", "skfmm.*", "spgl1.*", "IPython.*"]
+ignore_missing_imports = true

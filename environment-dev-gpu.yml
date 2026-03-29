@@ -20,8 +20,6 @@ dependencies:
   - icc_rt
   - pre-commit
   - autopep8
-  - isort
-  - black
   - pip:
     - torch
     - pytest-runner
@@ -34,6 +32,6 @@ dependencies:
     - nbsphinx
     - sphinxemoji
     - image
-    - flake8
+    - ruff
     - mypy
     - coverage

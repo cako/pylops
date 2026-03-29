@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import datetime
 import os
 import sys
@@ -100,7 +99,7 @@ master_doc = "index"
 # General information about the project
 year = datetime.date.today().year
 project = "PyLops"
-copyright = "{}, PyLops Development Team".format(year)
+copyright = f"{year}, PyLops Development Team"
 
 # Version
 version = __version__
@@ -108,9 +107,9 @@ if len(version.split("+")) > 1 or version == "unknown":
     version = "dev"
 
 # These enable substitutions using |variable| in the rst files
-rst_epilog = """
+rst_epilog = f"""
 .. |year| replace:: {year}
-""".format(year=year)
+"""
 html_static_path = ["_static"]
 html_last_updated_fmt = "%b %d, %Y"
 html_title = "PyLops"
@@ -153,7 +152,7 @@ html_context = {
     "doc_path": "docs/source",
     "galleries": sphinx_gallery_conf["gallery_dirs"],
     "gallery_dir": dict(
-        zip(sphinx_gallery_conf["gallery_dirs"], sphinx_gallery_conf["examples_dirs"])
+        zip(sphinx_gallery_conf["gallery_dirs"], sphinx_gallery_conf["examples_dirs"], strict=True)
     ),
     "github_project": "PyLops",
     "github_repo": "pylops",

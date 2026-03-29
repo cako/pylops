@@ -23,8 +23,6 @@ dependencies:
   - icc_rt
   - pre-commit
   - autopep8
-  - isort
-  - black
   - pip:
     - torch
     - devito
@@ -42,6 +40,6 @@ dependencies:
     - nbsphinx
     - sphinxemoji
     - image
-    - flake8
+    - ruff
     - mypy
     - coverage
