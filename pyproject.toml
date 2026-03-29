@@ -42,16 +42,15 @@ advanced = [
     "numba",
     "pyfftw",
     "PyWavelets",
-    "sympy",
     "scikit-fmm",
     "spgl1",
     "dtcwt",
     "astra-toolbox; sys_platform == 'linux'",
     "devito"
 ]
-stat = ["pytensor", "pymc"]
 gpu-cu12 = ["cupy-cuda12x"]
 gpu-cu13 = ["cupy-cuda13x"]
+stat = ["pytensor", "pymc"]
 deep = ["torch", "jax"]
 deep-cu126 = ["torch", "jax[cuda12]"]
 deep-cu128 = ["torch", "jax[cuda12]"]
