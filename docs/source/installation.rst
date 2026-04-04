@@ -23,7 +23,7 @@ For learning, however, the standard installation is often good enough; in that c
 recommend using `uv <https://docs.astral.sh/uv/>`_, a modern Python package manager that
 is easy to use and has a very fast dependency resolver.
 
-Some operators have additional, optional "engines" that are usually meant to provide improved
+Some operators have additional, optional *engines* that are usually meant to provide improved
 performance on CPU or enable GPU acceleration.  These rely on third-party libraries, which are 
 added to the list of our optional  dependencies and must be installed to be able to use the 
 associated engine. Similarly, some operators are implemented on top of third-party libraries, 
@@ -57,13 +57,8 @@ First install `pylops` with your package manager of choice.
             >> uv add pylops
         
         which installs also the *required* dependencies, if not already present
-        in your environment. To also install some of the optional dependencies
-        (namely ``numba``, ``pyfftw``, ``PyWavelets``, ``scikit-fmm``, ``spgl1``, 
-        ``dtcwt``, ``astra-toolbox``), run:
-        
-        .. code-block:: bash
-
-            >> uv add "pylops[advanced]"
+        in your environment. Refer to :ref:`Optional` for alternative `uv`
+        commands that install some of the optional dependencies as well.
 
 From Source
 ===========
@@ -372,7 +367,7 @@ a safe fallback to one of the required dependencies will be enforced.
    PyLops via ``make dev-install_conda`` (``conda``) or 
    ``make dev-install_uv`` (``uv``). GPU-enabled equivalents are 
    ``make dev-install_conda_gpu`` (``conda``) and
-   ``make dev-install_uvcu126 / dev-install_uvcu128 / dev-install_uvcu13 `` (``uv``)
+   ``make dev-install_uvcu126 / dev-install_uvcu128 / dev-install_uvcu13`` (``uv``)
 
 When using the Conda package manager, only the required dependencies will be installed
 when installing PyLops. It is recommended to install the optional dependencies manually 
@@ -424,7 +419,7 @@ In all cases, dependencies are installed from their PyPI wheels.
 
 A summary table of all optional dependencies, the operators that rely on them (and
 whether they are required to be able to use the operator(s)), and how to install
-them as part of the installation process of PyLopss provided in the table below.
+them as part of the installation process of PyLops provided in the table below.
 
 .. list-table::
    :widths: 15 40 5 40
