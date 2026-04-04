@@ -1,0 +1,32 @@
+name: PyLops Testing with Intel oneAPI Math Kernel Library(oneMKL)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        platform: [ubuntu-latest]
+        python-version: ["3.11", "3.12", "3.13"]
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Install uv with Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies and pylops
+        run: uv sync --locked  --extra intel --extra advanced  --extra stat --extra deep --all-groups
+      - name: Test with pytest
+        run: uv run pytest --color=yes pytests/
