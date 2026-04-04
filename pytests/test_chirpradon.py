@@ -101,6 +101,9 @@ def test_ChirpRadon3D(par):
     """Dot-test, forward, analytical inverse and sparse inverse
     for ChirpRadon3D operator
     """
+    if par["engine"] == "fftw" and backend == "cupy":
+        pytest.skip("fftw does not work with CuPy arrays")
+
     parmod = {
         "ot": 0,
         "dt": 0.004,
