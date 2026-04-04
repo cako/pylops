@@ -54,11 +54,11 @@ dev-install_uv:
 
 dev-install_uvcu126:
 	make uvcheck
-	$(UV) sync --locked  --extra advanced  --extra stat --extra gpu-cu126 --extra deep-cu126 --all-groups
+	$(UV) sync --locked  --extra advanced  --extra stat --extra gpu-cu12 --extra deep-cu126 --all-groups
 
 dev-install_uvcu128:
 	make uvcheck
-	$(UV) sync --locked  --extra advanced  --extra stat --extra gpu-cu128 --extra deep-cu128 --all-groups
+	$(UV) sync --locked  --extra advanced  --extra stat --extra gpu-cu12 --extra deep-cu128 --all-groups
 
 dev-install_uvcu13:
 	make uvcheck
