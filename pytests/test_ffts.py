@@ -1059,6 +1059,8 @@ def test_FFTND_small_complex(par):
 def test_FFT_1dsignal(par):
     if par["engine"] == "mkl_fft" and not mkl_fft_enabled:
         pytest.skip("mkl_fft is not installed")
+    if par["engine"] == "fftw" and backend == "cupy":
+        pytest.skip("fftw does not work with CuPy arrays")
     np.random.seed(5)
     """Dot-test and inversion for FFT operator for 1d signal"""
     decimal = 3 if np.real(np.ones(1, par["dtype"])).dtype == np.float32 else 8
