@@ -3,10 +3,10 @@ PYTHON := $(shell command -v python3 2> /dev/null || command which python 2> /de
 UV := $(shell command -v uv 2> /dev/null || command which uv 2> /dev/null)
 NOX := $(shell command -v nox 2> /dev/null || command which nox 2> /dev/null)
 
-.PHONY: install_conda dev-install_conda dev-install_conda_intel_mkl dev-install_conda_arm
-.PHONY: install_conda dev-install_conda dev-install_conda_intel_mkl dev-install_conda_arm
+.PHONY: install_conda dev-install_conda dev-install_conda_intel_mkl dev-install_conda_arm dev-install_conda_gpu
+.PHONY: dev-install_uv dev-install_uvcu126 dev-install_uvcu128 dev-install_uvcu13
 .PHONY: tests tests_cpu_ongpu tests_gpu tests_uv tests_cpu_ongpu_uv tests_gpu_uv tests_nox
-.PHONY: doc doc_uv docupdate docupdate_uv servedoc lint lint_uv typeannot typeannot_uv
+.PHONY: doc doc_uv docupdate docupdate_uv servedoc servedoc_uv lint lint_uv typeannot typeannot_uv
 .PHONY: coverage coverage_uv
 
 pipcheck:
@@ -33,27 +33,6 @@ ifndef NOX
 endif
 	@echo Using nox: $(NOX)
 
-install:
-	make pipcheck
-	$(PIP) install -r requirements.txt && $(PIP) install .
-
-dev-install:
-	make pipcheck
-	$(PIP) install -r requirements-dev.txt &&\
-	$(PIP) install -r requirements-pyfftw.txt &&\
-	$(PIP) install -r requirements-torch.txt && $(PIP) install -e .
-
-dev-install_intel_mkl:
-	make pipcheck
-	$(PIP) install -r requirements-intel-mkl.txt &&\
-	$(PIP) install -r requirements-dev.txt &&\
-	$(PIP) install -r requirements-torch.txt && $(PIP) install -e .
-
-dev-install_gpu:
-	make pipcheck
-	$(PIP) install -r requirements-dev-gpu.txt &&\
-	$(PIP) install -e .
-
 install_conda:
 	conda env create -f environment.yml && source ${CONDA_PREFIX}/etc/profile.d/conda.sh && conda activate pylops && pip install .
 
@@ -71,7 +50,19 @@ dev-install_conda_gpu:
 
 dev-install_uv:
 	make uvcheck
-	$(UV) sync --locked --all-extras --all-groups
+	$(UV) sync --locked  --extra advanced  --extra stat --extra deep --all-groups
+
+dev-install_uvcu126:
+	make uvcheck
+	$(UV) sync --locked  --extra advanced  --extra stat --extra gpu-cu126 --extra deep-cu126 --all-groups
+
+dev-install_uvcu128:
+	make uvcheck
+	$(UV) sync --locked  --extra advanced  --extra stat --extra gpu-cu128 --extra deep-cu128 --all-groups
+
+dev-install_uvcu13:
+	make uvcheck
+	$(UV) sync --locked  --extra advanced  --extra stat --extra gpu-cu13 --extra deep-cu13 --all-groups
 
 tests:
 	# Run tests with CPU
