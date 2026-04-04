@@ -1180,6 +1180,8 @@ def test_FFT_2dsignal(par):
     """
     if par["engine"] == "mkl_fft" and not mkl_fft_enabled:
         pytest.skip("mkl_fft is not installed")
+    if par["engine"] == "fftw" and backend == "cupy":
+        pytest.skip("fftw does not work with CuPy arrays")
     np.random.seed(5)
     decimal = 3 if np.real(np.ones(1, par["dtype"])).dtype == np.float32 else 8
 
@@ -1397,6 +1399,8 @@ def test_FFT_3dsignal(par):
     """
     if par["engine"] == "mkl_fft" and not mkl_fft_enabled:
         pytest.skip("mkl_fft is not installed")
+    if par["engine"] == "fftw" and backend == "cupy":
+        pytest.skip("fftw does not work with CuPy arrays")
     np.random.seed(5)
     decimal = 3 if np.real(np.ones(1, par["dtype"])).dtype == np.float32 else 8
 
