@@ -52,9 +52,9 @@ gpu-cu12 = ["cupy-cuda12x"]
 gpu-cu13 = ["cupy-cuda13x"]
 stat = ["pytensor", "pymc"]
 deep = ["torch", "jax"]
-deep-cu126 = ["torch", "jax[cuda12]"]
-deep-cu128 = ["torch", "jax[cuda12]"]
-deep-cu13 = ["torch>=2.11", "jax[cuda13]"]
+deep-cu126 = ["torch<2.11.0", "jax[cuda12]"]
+deep-cu128 = ["torch<2.11.0", "jax[cuda12]"]
+deep-cu13 = ["torch>=2.11.0", "jax[cuda13]"]
 
 [dependency-groups]
 dev = [
@@ -101,6 +101,7 @@ conflicts = [
     { extra = "deep" },
     { extra = "deep-cu126" },
     { extra = "deep-cu128" },
+    { extra = "deep-cu13" },
   ],
 ]
 
