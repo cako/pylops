@@ -35,12 +35,12 @@ PAR = {
 }
 
 # Check if skfmm is available and by-pass tests using it otherwise. This is
-# currently required for Travis as since we moved to Python3.8 it has
-# stopped working
+# currently used in GPU CI not to run tests that require skfmm to compute the
+# traveltime tables - should consider fixing it
 try:
     import skfmm  # noqa: F401
 
-    skfmm_enabled = True
+    skfmm_enabled = True if backend == "numpy" else False
 except ImportError:
     skfmm_enabled = False
 
@@ -198,7 +198,14 @@ def test_traveltime_table():
             _,
         ) = Kirchhoff._traveltime_table(z, x, s3d, r3d, v0, y=y, mode="analytic")
 
-        (trav_srcs_eik, trav_recs_eik, _, _, _, _,) = Kirchhoff._traveltime_table(
+        (
+            trav_srcs_eik,
+            trav_recs_eik,
+            _,
+            _,
+            _,
+            _,
+        ) = Kirchhoff._traveltime_table(
             z,
             x,
             s3d,
