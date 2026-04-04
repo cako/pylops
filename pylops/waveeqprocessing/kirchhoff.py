@@ -330,7 +330,7 @@ class Kirchhoff(LinearOperator):
             "A new implementation of Kirchhoff is provided in v2.1.0. "
             "This currently affects only the inner working of the "
             "operator, end-users can continue using the operator in "
-            "the same way. Nevertheless, it is now recommended to provide"
+            "the same way. Nevertheless, it is now recommended to provide "
             "the variables trav (and amp) as a tuples containing the "
             "traveltime (and amplitude) tables for sources and receivers "
             "separately. This behaviour will eventually become default in "
