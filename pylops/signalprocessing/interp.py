@@ -179,7 +179,7 @@ def Interp(
     ValueError
         If the vector ``iava`` contains repeated values.
     NotImplementedError
-        If ``kind`` is not ``nearest``, ``linear`` or ``sinc``
+        If ``kind`` is not ``nearest``, ``linear``, ``sinc``, or ``"cubic_spline"``
 
     See Also
     --------
