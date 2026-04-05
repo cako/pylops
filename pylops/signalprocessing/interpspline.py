@@ -251,7 +251,11 @@ class _BandedLUDecomposition:
         banded_representation[2, ::] = matrix.main_diagonal
         banded_representation[3, 0:-1] = matrix.sub_diagonal
 
-        (lu_banded, pivot_indices, info,) = lapack_factorizer(
+        (
+            lu_banded,
+            pivot_indices,
+            info,
+        ) = lapack_factorizer(
             ab=banded_representation,
             kl=1,
             ku=1,
@@ -388,7 +392,6 @@ class _TridiagonalLUDecomposition:
             )
 
         raise np.linalg.LinAlgError(
-            f"Could not LU-factorize tridiagonal matrix! Got {info=}."
             f"Could not LU-factorize tridiagonal matrix! Got {info=}."
         )
 
