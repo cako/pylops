@@ -953,7 +953,7 @@ class InterpCubicSpline(LinearOperator):
             x_mod[0 : self.num_cols]
             + self._rmatmat_difference_method(
                 self._lhs_B_matrix_transposed_lu.solve(
-                    rhs=x_mod[self.num_cols : x_mod.size],
+                    rhs=x_mod[self.num_cols :],
                     lapack_solver=self._tridiag_lu_solve,
                 )
             )
