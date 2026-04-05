@@ -18,6 +18,21 @@ TEST_X_RANGE: Final[Tuple[float, float]] = (-5.0, 5.0)
 MIN_NUM_TEST_SAMPLES: Final[int] = 1
 
 
+def test_cubic_spline_raises_on_not_supported_bc_type() -> None:
+    """
+    Tests whether ``pylops.signalprocessing.InterpCubicSpline`` raises a
+    ``NotImplementedError`` for boundary conditions that are not supported.
+
+    """
+
+    with pytest.raises(NotImplementedError):
+        InterpCubicSpline(
+            dims=(5, 2),
+            iava=np.array([0.5, 2.3]),
+            bc_type="erroneous",  # type: ignore
+        )
+
+
 @pytest.mark.parametrize(
     "with_complex",
     [
