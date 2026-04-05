@@ -210,7 +210,7 @@ class _BandedLUDecomposition:
     Represents the LU decomposition of a general banded matrix as performed by the
     LAPACK routines ``?gbtrf``.
     This class was implemented for spline interpolations between only 2 data points
-    because the class :class:`_BandedLUDecomposition` uses the LAPACK routines
+    because the class :class:`_TridiagonalLUDecomposition` uses the LAPACK routines
     ``?gttrf`` that cannot handle 2 x 2 tridiagonal matrices.
 
     """
