@@ -47,7 +47,10 @@ def _linearinterp(
 
     # ensure that samples are not beyond the last sample, in that case set to
     # penultimate sample and raise a warning
-    _clip_iava_above_last_sample_index(iava=iava, sample_size=sample_size)
+    iava = _clip_iava_above_last_sample_index(  # type: ignore
+        iava=iava,  # type: ignore
+        sample_size=sample_size,
+    )
 
     # find indices and weights
     iva_l = ncp.floor(iava).astype(int)

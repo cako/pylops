@@ -28,7 +28,7 @@ def _ensure_iava_is_unique(
 def _clip_iava_above_last_sample_index(
     iava: NDArray,
     sample_size: int,
-) -> None:
+) -> NDArray:
     """
     Ensures that elements in ``iava`` do not exceed the last sample index.
     Elements above the penultimate sample are clipped to the next closest float value
@@ -52,4 +52,4 @@ def _clip_iava_above_last_sample_index(
 
     _ensure_iava_is_unique(iava=iava)
 
-    return
+    return iava
