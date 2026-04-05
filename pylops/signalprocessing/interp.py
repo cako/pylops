@@ -133,7 +133,7 @@ def Interp(
       polynomial fitted between ``np.floor(iava)`` and ``np.floor(iava) + 1``.
       It offers an excellent tradeoff between accuracy and computational complexity
       and its results oscillate less than those obtained from sinc interpolation.
-      It can also be accessed directly via :class:`pylops.singalprocessing.InterpCubicSpline`.
+      It can also be accessed directly via :class:`pylops.signalprocessing.InterpCubicSpline`.
 
     .. note:: The vector ``iava`` should contain unique values. If the same
       index is repeated twice an error will be raised. This also applies when
@@ -179,7 +179,7 @@ def Interp(
     ValueError
         If the vector ``iava`` contains repeated values.
     NotImplementedError
-        If ``kind`` is not ``nearest``, ``linear``, ``sinc``, or ``"cubic_spline"``
+        If ``kind`` is not ``nearest``, ``linear``, ``sinc``, or ``cubic_spline``
 
     See Also
     --------
