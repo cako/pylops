@@ -159,7 +159,6 @@ class CG(Solver):
             Pre-allocate all variables used by the solver. Note that if ``y``
             is a JAX array, this option is ignored and variables are not
             pre-allocated since JAX does not support in-place operations.
-
         show : :obj:`bool`, optional
             Display setup log
 

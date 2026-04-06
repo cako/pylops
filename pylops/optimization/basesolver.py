@@ -46,7 +46,7 @@ class Solver(metaclass=ABCMeta):
     Parameters
     ----------
     Op : :obj:`pylops.LinearOperator`
-        Operator to invert of
+        Operator to invert
     callbacks : :obj:`pylops.optimization.callback.Callbacks`
         Callbacks object used to implement custom callbacks
 

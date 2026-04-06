@@ -2103,7 +2103,6 @@ class FISTA(ISTA):
     Op : :obj:`pylops.LinearOperator`
         Operator to invert
 
-
     Attributes
     ----------
     ncp : :obj:`module`
