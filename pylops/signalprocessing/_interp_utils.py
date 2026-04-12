@@ -28,7 +28,7 @@ def _ensure_iava_is_unique(
 def _clip_iava_above_last_sample_index(
     iava: NDArray,
     sample_size: int,
-) -> None:
+) -> NDArray:
     """
     Ensures that elements in ``iava`` do not exceed the last sample index.
     Elements above the penultimate sample are clipped to the next closest float value
@@ -47,8 +47,9 @@ def _clip_iava_above_last_sample_index(
         # NOTE: ``numpy.nextafter(x, -np.inf)`` gives the closest float-value that is
         #       less than ``x``, i.e., this logic clips ``iava`` to the highest possible
         #       value that is still below the last sample
+        iava = iava.copy()  # to avoid silent input mutation
         iava[np.where(outside)] = np.nextafter(last_sample_index, -np.inf)
 
     _ensure_iava_is_unique(iava=iava)
 
-    return
+    return iava

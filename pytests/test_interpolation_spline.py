@@ -1,3 +1,4 @@
+from math import prod
 from typing import Final, Tuple
 
 import numpy as np
@@ -5,6 +6,7 @@ import pytest
 from scipy.interpolate import CubicSpline
 
 from pylops.signalprocessing import InterpCubicSpline
+from pylops.utils import dottest
 
 TEST_ARRAY_SHAPE: Final[Tuple] = (
     20,
@@ -14,6 +16,90 @@ TEST_ARRAY_SHAPE: Final[Tuple] = (
 )
 TEST_X_RANGE: Final[Tuple[float, float]] = (-5.0, 5.0)
 MIN_NUM_TEST_SAMPLES: Final[int] = 1
+
+
+def test_cubic_spline_raises_on_not_supported_bc_type() -> None:
+    """
+    Tests whether ``pylops.signalprocessing.InterpCubicSpline`` raises a
+    ``NotImplementedError`` for boundary conditions that are not supported.
+
+    """
+
+    with pytest.raises(NotImplementedError):
+        InterpCubicSpline(
+            dims=(5, 2),
+            iava=np.array([0.5, 2.3]),
+            bc_type="erroneous",  # type: ignore
+        )
+
+
+@pytest.mark.parametrize(
+    "with_complex",
+    [
+        pytest.param(False, id="real"),
+        pytest.param(True, id="complex"),
+    ],
+)
+@pytest.mark.parametrize(
+    "axis",
+    [
+        0,
+        1,
+        2,
+        3,
+        -1,
+        -2,
+        -3,
+    ],
+)
+@pytest.mark.parametrize(
+    "subsample_fraction",
+    [
+        pytest.param(0.5, id="decimation"),
+        pytest.param(5.0, id="upsampling"),
+    ],
+)
+def test_natural_cubic_spline_dottest(
+    subsample_fraction: float,
+    axis: int,
+    with_complex: bool,
+) -> None:
+    """
+    Tests ``pylops.signalprocessing.InterpCubicSpline`` with the ``dottest``.
+
+    """
+
+    # Setup
+
+    num_samples = TEST_ARRAY_SHAPE[axis]
+    x_eval_fractions = np.random.rand(
+        max(
+            round(num_samples * subsample_fraction),
+            MIN_NUM_TEST_SAMPLES,
+        )
+    )
+    x_eval_for_pylops = (num_samples - 1) * x_eval_fractions
+
+    shape_list = list(TEST_ARRAY_SHAPE)
+    shape_list[axis] = x_eval_fractions.size  # type: ignore
+    num_rows = prod(shape_list, start=1)
+    num_columns = prod(TEST_ARRAY_SHAPE, start=1)
+
+    # Test
+
+    splinop = InterpCubicSpline(
+        dims=TEST_ARRAY_SHAPE,
+        iava=x_eval_for_pylops,
+        axis=axis,
+        dtype="complex128" if with_complex else "float64",
+    )
+
+    assert dottest(
+        Op=splinop,
+        nr=num_rows,
+        nc=num_columns,
+        complexflag=0 if not with_complex else 3,
+    )
 
 
 @pytest.mark.parametrize(

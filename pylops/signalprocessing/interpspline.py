@@ -210,7 +210,7 @@ class _BandedLUDecomposition:
     Represents the LU decomposition of a general banded matrix as performed by the
     LAPACK routines ``?gbtrf``.
     This class was implemented for spline interpolations between only 2 data points
-    because the class :class:`_BandedLUDecomposition` uses the LAPACK routines
+    because the class :class:`_TridiagonalLUDecomposition` uses the LAPACK routines
     ``?gttrf`` that cannot handle 2 x 2 tridiagonal matrices.
 
     """
@@ -251,7 +251,11 @@ class _BandedLUDecomposition:
         banded_representation[2, ::] = matrix.main_diagonal
         banded_representation[3, 0:-1] = matrix.sub_diagonal
 
-        (lu_banded, pivot_indices, info,) = lapack_factorizer(
+        (
+            lu_banded,
+            pivot_indices,
+            info,
+        ) = lapack_factorizer(
             ab=banded_representation,
             kl=1,
             ku=1,
@@ -388,7 +392,6 @@ class _TridiagonalLUDecomposition:
             )
 
         raise np.linalg.LinAlgError(
-            f"Could not LU-factorize tridiagonal matrix! Got {info=}."
             f"Could not LU-factorize tridiagonal matrix! Got {info=}."
         )
 
@@ -818,7 +821,10 @@ class InterpCubicSpline(LinearOperator):
             )
 
         iava = np.asarray(iava, dtype=np.float64)
-        _clip_iava_above_last_sample_index(iava=iava, sample_size=num_cols)
+        iava = _clip_iava_above_last_sample_index(  # type: ignore
+            iava=iava,
+            sample_size=num_cols,
+        )
 
         if isinstance(bc_type, str) and bc_type.lower() in {"natural"}:
             self.bc_type = bc_type.lower()
@@ -950,7 +956,7 @@ class InterpCubicSpline(LinearOperator):
             x_mod[0 : self.num_cols]
             + self._rmatmat_difference_method(
                 self._lhs_B_matrix_transposed_lu.solve(
-                    rhs=x_mod[self.num_cols : x_mod.size],
+                    rhs=x_mod[self.num_cols :],
                     lapack_solver=self._tridiag_lu_solve,
                 )
             )
