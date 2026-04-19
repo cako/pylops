@@ -47,7 +47,10 @@ def _linearinterp(
 
     # ensure that samples are not beyond the last sample, in that case set to
     # penultimate sample and raise a warning
-    _clip_iava_above_last_sample_index(iava=iava, sample_size=sample_size)
+    iava = _clip_iava_above_last_sample_index(  # type: ignore
+        iava=iava,  # type: ignore
+        sample_size=sample_size,
+    )
 
     # find indices and weights
     iva_l = ncp.floor(iava).astype(int)
@@ -133,7 +136,7 @@ def Interp(
       polynomial fitted between ``np.floor(iava)`` and ``np.floor(iava) + 1``.
       It offers an excellent tradeoff between accuracy and computational complexity
       and its results oscillate less than those obtained from sinc interpolation.
-      It can also be accessed directly via :class:`pylops.singalprocessing.InterpCubicSpline`.
+      It can also be accessed directly via :class:`pylops.signalprocessing.InterpCubicSpline`.
 
     .. note:: The vector ``iava`` should contain unique values. If the same
       index is repeated twice an error will be raised. This also applies when
@@ -179,7 +182,7 @@ def Interp(
     ValueError
         If the vector ``iava`` contains repeated values.
     NotImplementedError
-        If ``kind`` is not ``nearest``, ``linear`` or ``sinc``
+        If ``kind`` is not ``nearest``, ``linear``, ``sinc``, or ``cubic_spline``
 
     See Also
     --------
