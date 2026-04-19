@@ -62,7 +62,6 @@ def power_iteration(
     ).astype(dtype)
     b_k = b_k / ncp.linalg.norm(b_k)
 
-    niter = 10 if niter is None else niter
     maxeig_old = 0.0
     for _iiter in range(niter):
         # compute largest eigenvector

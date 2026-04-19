@@ -331,7 +331,7 @@ class Solver(metaclass=ABCMeta):
         --------
         >>> import numpy as np
         >>> from pylops.basicoperators import Identity
-        >>> from pylops.optimization.solver import CG
+        >>> from pylops.optimization.cls_basic import CG
         >>> def callback(x):
         ...     print(f"Running callback, current solution {x}")
         ...
