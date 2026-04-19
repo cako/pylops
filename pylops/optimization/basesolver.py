@@ -335,10 +335,10 @@ class Solver(metaclass=ABCMeta):
         >>> def callback(x):
         ...     print(f"Running callback, current solution {x}")
         ...
-        >>> I = Identity(10)
-        >>> I
+        >>> IOp = Identity(10)
+        >>> IOp
         <10x10 Identity with dtype=float64>
-        >>> cgsolve = CG(I, np.arange(10))
+        >>> cgsolve = CG(IOp)
         >>> cgsolve.callback = callback
 
         >>> x = np.ones(10)
