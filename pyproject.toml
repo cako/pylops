@@ -1,10 +1,9 @@
 [build-system]
 requires = [
-    "setuptools >= 65",
-    "setuptools_scm[toml]",
-    "wheel",
+    "hatchling",
+    "hatch-vcs"
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "hatchling.build"
 
 [project]
 name = "pylops"
@@ -85,11 +84,27 @@ Documentation = "https://pylops.readthedocs.io/en/stable"
 Discussions = "https://github.com/PyLops/pylops/discussions"
 Issues = "https://github.com/PyLops/pylops/issues"
 
-[tool.setuptools.packages.find]
-exclude = ["pytests"]
+[tool.hatch]
+version.source = "vcs"
 
-[tool.setuptools_scm]
-version_file = "pylops/version.py"
+[tool.hatch.build]
+exclude = [
+  ".*",
+  "docs",
+  "examples",
+  "pytests",
+  "testdata",
+  "tutorials",
+]
+
+[tool.hatch.build.hooks.vcs]
+version-file = "pylops/version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pylops"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [".github"]
 
 [tool.uv]
 conflicts = [

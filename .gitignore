@@ -19,7 +19,7 @@ pylops.egg-info/
 .eggs/
 __pycache__
 
-# setuptools_scm generated  #
+# hatchling generated  #
 pylops/version.py
 
 # Development #

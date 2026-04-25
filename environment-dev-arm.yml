@@ -30,7 +30,6 @@ dependencies:
     - spgl1
     - jax
     - pytest-runner
-    - setuptools_scm
     - shibuya
     - sphinx-design
     - sphinx-gallery

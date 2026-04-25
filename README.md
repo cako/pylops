@@ -20,13 +20,35 @@ It is inspired by the iconic MATLAB [Spot – A Linear-Operator Toolbox](http://
 
 
 ## Installation
-To get the most out of PyLops straight out of the box, we recommend `conda` to install PyLops:
+To get the most out of PyLops straight out of the box, we recommend using
+the PyPI distribution via `uv`:
+
+```bash
+uv pip install pylops
+```
+
+or directly via `pip`:
+
+```bash
+pip install pylops
+```
+
+#### From Conda
+You can also install PyLops via `conda`:
+
 ```bash
 conda install -c conda-forge pylops
 ```
-You can also install with `pip`:
+
+#### From Github
+Finally, you can also directly install from the main branch (although this is not recommended) via `uv`:
+
 ```bash
-pip install pylops
+uv add git+https://github.com/PyLops/pylops.git --branch main
+```
+or via `pip`:
+```bash
+pip install git+https://git@github.com/PyLops/pylops.git@main
 ```
 
 See the docs ([Installation](https://pylops.readthedocs.io/en/stable/installation.html)) for more information about dependencies and performance.
