@@ -21,7 +21,7 @@ par2 = {"n": 21, "imag": 1j, "dtype": "complex64"}  # square, complex
 
 @pytest.mark.parametrize("par", [(par1), (par2)])
 def test_power_iteration(par):
-    """Max eigenvalue computation with power iteration method vs. scipy methods"""
+    """Max eigenvalue computation with power iteration method vs. numpy.linalg.eig"""
     np.random.seed(10)
 
     A = np.random.randn(par["n"], par["n"]) + par["imag"] * np.random.randn(

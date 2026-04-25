@@ -3,7 +3,6 @@ __all__ = ["describe"]
 import logging
 import random
 import string
-from typing import List, Set, Union
 
 from pylops import LinearOperator
 from pylops.basicoperators import BlockDiag, HStack, VStack
@@ -51,7 +50,7 @@ def _in_notebook() -> bool:
     return True
 
 
-def _assign_name(Op, Ops, names: List[str]) -> str:
+def _assign_name(Op, Ops, names: list[str]) -> str:
     """Assign name to an operator as provided by the user
     (or randomly select one when not provided by the user)
 
@@ -102,7 +101,7 @@ def _assign_name(Op, Ops, names: List[str]) -> str:
     return name
 
 
-def _describeop(Op, Ops, names: List[str]):
+def _describeop(Op, Ops, names: list[str]):
     """Core steps to describe a single operator
 
     Parameters
@@ -150,7 +149,7 @@ def _describeop(Op, Ops, names: List[str]):
 def _describe(
     Op,
     Ops,
-    names: Union[List[str], Set[str]],
+    names: list[str] | set[str],
 ):
     """Core steps to describe a composite operator. This is done recursively.
 

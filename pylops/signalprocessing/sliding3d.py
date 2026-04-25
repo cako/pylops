@@ -4,7 +4,6 @@ __all__ = [
 ]
 
 import logging
-from typing import Optional, Tuple
 
 import numpy as np
 
@@ -24,16 +23,16 @@ logger = logging.getLogger(__name__)
 
 
 def sliding3d_design(
-    dimsd: Tuple[int, int, int],
-    nwin: Tuple[int, int],
-    nover: Tuple[int, int],
-    nop: Tuple[int, int, int],
+    dimsd: tuple[int, int, int],
+    nwin: tuple[int, int],
+    nover: tuple[int, int],
+    nop: tuple[int, int, int],
     verb: bool = True,
-) -> Tuple[
-    Tuple[int, int],
-    Tuple[int, int, int],
-    Tuple[Tuple[NDArray, NDArray], Tuple[NDArray, NDArray]],
-    Tuple[Tuple[NDArray, NDArray], Tuple[NDArray, NDArray]],
+) -> tuple[
+    tuple[int, int],
+    tuple[int, int, int],
+    tuple[tuple[NDArray, NDArray], tuple[NDArray, NDArray]],
+    tuple[tuple[NDArray, NDArray], tuple[NDArray, NDArray]],
 ]:
     """Design Sliding3D operator
 
@@ -197,17 +196,16 @@ class Sliding3D(LinearOperator):
         Op: LinearOperator,
         dims: InputDimsLike,
         dimsd: InputDimsLike,
-        nwin: Tuple[int, int],
-        nover: Tuple[int, int],
-        nop: Tuple[int, int, int],
-        tapertype: Optional[Ttaper] = "hanning",
+        nwin: tuple[int, int],
+        nover: tuple[int, int],
+        nop: tuple[int, int, int],
+        tapertype: Ttaper | None = "hanning",
         savetaper: bool = True,
         nproc: int = 1,
         name: str = "P",
     ) -> None:
-
-        dims: Tuple[int, ...] = _value_or_sized_to_tuple(dims)
-        dimsd: Tuple[int, ...] = _value_or_sized_to_tuple(dimsd)
+        dims: tuple[int, ...] = _value_or_sized_to_tuple(dims)
+        dimsd: tuple[int, ...] = _value_or_sized_to_tuple(dimsd)
 
         # data windows
         dwin0_ins, dwin0_ends = _slidingsteps(dimsd[0], nwin[0], nover[0])
@@ -228,12 +226,11 @@ class Sliding3D(LinearOperator):
         if nwins * Op.shape[1] // dims[2] != dims[0] * dims[1] and Op.shape[
             1
         ] != np.prod(dims):
-            raise ValueError(
-                f"Model shape (dims={dims}) is not consistent with chosen "
-                f"number of windows. Run sliding3d_design to identify the "
-                f"correct number of windows for the current "
-                "model size..."
+            msg = (
+                f"Model shape (dims={dims}) is not consistent with chosen number of windows. "
+                "Run sliding3d_design to identify the correct number of windows for the current model size..."
             )
+            raise ValueError(msg)
 
         # create tapers
         self.tapertype = tapertype

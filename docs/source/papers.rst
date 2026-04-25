@@ -1,7 +1,8 @@
 .. _papers:
 
-Papers using PyLops
-===================
+|:bookmark:| Papers using PyLops
+################################
+
 This section lists various conference abstracts and papers using the
 PyLops framework. If you publish a paper using PyLops, `we'd love to hear about it <https://github.com/PyLops/pylops/discussions>`_!
 

@@ -1,6 +1,6 @@
 __all__ = ["SecondDerivative"]
 
-from typing import Callable, Union
+from collections.abc import Callable
 
 import numpy as np
 
@@ -83,7 +83,7 @@ class SecondDerivative(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         axis: int = -1,
         sampling: float = 1.0,
         kind: Tderivkind = "centered",
@@ -127,9 +127,8 @@ class SecondDerivative(LinearOperator):
             self._hmatvec = self._matvec_backward
             self._hrmatvec = self._rmatvec_backward
         else:
-            raise NotImplementedError(
-                "'kind' must be 'forward', 'centered' or 'backward'"
-            )
+            msg = "'kind' must be 'forward', 'centered' or 'backward'"
+            raise NotImplementedError(msg)
 
     def _matvec(self, x: NDArray) -> NDArray:
         return self._hmatvec(x)

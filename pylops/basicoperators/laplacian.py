@@ -1,12 +1,16 @@
 __all__ = ["Laplacian"]
 
 
-from typing import Tuple
-
 from pylops import LinearOperator
 from pylops.basicoperators import SecondDerivative
 from pylops.utils.backend import get_normalize_axis_index
-from pylops.utils.typing import DTypeLike, InputDimsLike, NDArray, Tderivkind
+from pylops.utils.typing import (
+    DTypeLike,
+    InputDimsLike,
+    NDArray,
+    SamplingLike,
+    Tderivkind,
+)
 
 
 class Laplacian(LinearOperator):
@@ -77,8 +81,8 @@ class Laplacian(LinearOperator):
         self,
         dims: InputDimsLike,
         axes: InputDimsLike = (-2, -1),
-        weights: Tuple[float, ...] = (1.0, 1.0),
-        sampling: Tuple[float, ...] = (1.0, 1.0),
+        weights: SamplingLike = (1.0, 1.0),
+        sampling: SamplingLike = (1.0, 1.0),
         edge: bool = False,
         kind: Tderivkind = "centered",
         dtype: DTypeLike = "float64",
@@ -86,7 +90,8 @@ class Laplacian(LinearOperator):
     ):
         axes = tuple(get_normalize_axis_index()(ax, len(dims)) for ax in axes)
         if not (len(axes) == len(weights) == len(sampling)):
-            raise ValueError("axes, weights, and sampling have different size")
+            msg = "axes, weights, and sampling have different size"
+            raise ValueError(msg)
         self.axes = axes
         self.weights = weights
         self.sampling = sampling
@@ -113,8 +118,8 @@ class Laplacian(LinearOperator):
     def _calc_l2op(
         dims: InputDimsLike,
         axes: InputDimsLike,
-        weights: Tuple[float, ...],
-        sampling: Tuple[float, ...],
+        weights: SamplingLike,
+        sampling: SamplingLike,
         edge: bool,
         kind: Tderivkind,
         dtype: DTypeLike,
@@ -124,7 +129,7 @@ class Laplacian(LinearOperator):
         )
         dims = l2op.dims
         l2op *= weights[0]
-        for ax, samp, weight in zip(axes[1:], sampling[1:], weights[1:]):
+        for ax, samp, weight in zip(axes[1:], sampling[1:], weights[1:], strict=True):
             l2op += weight * SecondDerivative(
                 dims, axis=ax, sampling=samp, edge=edge, kind=kind, dtype=dtype
             )

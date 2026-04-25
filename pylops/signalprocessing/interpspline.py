@@ -2,9 +2,10 @@ __all__ = [
     "InterpCubicSpline",
 ]
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import cached_property, partial
-from typing import Callable, Final, Literal, Tuple, Union
+from typing import Final, Literal
 
 import numpy as np
 from scipy.linalg import get_lapack_funcs
@@ -137,10 +138,11 @@ class _TridiagonalMatrix:
         for which in ("main", "super", "sub"):
             ndim = getattr(self, f"{which}_diagonal").ndim
             if ndim != 1:
-                raise ValueError(
-                    f"Expected {which} diagonal to be a 1-dimensional Array, but it is "
-                    f"{ndim}-dimensional."
+                msg = (
+                    f"Expected {which} diagonal to be a 1-dimensional Array, "
+                    f"but it is{ndim}-dimensional."
                 )
+                raise ValueError(msg)
 
         main_diagonal_dtype = self.main_diagonal.dtype.type
         main_diagonal_size = self.main_diagonal.size
@@ -150,18 +152,20 @@ class _TridiagonalMatrix:
             size = diag.size
 
             if dtype != main_diagonal_dtype:
-                raise TypeError(
+                msg = (
                     f"Expected {which} diagonal to have the same dtype as the main "
-                    f"diagonal, but its dtype is {repr(dtype)} and the main diagonal "
-                    f"has dtype {repr(main_diagonal_dtype)}."
+                    f"diagonal, but its dtype is {repr(dtype)} and that of the main "
+                    f"diagonal is {repr(main_diagonal_dtype)}."
                 )
+                raise TypeError(msg)
 
             if size != main_diagonal_size - 1:
-                raise ValueError(
+                msg = (
                     f"Expected {which} diagonal to have 1 entry less than the main "
                     f"diagonal, but it has {size} entries and the main diagonal has "
                     f"{main_diagonal_size} entries."
                 )
+                raise ValueError(msg)
 
         return
 
@@ -269,9 +273,8 @@ class _BandedLUDecomposition:
                 num_super=1,
             )
 
-        raise np.linalg.LinAlgError(
-            f"Could not LU-factorize tridiagonal matrix! Got {info=}."
-        )
+        msg = f"Could not LU-factorize tridiagonal matrix! Got {info=}."
+        raise np.linalg.LinAlgError(msg)
 
     def solve(
         self,
@@ -315,9 +318,8 @@ class _BandedLUDecomposition:
         if info == 0:
             return x
 
-        raise np.linalg.LinAlgError(
-            f"Could not solve LU-factorization of tridiagonal matrix! Got {info=}."
-        )
+        msg = f"Could not solve LU-factorization of tridiagonal matrix! Got {info=}."
+        raise np.linalg.LinAlgError(msg)
 
 
 @dataclass
@@ -391,9 +393,8 @@ class _TridiagonalLUDecomposition:
                 pivot_indices=pivot_indices,
             )
 
-        raise np.linalg.LinAlgError(
-            f"Could not LU-factorize tridiagonal matrix! Got {info=}."
-        )
+        msg = f"Could not LU-factorize tridiagonal matrix! Got {info=}."
+        raise np.linalg.LinAlgError(msg)
 
     def solve(
         self,
@@ -431,9 +432,8 @@ class _TridiagonalLUDecomposition:
         if info == 0:
             return x
 
-        raise np.linalg.LinAlgError(
-            f"Could not solve LU-factorization of tridiagonal matrix! Got {info=}."
-        )
+        msg = f"Could not solve LU-factorization of tridiagonal matrix! Got {info=}."
+        raise np.linalg.LinAlgError(msg)
 
 
 def _make_cubic_spline_left_hand_side(
@@ -800,14 +800,13 @@ class InterpCubicSpline(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         iava: SamplingLike,
         bc_type: Literal["natural"] = "natural",
         axis: int = -1,
         dtype: DTypeLike = "float64",
         name: str = "S",
     ) -> None:
-
         # Input Validation and Standardization
 
         dims = _value_or_sized_to_tuple(dims)
@@ -815,10 +814,8 @@ class InterpCubicSpline(LinearOperator):
         num_cols = dims[axis]
 
         if num_cols < 2:
-            raise ValueError(
-                f"A cubic spline requires at least 2 data points to interpolate, but "
-                f"got {dims[axis]=}."
-            )
+            msg = f"A cubic spline requires at least 2 data points to interpolate, but got {dims[axis]=}."
+            raise ValueError(msg)
 
         iava = np.asarray(iava, dtype=np.float64)
         iava = _clip_iava_above_last_sample_index(  # type: ignore
@@ -830,17 +827,19 @@ class InterpCubicSpline(LinearOperator):
             self.bc_type = bc_type.lower()
 
         else:
-            raise NotImplementedError(
-                f"Cubic spline interpolation currently only supports 'natural' "
-                f"boundaries, but got {bc_type=}"
+            msg = (
+                "Cubic spline interpolation currently only supports 'natural' "
+                f"boundaries, but got {bc_type=}."
             )
+            raise NotImplementedError(msg)
 
         dtype = np.dtype(dtype)
         if dtype.type not in {np.float64, np.complex128}:
-            raise TypeError(
-                f"Expected dtype fo cubic spline interpolator to be either float64 or "
+            msg = (
+                "Expected dtype fo cubic spline interpolator to be either float64 or "
                 f"complex128 to achieve the required accuracy, but got {dtype}."
             )
+            raise TypeError(msg)
 
         # Operator Initialization
 
@@ -848,8 +847,8 @@ class InterpCubicSpline(LinearOperator):
         dimsd[axis] = len(iava)
         dimsd = tuple(dimsd)
 
-        self.dims: Tuple = dims
-        self.dimsd: Tuple = dimsd
+        self.dims: tuple = dims
+        self.dimsd: tuple = dimsd
         self.iava: FloatingNDArray = iava
         self.axis: int = axis
 
@@ -949,7 +948,6 @@ class InterpCubicSpline(LinearOperator):
 
     @reshaped(swapaxis=True, axis=0)
     def _rmatvec(self, x: InexactNDArray) -> InexactNDArray:
-
         x_mod = self._P_matrix_transposed @ x.reshape(x.shape[0], -1)
 
         return (

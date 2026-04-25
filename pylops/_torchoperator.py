@@ -25,7 +25,8 @@ class _TorchOperator(torch.autograd.Function):
             warnings.warn(
                 "PyLops operator will be applied on the cpu "
                 "whilst the input torch vector is on "
-                "%s, this may lead to poor performance" % ctx.devicetorch
+                "%s, this may lead to poor performance" % ctx.devicetorch,
+                stacklevel=2,
             )
 
         # prepare input

@@ -1,6 +1,6 @@
 __all__ = ["Shift"]
 
-from typing import TYPE_CHECKING, Tuple, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -15,8 +15,8 @@ if TYPE_CHECKING:
 
 
 def Shift(
-    dims: Tuple,
-    shift: Union[float, NDArray],
+    dims: tuple,
+    shift: float | NDArray,
     axis: int = -1,
     nfft: int = None,
     sampling: float = 1.0,

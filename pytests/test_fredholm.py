@@ -10,7 +10,6 @@ else:
     from numpy.testing import assert_array_almost_equal
 
     backend = "numpy"
-import itertools
 
 import pytest
 
@@ -53,7 +52,6 @@ par4 = {
     "ny": 6,
     "nx": 4,
     "nz": 5,
-    "saveGt": False,
     "usematmul": False,
     "saveGt": False,
     "imag": 1j,

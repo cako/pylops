@@ -1,7 +1,8 @@
 .. _addingoperator:
 
-Implementing new operators
-==========================
+|:paintbrush:| Implementing new operators
+#########################################
+
 Users are welcome to create new operators and add them to the PyLops library.
 
 In this tutorial, we will go through the key steps in the definition of an operator, using a simplified version of the
@@ -10,7 +11,7 @@ to the model in forward mode and to the data in adjoint mode.
 
 
 Creating the operator
----------------------
+*********************
 The first thing we need to do is to create a new file with the name of the operator we would like to implement.
 Note that as the operator will be a class, we need to follow the UpperCaseCamelCase convention both for the class itself
 and for the filename.
@@ -42,7 +43,7 @@ input parameters and a ``Notes`` section providing a mathematical explanation of
 some of the core operators of PyLops to get a feeling of the level of details of the mathematical explanation.
 
 Initialization (``__init__``)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=============================
 
 We then need to create the ``__init__`` where the input parameters are passed and saved as members of our class.
 While the input parameters change from operator to operator, it is always required to create three members:
@@ -87,7 +88,7 @@ See the docs of :py:class:`pylops.LinearOperator` for more information about wha
 attributes mean.
 
 Forward mode (``_matvec``)
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+==========================
 We can then move onto writing the *forward mode* in the method ``_matvec``. In other words, we will need to write
 the piece of code that will implement the following operation :math:`\mathbf{y} = \mathbf{A}\mathbf{x}`.
 Such method is always composed of two inputs (the object itself ``self`` and the input model  ``x``).
@@ -105,7 +106,7 @@ more details in the decorator documentation, by adding such decorator the input 
 a nd-array of shape ``dims``, fed to the actual code in ``_matvec`` and then flattened.
 
 Adjoint mode (``_rmatvec``)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================
 Finally we need to implement the *adjoint mode* in the method ``_rmatvec``. In other words, we will need to write
 the piece of code that will implement the following operation :math:`\mathbf{x} = \mathbf{A}^H\mathbf{y}`.
 Such method is also composed of two inputs (the object itself ``self`` and the input data ``y``).
@@ -123,8 +124,9 @@ Similar to ``_matvec``, since version ``v2.0.0``, this method can also be decora
 When doing so, the input ``x`` is initially reshaped into
 a nd-array of shape ``dimsd``, fed to the actual code in ``_rmatvec`` and then flattened.
 
+
 Testing the operator
---------------------
+********************
 Being able to write an operator is not yet a guarantee of the fact that the operator is correct, or in other words
 that the adjoint code is actually the *adjoint* of the forward code. Luckily for us, a simple test can be performed
 to check the validity of forward and adjoint operators, the so called *dot-test*.
@@ -170,7 +172,7 @@ model tested towards the input model.
 
 
 Documenting the operator
-------------------------
+************************
 Once the operator has been created, we can add it to the documentation of PyLops. To do so, simply add the name of
 the operator within the ``index.rst`` file in ``docs/source/api`` directory.
 
@@ -180,7 +182,7 @@ can be used as template.
 
 
 Final checklist
----------------
+***************
 Before submitting your new operator for review, use the following **checklist** to ensure that your code
 adheres to the guidelines of PyLops:
 

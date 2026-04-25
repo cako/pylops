@@ -5,7 +5,6 @@ __all__ = [
     "psnr",
 ]
 
-from typing import Optional
 
 import numpy as np
 
@@ -82,8 +81,8 @@ def snr(xref: ArrayLike, xcmp: ArrayLike) -> float:
 def psnr(
     xref: ArrayLike,
     xcmp: ArrayLike,
-    xmax: Optional[float] = None,
-    xmin: Optional[float] = 0.0,
+    xmax: float | None = None,
+    xmin: float | None = 0.0,
 ) -> float:
     """Peak Signal to Noise Ratio (PSNR)
 

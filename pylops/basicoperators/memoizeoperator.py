@@ -1,6 +1,5 @@
 __all__ = ["MemoizeOperator"]
 
-from typing import List, Tuple
 
 import numpy as np
 
@@ -43,7 +42,7 @@ class MemoizeOperator(LinearOperator):
         super().__init__(Op=Op)
 
         self.max_neval = max_neval
-        self.store: List[Tuple[NDArray, NDArray]] = []  # Store a list of (x, y)
+        self.store: list[tuple[NDArray, NDArray]] = []  # Store a list of (x, y)
         self.neval = 0  # Number of evaluations of the operator
 
     def _matvec(self, x: NDArray) -> NDArray:

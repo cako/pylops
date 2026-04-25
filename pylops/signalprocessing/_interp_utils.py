@@ -20,7 +20,8 @@ def _ensure_iava_is_unique(
     )
 
     if np.any(count > 1):
-        raise ValueError("Found repeated/non-unique values in iava.")
+        msg = "Found repeated/non-unique values in iava."
+        raise ValueError(msg)
 
     return
 
@@ -39,9 +40,10 @@ def _clip_iava_above_last_sample_index(
     outside = iava >= last_sample_index
     if np.any(outside):
         warnings.warn(
-            f"At least one value in iava is beyond the penultimate sample index "
+            "At least one value in iava is beyond the penultimate sample index "
             f"{last_sample_index}. Out-of-bound-values are forced below penultimate "
-            f"sample."
+            "sample.",
+            stacklevel=2,
         )
 
         # NOTE: ``numpy.nextafter(x, -np.inf)`` gives the closest float-value that is

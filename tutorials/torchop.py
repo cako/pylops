@@ -110,7 +110,7 @@ print(test)
 
 class Network(nn.Module):
     def __init__(self, input_channels):
-        super(Network, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(
             input_channels, input_channels // 2, kernel_size=3, padding=1
         )

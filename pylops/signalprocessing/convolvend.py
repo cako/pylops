@@ -1,6 +1,6 @@
 __all__ = ["ConvolveND"]
 
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
 
@@ -75,11 +75,11 @@ class ConvolveND(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         h: NDArray,
-        offset: Optional[InputDimsLike] = None,
+        offset: InputDimsLike | None = None,
         axes: InputDimsLike = (-2, -1),
-        method: Optional[Literal["auto", "direct", "fft"]] = "fft",
+        method: Literal["auto", "direct", "fft"] | None = "fft",
         dtype: DTypeLike = "float64",
         name: str = "C",
     ):

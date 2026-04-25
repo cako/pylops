@@ -5,19 +5,18 @@ Test module for FunctionOperator. Tests 32 and 64 bit float and complex number
 by wrapping a matrix multiplication as a FunctionOperator.
 Also provides a good starting point for new tests.
 """
+
 import itertools
 import os
 
 if int(os.environ.get("TEST_CUPY_PYLOPS", 0)):
     import cupy as np
     from cupy.testing import assert_array_almost_equal, assert_array_equal
-    from cupyx.scipy.sparse import rand
 
     backend = "cupy"
 else:
     import numpy as np
     from numpy.testing import assert_array_almost_equal, assert_array_equal
-    from scipy.sparse import rand
 
     backend = "numpy"
 import pytest

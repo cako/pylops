@@ -1,6 +1,5 @@
 __all__ = ["dottest"]
 
-from typing import Optional
 
 import numpy as np
 
@@ -10,8 +9,8 @@ from pylops.utils.typing import Tbackend
 
 def dottest(
     Op,
-    nr: Optional[int] = None,
-    nc: Optional[int] = None,
+    nr: int | None = None,
+    nc: int | None = None,
     rtol: float = 1e-6,
     atol: float = 1e-21,
     complexflag: int = 0,
@@ -89,7 +88,8 @@ def dottest(
         nc = Op.shape[1]
 
     if (nr, nc) != Op.shape:
-        raise AssertionError("Provided nr and nc do not match Operator shape.")
+        msg = f"Provided nr and nc do not match the operator shape {Op.shape}."
+        raise AssertionError(msg)
 
     # make u and v vectors
     rdtype = np.ones(1, Op.dtype).real.dtype

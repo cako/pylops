@@ -1,6 +1,7 @@
 __all__ = ["Radon2D"]
 
-from typing import Callable, Literal, Optional, Tuple
+from collections.abc import Callable
+from typing import Literal
 
 import numpy as np
 
@@ -53,7 +54,7 @@ def _indices_2d(
     t: int,
     nt: int,
     interp: bool = True,
-) -> Tuple[NDArray, NDArray, Optional[NDArray]]:
+) -> tuple[NDArray, NDArray, NDArray | None]:
     """Compute time and space indices of parametric line in ``f`` function
 
     Parameters
@@ -101,7 +102,7 @@ def _indices_2d_onthefly(
     t: int,
     nt: int,
     interp: bool = True,
-) -> Tuple[NDArray, NDArray, Optional[NDArray]]:
+) -> tuple[NDArray, NDArray, NDArray | None]:
     """Wrapper around _indices_2d to allow on-the-fly computation of
     parametric curves"""
     tscan = np.full(len(x), np.nan, dtype=np.float32)
@@ -122,7 +123,7 @@ def _create_table(
     npx: int,
     nx: int,
     interp: bool,
-) -> Tuple[NDArray, Optional[NDArray]]:
+) -> tuple[NDArray, NDArray | None]:
     """Create look up table"""
     table = np.full((npx, nt, nx), np.nan, dtype=np.float32)
     if interp:
@@ -243,7 +244,8 @@ def Radon2D(
     """
     # engine
     if engine not in ["numpy", "numba"]:
-        raise ValueError("engine must be numpy or numba")
+        msg = "`engine` must be numpy or numba"
+        raise ValueError(msg)
     if engine == "numba" and jit_message is not None:
         engine = "numpy"
     # axes
@@ -257,7 +259,11 @@ def Radon2D(
     elif callable(kind):
         f = kind
     else:
-        raise NotImplementedError("kind must be linear, " "parabolic, or hyperbolic...")
+        msg = (
+            "Wrong kind of basis function. Expected 'linear', 'parabolic', "
+            f"or 'hyperbolic', but received '{kind}'."
+        )
+        raise NotImplementedError(msg)
     # make axes unitless
     dh, dt = np.abs(haxis[1] - haxis[0]), np.abs(taxis[1] - taxis[0])
     dpx = dh / dt

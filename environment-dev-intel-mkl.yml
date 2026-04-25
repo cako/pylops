@@ -24,8 +24,6 @@ dependencies:
   - icc_rt
   - pre-commit
   - autopep8
-  - isort
-  - black
   - mkl_fft
   - pip:
     - torch
@@ -36,11 +34,14 @@ dependencies:
     - jax
     - pytest-runner
     - setuptools_scm
-    - pydata-sphinx-theme
-    - pooch
+    - shibuya
+    - sphinx-design
     - sphinx-gallery
+    - sphinx-iconify
+    - pooch
     - nbsphinx
     - sphinxemoji
     - image
-    - flake8
+    - ruff
     - mypy
+    - coverage

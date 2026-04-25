@@ -280,16 +280,6 @@ def test_PrestackLinearModelling(par):
     assert_array_almost_equal(d, d_dense, decimal=4)
 
     # Inversion
-    par3b = {
-        "vsvp": np.linspace(0.4, 0.6, nt0),
-        "linearization": "akirich",
-        "epsR": 1e-4,
-        "epsRL1": 1e-2,
-        "epsI": 1e-6,
-        "simultaneous": True,
-        "kind": "forward",
-    }
-
     for explicit in [True, False]:
         dict_inv = dict(iter_lim=10) if backend == "numpy" else dict(niter=10)
         if not par["simultaneous"]:
@@ -313,7 +303,7 @@ def test_PrestackLinearModelling(par):
             epsRL1=par["epsRL1"],
             simultaneous=par["simultaneous"],
             kind=par["kind"],
-            **dict_inv
+            **dict_inv,
         )
         assert np.linalg.norm(m - minv) / np.linalg.norm(minv) < 4e-2
 
@@ -434,6 +424,6 @@ def test_PrestackLinearModelling2d(par):
             epsR=par["epsR"],
             epsRL1=par["epsRL1"],
             simultaneous=par["simultaneous"],
-            **dict_inv
+            **dict_inv,
         )
         assert np.linalg.norm(m2d - minv2d) / np.linalg.norm(minv2d) < 2e-1

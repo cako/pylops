@@ -1,7 +1,8 @@
 .. _citing:
 
-How to cite
-===========
+|:pencil2:| How to cite
+#######################
+
 When using PyLops in scientific publications, please cite the following paper:
 
 .. raw:: html

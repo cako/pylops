@@ -1,7 +1,8 @@
 __all__ = ["Seislet"]
 
+from collections.abc import Sequence
 from math import ceil, log
-from typing import Literal, Optional, Sequence
+from typing import Literal
 
 import numpy as np
 
@@ -424,14 +425,15 @@ class Seislet(LinearOperator):
         self,
         slopes: NDArray,
         sampling: Sequence[float] = (1.0, 1.0),
-        level: Optional[int] = None,
+        level: int | None = None,
         kind: Literal["haar", "linear"] = "haar",
         inv: bool = False,
         dtype: DTypeLike = "float64",
         name: str = "S",
     ) -> None:
         if len(sampling) != 2:
-            raise ValueError("provide two sampling steps")
+            msg = f"Wrong number of sampling steps. Expected 2, but received {len(sampling)}."
+            raise ValueError(msg)
 
         # define predict and update steps
         if kind == "haar":
@@ -439,7 +441,8 @@ class Seislet(LinearOperator):
         elif kind == "linear":
             self.predict = _predict_lin
         else:
-            raise NotImplementedError("kind should be haar or linear")
+            msg = f"Wrong kind of basis function. Expected 'haar' or 'linear', but received '{kind}'."
+            raise NotImplementedError(msg)
 
         # define padding for length to be power of 2
         dims = slopes.shape

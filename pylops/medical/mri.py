@@ -3,7 +3,6 @@ __all__ = [
 ]
 
 import warnings
-from typing import Optional, Union
 
 import numpy as np
 
@@ -109,9 +108,9 @@ class MRI2D(LinearOperator):
     def __init__(
         self,
         dims: InputDimsLike,
-        mask: Union[Tmrimask, NDArray],
-        nlines: Optional[int] = None,
-        perc_center: Optional[float] = 0.1,
+        mask: Tmrimask | NDArray,
+        nlines: int | None = None,
+        perc_center: float | None = 0.1,
         engine: Tmriengine = "numpy",
         fft_engine: Tfftengine_nsm = "numpy",
         dtype: DTypeLike = "complex128",
@@ -124,7 +123,9 @@ class MRI2D(LinearOperator):
 
         # Validate inputs
         if engine == "jax" and fft_engine != "numpy":
-            warnings.warn("When engine='jax', fft_engine is forced to 'numpy'")
+            warnings.warn(
+                "When engine='jax', fft_engine is forced to 'numpy'", stacklevel=2
+            )
             self.fft_engine = "numpy"
         if isinstance(mask, str) and mask not in (
             "vertical-reg",
@@ -132,17 +133,22 @@ class MRI2D(LinearOperator):
             "radial-reg",
             "radial-uni",
         ):
-            raise ValueError(
-                "mask must be a numpy array, 'vertical-reg', 'vertical-uni', 'radial-reg', or 'radial-uni'"
+            msg = (
+                "`mask` must be a numpy array, 'vertical-reg', 'vertical-uni', "
+                f"'radial-reg', or 'radial-uni', got {mask}"
             )
+            raise ValueError(msg)
         if self.fft_engine not in ["numpy", "scipy", "mkl_fft"]:
-            raise ValueError("fft_engine must be 'numpy', 'scipy', or 'mkl_fft'")
+            msg = "`fft_engine` must be 'numpy', 'scipy', or 'mkl_fft'"
+            raise ValueError(msg)
         if isinstance(mask, str) and (nlines is None or perc_center is None):
-            raise ValueError(
-                "nlines and perc_center must be specified providing mask as string"
+            msg = (
+                "`nlines` and `perc_center` must be specified providing mask as string"
             )
+            raise ValueError(msg)
         if isinstance(mask, str) and mask == "vertical-reg" and perc_center > 0.0:
-            raise ValueError("perc_center must be 0.0 when using 'vertical-reg' mask")
+            msg = "`perc_center` must be 0.0 when using `mask=vertical-reg`"
+            raise ValueError(msg)
 
         # Create mask
         self.mask: NDArray
@@ -182,11 +188,12 @@ class MRI2D(LinearOperator):
         """Create vertical mask"""
         nlines_center = int(perc_center * dims[1])
         if (nlines + nlines_center) > dims[1]:
-            raise ValueError(
-                "nlines and perc_center produce a number of lines "
+            msg = (
+                "`nlines` and `perc_center` produce a number of lines "
                 "greater than the total number of lines of the k-space"
                 f"({nlines + nlines_center}>{dims[1]})"
             )
+            raise ValueError(msg)
 
         if nlines_center == 0:
             # No lines from the center

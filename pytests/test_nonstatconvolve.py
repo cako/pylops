@@ -102,14 +102,14 @@ par_2d = {
 @pytest.mark.parametrize("par", [(par_2d)])
 def test_even_filter(par):
     """Check error is raised if filter has even size"""
-    with pytest.raises(ValueError, match="filters hs must have odd length"):
+    with pytest.raises(ValueError, match="must have odd length"):
         _ = NonStationaryConvolve1D(
             dims=par["nx"],
             hs=h1ns[..., :-1],
             ih=(int(par["nx"] // 4), int(2 * par["nx"] // 4), int(3 * par["nx"] // 4)),
         )
 
-    with pytest.raises(ValueError, match="filters hs must have odd length"):
+    with pytest.raises(ValueError, match="must have odd length"):
         _ = NonStationaryConvolve2D(
             dims=(par["nx"], par["nz"]),
             hs=h2ns[..., :-1],
@@ -117,14 +117,14 @@ def test_even_filter(par):
             ihz=(int(par["nz"] // 4), int(3 * par["nz"] // 4)),
         )
 
-    with pytest.raises(ValueError, match="filters hs must have odd length"):
+    with pytest.raises(ValueError, match="must have odd length"):
         _ = NonStationaryFilters1D(
             inp=np.arange(par["nx"]),
             hsize=nfilts[0] - 1,
             ih=(int(par["nx"] // 4), int(2 * par["nx"] // 4), int(3 * par["nx"] // 4)),
         )
 
-    with pytest.raises(ValueError, match="filters hs must have odd length"):
+    with pytest.raises(ValueError, match="must have odd length"):
         _ = NonStationaryFilters2D(
             inp=np.ones((par["nx"], par["nz"])),
             hshape=(nfilts[0] - 1, nfilts[1] - 1),
@@ -155,7 +155,7 @@ def test_ih_irregular(par):
 @pytest.mark.parametrize("par", [(par_2d)])
 def test_unknown_engine_2d(par):
     """Check error is raised if unknown engine is passed"""
-    with pytest.raises(ValueError, match="engine must be numpy"):
+    with pytest.raises(ValueError, match="`engine` must be numpy"):
         _ = NonStationaryConvolve2D(
             dims=(par["nx"], par["nz"]),
             hs=h2ns,
@@ -164,7 +164,7 @@ def test_unknown_engine_2d(par):
             engine="foo",
         )
 
-    with pytest.raises(ValueError, match="engine must be numpy"):
+    with pytest.raises(ValueError, match="`engine` must be numpy"):
         _ = NonStationaryFilters2D(
             inp=np.ones((par["nx"], par["nz"])),
             hshape=(nfilts[0] - 1, nfilts[1] - 1),
@@ -187,7 +187,7 @@ def test_NonStationaryConvolve1D(par):
         )
         assert dottest(Cop, par["nx"], par["nx"], backend=backend)
 
-        x = np.zeros((par["nx"]))
+        x = np.zeros(par["nx"])
         x[par["nx"] // 2] = 1.0
         xlsqr = lsqr(
             Cop,
@@ -316,7 +316,7 @@ def test_StationaryConvolve2D(par):
 )
 def test_NonStationaryFilters1D(par):
     """Dot-test and inversion for NonStationaryFilters2D operator"""
-    x = np.zeros((par["nx"]))
+    x = np.zeros(par["nx"])
     x[par["nx"] // 4], x[par["nx"] // 2], x[3 * par["nx"] // 4] = 1.0, 1.0, 1.0
     Cop = NonStationaryFilters1D(
         inp=x,

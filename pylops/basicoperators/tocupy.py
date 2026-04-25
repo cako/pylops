@@ -1,6 +1,5 @@
 __all__ = ["ToCupy"]
 
-from typing import Union
 
 import numpy as np
 
@@ -50,7 +49,7 @@ class ToCupy(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         dtype: DTypeLike = "float64",
         name: str = "C",
     ) -> None:

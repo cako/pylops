@@ -8,7 +8,6 @@ else:
     import numpy as np
 
     backend = "numpy"
-import itertools
 
 import pytest
 

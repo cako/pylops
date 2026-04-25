@@ -6,7 +6,6 @@ __all__ = [
 
 from itertools import chain
 from types import ModuleType
-from typing import Optional, Tuple
 
 import numpy
 
@@ -16,7 +15,7 @@ from pylops.utils.typing import NDArray, Tbackend, Tsampler, Tsampler2
 
 def _sampler_gaussian(
     m: float, batch_size: int, backend_module: ModuleType = numpy
-) -> Tuple[float, NDArray]:
+) -> tuple[float, NDArray]:
     return backend_module.random.randn(m, batch_size)
 
 
@@ -44,8 +43,8 @@ _SAMPLERS = {
 
 def trace_hutchinson(
     Op,
-    neval: Optional[int] = None,
-    batch_size: Optional[int] = None,
+    neval: int | None = None,
+    batch_size: int | None = None,
     sampler: Tsampler = "rademacher",
     backend: Tbackend = "numpy",
 ) -> float:
@@ -142,25 +141,26 @@ def trace_hutchinson(
             for i, idx in enumerate(z_idx):
                 z[idx, i] = 1.0
                 remaining_vectors.remove(idx)
-            trace += ncp.trace((z.T @ (Op @ z)))
+            trace += ncp.trace(z.T @ (Op @ z))
             n_total += batch
         trace *= m / n_total
         return trace[0]
 
     if sampler not in _SAMPLERS:
-        raise NotImplementedError(f"sampler {sampler} not available.")
+        msg = f"sampler {sampler} not available."
+        raise NotImplementedError(msg)
 
     sampler_fun = _SAMPLERS[sampler]
     for batch in batch_range:
         z = sampler_fun(m, batch, backend_module=ncp).astype(Op.dtype)
-        trace += ncp.trace((z.T @ (Op @ z)))
+        trace += ncp.trace(z.T @ (Op @ z))
     trace /= neval
     return trace[0]
 
 
 def trace_hutchpp(
     Op,
-    neval: Optional[int] = None,
+    neval: int | None = None,
     sampler: Tsampler2 = "rademacher",
     backend: Tbackend = "numpy",
 ) -> float:
@@ -229,14 +229,14 @@ def trace_hutchpp(
     neval = int(numpy.round(m * 0.1)) if neval is None else neval
 
     if sampler not in _SAMPLERS:
-        raise NotImplementedError(f"sampler {sampler} not available.")
+        msg = f"sampler {sampler} not available."
+        raise NotImplementedError(msg)
 
     sampler_fun = _SAMPLERS[sampler]
 
     batch = neval // 3
     if batch <= 0:
-        msg = f"Sampler '{sampler}' not supported with {neval} samples."
-        msg += " Try increasing it."
+        msg = f"Sampler '{sampler}' not supported with {neval} samples. Try increasing it."
         raise ValueError(msg)
 
     S = sampler_fun(m, batch, backend_module=ncp).astype(Op.dtype)
@@ -253,7 +253,7 @@ def trace_hutchpp(
 
 def trace_nahutchpp(
     Op,
-    neval: Optional[int] = None,
+    neval: int | None = None,
     sampler: Tsampler2 = "rademacher",
     c1: float = 1.0 / 6.0,
     c2: float = 1.0 / 3.0,
@@ -336,7 +336,8 @@ def trace_nahutchpp(
     neval = int(numpy.round(m * 0.1)) if neval is None else neval
 
     if sampler not in _SAMPLERS:
-        raise NotImplementedError(f"sampler {sampler} not available.")
+        msg = f"sampler {sampler} not available."
+        raise NotImplementedError(msg)
 
     sampler_fun = _SAMPLERS[sampler]
 

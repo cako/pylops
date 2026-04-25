@@ -4,7 +4,6 @@ __all__ = [
 ]
 
 import logging
-from typing import Optional, Tuple, Union
 
 import numpy as np
 
@@ -29,7 +28,7 @@ def sliding1d_design(
     nover: int,
     nop: int,
     verb: bool = True,
-) -> Tuple[int, int, Tuple[NDArray, NDArray], Tuple[NDArray, NDArray]]:
+) -> tuple[int, int, tuple[NDArray, NDArray], tuple[NDArray, NDArray]]:
     """Design Sliding1D operator
 
     This routine can be used prior to creating the :class:`pylops.signalprocessing.Sliding1D`
@@ -170,17 +169,16 @@ class Sliding1D(LinearOperator):
     def __init__(
         self,
         Op: LinearOperator,
-        dim: Union[int, InputDimsLike],
-        dimd: Union[int, InputDimsLike],
+        dim: int | InputDimsLike,
+        dimd: int | InputDimsLike,
         nwin: int,
         nover: int,
-        tapertype: Optional[Ttaper] = "hanning",
+        tapertype: Ttaper | None = "hanning",
         savetaper: bool = True,
         name: str = "S",
     ) -> None:
-
-        dim: Tuple[int, ...] = _value_or_sized_to_tuple(dim)
-        dimd: Tuple[int, ...] = _value_or_sized_to_tuple(dimd)
+        dim: tuple[int, ...] = _value_or_sized_to_tuple(dim)
+        dimd: tuple[int, ...] = _value_or_sized_to_tuple(dimd)
 
         # data windows
         dwin_ins, dwin_ends = _slidingsteps(dimd[0], nwin, nover)
@@ -191,12 +189,11 @@ class Sliding1D(LinearOperator):
 
         # check windows
         if nwins * Op.shape[1] != dim[0] and Op.shape[1] != dim[0]:
-            raise ValueError(
-                f"Model shape (dim={dim}) is not consistent with chosen "
-                f"number of windows. Run sliding1d_design to identify the "
-                f"correct number of windows for the current "
-                "model size..."
+            msg = (
+                f"Model shape (dim={dim}) is not consistent with chosen number of windows. "
+                "Run sliding1d_design to identify the correct number of windows for the current model size..."
             )
+            raise ValueError(msg)
 
         # create tapers
         self.tapertype = tapertype

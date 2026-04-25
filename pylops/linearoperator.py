@@ -1,4 +1,4 @@
-from __future__ import annotations, division
+from __future__ import annotations
 
 __all__ = [
     "LinearOperator",
@@ -27,7 +27,7 @@ if int(sp_version[0]) <= 1 and int(sp_version[1]) < 8:
 else:
     from scipy.sparse._sputils import isintlike, isshape
 
-from typing import Callable, List, Optional, Sequence, Union
+from collections.abc import Callable, Sequence
 
 from pylops import get_ndarray_multiplication
 from pylops.optimization.basic import cgls
@@ -120,15 +120,15 @@ class LinearOperator(_LinearOperator):
 
     def __init__(
         self,
-        Op: Optional[Union[spLinearOperator, LinearOperator]] = None,
-        dtype: Optional[DTypeLike] = None,
-        shape: Optional[ShapeLike] = None,
-        dims: Optional[ShapeLike] = None,
-        dimsd: Optional[ShapeLike] = None,
-        clinear: Optional[bool] = None,
-        explicit: Optional[bool] = None,
-        forceflat: Optional[bool] = None,
-        name: Optional[str] = None,
+        Op: spLinearOperator | LinearOperator | None = None,
+        dtype: DTypeLike | None = None,
+        shape: ShapeLike | None = None,
+        dims: ShapeLike | None = None,
+        dimsd: ShapeLike | None = None,
+        clinear: bool | None = None,
+        explicit: bool | None = None,
+        forceflat: bool | None = None,
+        name: str | None = None,
     ) -> None:
         if Op is not None:
             self.Op = Op
@@ -178,12 +178,11 @@ class LinearOperator(_LinearOperator):
             dims = getattr(self, "_dims", None)
             dimsd = getattr(self, "_dimsd", None)
             if dims is None or dimsd is None:  # Cannot find both dims and dimsd, error
-                raise AttributeError(
-                    (
-                        f"'{self.__class__.__name__}' object has no attribute 'shape' "
-                        "nor both fallback attributes ('dims', 'dimsd')"
-                    )
+                msg = (
+                    f"'{self.__class__.__name__}' object has no attribute 'shape' "
+                    "nor both fallback attributes ('dims', 'dimsd')"
                 )
+                raise AttributeError(msg)
             _shape = (int(np.prod(dimsd)), int(np.prod(dims)))
             self._shape = _shape  # Update to not redo everything above on next call
         return _shape
@@ -192,16 +191,20 @@ class LinearOperator(_LinearOperator):
     def shape(self, new_shape: ShapeLike) -> None:
         new_shape = tuple(new_shape)
         if not isshape(new_shape):
-            raise ValueError(f"invalid shape %{new_shape:r} (must be 2-d)")
+            msg = f"Invalid shape; must be 2-d tuple of integers, got {new_shape}"
+            raise ValueError(msg)
         dims = getattr(self, "_dims", None)
         dimsd = getattr(self, "_dimsd", None)
         if dims is not None and dimsd is not None:  # Found dims and dimsd
             if np.prod(dimsd) != new_shape[0] and np.prod(dims) != new_shape[1]:
-                raise ValueError("New shape incompatible with dims and dimsd")
+                msg = "New shape incompatible with dims and dimsd"
+                raise ValueError(msg)
             elif np.prod(dimsd) != new_shape[0]:
-                raise ValueError("New shape incompatible with dimsd")
+                msg = "New shape incompatible with dimsd"
+                raise ValueError(msg)
             elif np.prod(dims) != new_shape[1]:
-                raise ValueError("New shape incompatible with dims")
+                msg = "New shape incompatible with dims"
+                raise ValueError(msg)
         self._shape = new_shape
 
     @shape.deleter
@@ -214,9 +217,11 @@ class LinearOperator(_LinearOperator):
         if _dims is None:
             shape = getattr(self, "_shape", None)
             if shape is None:
-                raise AttributeError(
-                    f"'{self.__class__.__name__}' object has no attributes 'dims' or 'shape'"
+                msg = (
+                    f"'{self.__class__.__name__}' object has no "
+                    "attributes 'dims' or 'shape'"
                 )
+                raise AttributeError(msg)
             _dims = (shape[1],)
         return _dims
 
@@ -230,7 +235,8 @@ class LinearOperator(_LinearOperator):
             if np.prod(new_dims) == self.shape[1]:
                 self._dims = new_dims
             else:
-                raise ValueError("dims incompatible with shape[1]")
+                msg = "dims incompatible with shape[1]"
+                raise ValueError(msg)
 
     @dims.deleter
     def dims(self):
@@ -242,9 +248,11 @@ class LinearOperator(_LinearOperator):
         if _dimsd is None:
             shape = getattr(self, "_shape", None)
             if shape is None:
-                raise AttributeError(
-                    f"'{self.__class__.__name__}' object has no attributes 'dimsd' or 'shape'"
+                msg = (
+                    f"'{self.__class__.__name__}' object has "
+                    "no attributes 'dimsd' or 'shape'"
                 )
+                raise AttributeError(msg)
             _dimsd = (shape[0],)
         return _dimsd
 
@@ -258,7 +266,8 @@ class LinearOperator(_LinearOperator):
             if np.prod(new_dimsd) == self.shape[0]:
                 self._dimsd = new_dimsd
             else:
-                raise ValueError("dimsd incompatible with shape[0]")
+                msg = "dimsd incompatible with shape[0]"
+                raise ValueError(msg)
 
     @dimsd.deleter
     def dimsd(self):
@@ -315,12 +324,13 @@ class LinearOperator(_LinearOperator):
     def name(self):
         del self._name
 
-    def __mul__(self, x: Union[float, LinearOperator]) -> LinearOperator:
+    def __mul__(self, x: float | LinearOperator) -> LinearOperator:
         return self.dot(x)
 
     def __matmul__(self, other):
         if np.isscalar(other):
-            raise ValueError("Scalar not allowed, use * instead")
+            msg = "Scalar not allowed, use * instead"
+            raise ValueError(msg)
         return self.__mul__(other)
 
     def __rmul__(self, x: float) -> LinearOperator:
@@ -340,7 +350,8 @@ class LinearOperator(_LinearOperator):
 
     def __rmatmul__(self, other):
         if np.isscalar(other):
-            raise ValueError("Scalar not allowed, use * instead")
+            msg = "Scalar not allowed, use * instead"
+            raise ValueError(msg)
         return self.__rmul__(other)
 
     def __pow__(self, p: int) -> LinearOperator:
@@ -379,9 +390,8 @@ class LinearOperator(_LinearOperator):
             elif self.forceflat is not None and Opx.forceflat is not None:
                 # Define forceflat only if differing, otherwise raise error
                 if self.forceflat != Opx.forceflat:
-                    raise ValueError(
-                        f"Operators have conflicting forceflat {Op.forceflat} != {Opx.forceflat}"
-                    )
+                    msg = f"Operators have conflicting forceflat {Op.forceflat} != {Opx.forceflat}"
+                    raise ValueError(msg)
                 Op.forceflat = self.forceflat
             else:  # Only one of them is None
                 Op.forceflat = (
@@ -425,7 +435,7 @@ class LinearOperator(_LinearOperator):
     def _copy_attributes(
         self,
         dest: LinearOperator,
-        exclude: Optional[List[str]] = None,
+        exclude: list[str] | None = None,
     ) -> None:
         """Copy attributes from one LinearOperator to another"""
         if exclude is None:
@@ -522,9 +532,8 @@ class LinearOperator(_LinearOperator):
         M, N = self.shape
 
         if x.shape != (N,) and x.shape != (N, 1):
-            raise ValueError(
-                f"Dimension mismatch. Got {x.shape}, but expected ({N},) or ({N}, 1)."
-            )
+            msg = f"Dimension mismatch. Got {x.shape}, but expected ({N},) or ({N}, 1)."
+            raise ValueError(msg)
 
         y = self._matvec(x)
 
@@ -533,7 +542,8 @@ class LinearOperator(_LinearOperator):
         elif x.ndim == 2:
             y = y.reshape(M, 1)
         else:
-            raise ValueError("Invalid shape returned by user-defined matvec()")
+            msg = "Invalid shape returned by user-defined matvec()"
+            raise ValueError(msg)
         return y
 
     @count(forward=False)
@@ -558,9 +568,8 @@ class LinearOperator(_LinearOperator):
         M, N = self.shape
 
         if x.shape != (M,) and x.shape != (M, 1):
-            raise ValueError(
-                f"Dimension mismatch. Got {x.shape}, but expected ({M},) or ({M}, 1)."
-            )
+            msg = f"Dimension mismatch. Got {x.shape}, but expected ({M},) or ({M}, 1)."
+            raise ValueError(msg)
 
         y = self._rmatvec(x)
 
@@ -569,7 +578,8 @@ class LinearOperator(_LinearOperator):
         elif x.ndim == 2:
             y = y.reshape(N, 1)
         else:
-            raise ValueError("Invalid shape returned by user-defined rmatvec()")
+            msg = "Invalid shape returned by user-defined rmatvec()"
+            raise ValueError(msg)
         return y
 
     @count(forward=True, matmat=True)
@@ -592,9 +602,11 @@ class LinearOperator(_LinearOperator):
 
         """
         if X.ndim != 2:
-            raise ValueError(f"Expected 2-d ndarray or matrix, not {X.ndim}-d ndarray")
+            msg = f"Expected 2-d ndarray or matrix, not {X.ndim}-d ndarray"
+            raise ValueError(msg)
         if X.shape[0] != self.shape[1]:
-            raise ValueError(f"Dimension mismatch: {self.shape}, {X.shape}")
+            msg = f"Dimension mismatch: {self.shape}, {X.shape}"
+            raise ValueError(msg)
         Y = self._matmat(X)
         return Y
 
@@ -618,9 +630,11 @@ class LinearOperator(_LinearOperator):
 
         """
         if X.ndim != 2:
-            raise ValueError(f"Expected 2-d ndarray or matrix, not {X.ndim}-d ndarray")
+            msg = f"Expected 2-d ndarray or matrix, not {X.ndim}-d ndarray"
+            raise ValueError(msg)
         if X.shape[0] != self.shape[0]:
-            raise ValueError(f"Dimension mismatch: {self.shape}, {X.shape}")
+            f"Dimension mismatch: {self.shape}, {X.shape}"
+            raise ValueError(msg)
         Y = self._rmatmat(X)
         return Y
 
@@ -652,9 +666,8 @@ class LinearOperator(_LinearOperator):
             elif self.forceflat is not None and Opx.forceflat is not None:
                 # Define forceflat only if differing, otherwise raise error
                 if self.forceflat != Opx.forceflat:
-                    raise ValueError(
-                        f"Operators have conflicting forceflat {Op.forceflat} != {Opx.forceflat}"
-                    )
+                    msg = f"Operators have conflicting forceflat: {Op.forceflat} != {Opx.forceflat}"
+                    raise ValueError(msg)
                 Op.forceflat = self.forceflat
             else:  # Only one of them is None
                 Op.forceflat = (
@@ -674,10 +687,11 @@ class LinearOperator(_LinearOperator):
             if not get_ndarray_multiplication() and (
                 x.ndim > 2 or (x.ndim == 2 and x.shape[0] != self.shape[1])
             ):
-                raise ValueError(
+                msg = (
                     "Operator can only be applied to 1D vectors or 2D matrices. "
                     "Enable ndarray multiplication with pylops.set_ndarray_multiplication(True)."
                 )
+                raise ValueError(msg)
             is_dims_shaped = x.shape == self.dims
             is_dims_shaped_matrix = len(x.shape) > 1 and x.shape[:-1] == self.dims
             if is_dims_shaped:
@@ -705,16 +719,14 @@ class LinearOperator(_LinearOperator):
                     y = y.reshape((*self.dimsd, -1))
                 return y
             else:
-                raise ValueError(
-                    (
-                        "Wrong shape.\nFor vector multiplication, expects either a 1d "
-                        "array or, an ndarray of size `dims` when `dims` and `dimsd` "
-                        "both are available.\n"
-                        "For matrix multiplication, expects a 2d array with its first "
-                        f"dimension is equal to {self.shape[1]}.\n"
-                        f"Instead, received an array of shape {x.shape}."
-                    )
+                msg = (
+                    "Wrong shape.\nFor vector multiplication, expects either a 1d "
+                    "array or, an ndarray of size `dims` when `dims` and `dimsd` "
+                    "both are available.\n For matrix multiplication, expects a 2d "
+                    f"array with its first dimension is equal to {self.shape[1]}.\n"
+                    f"Instead, received an array of shape {x.shape}."
                 )
+                raise ValueError(msg)
 
     def div(
         self,
@@ -885,11 +897,11 @@ class LinearOperator(_LinearOperator):
 
     def eigs(
         self,
-        neigs: Optional[int] = None,
+        neigs: int | None = None,
         symmetric: bool = False,
-        niter: Optional[int] = None,
+        niter: int | None = None,
         uselobpcg: bool = False,
-        **kwargs_eig: Union[int, float, str],
+        **kwargs_eig: int | float | str,
     ) -> NDArray:
         r"""Most significant eigenvalues of linear operator.
 
@@ -964,11 +976,11 @@ class LinearOperator(_LinearOperator):
                     eigenvalues = eigvals(self.A)
                 else:
                     if not symmetric and np.iscomplexobj(self) and uselobpcg:
-                        raise ValueError(
-                            "cannot use scipy.sparse.linalg.lobpcg "
-                            "for non-symmetric square matrices of "
-                            "complex type..."
+                        msg = (
+                            "Cannot use scipy.sparse.linalg.lobpcg "
+                            "for non-symmetric square matrices of complex type..."
                         )
+                        raise ValueError(msg)
                     if symmetric and uselobpcg:
                         X = np.random.rand(self.shape[0], neigs).astype(self.dtype)
                         eigenvalues = sp_lobpcg(
@@ -1011,11 +1023,11 @@ class LinearOperator(_LinearOperator):
                 neigs = self.shape[1] - 2
             if self.shape[0] == self.shape[1]:
                 if not symmetric and np.iscomplexobj(self) and uselobpcg:
-                    raise ValueError(
-                        "cannot use scipy.sparse.linalg.lobpcg for "
-                        "non symmetric square matrices of "
-                        "complex type..."
+                    msg = (
+                        "Cannot use scipy.sparse.linalg.lobpcg for "
+                        "non symmetric square matrices of complex type..."
                     )
+                    raise ValueError(msg)
                 if symmetric and uselobpcg:
                     X = np.random.rand(self.shape[0], neigs).astype(self.dtype)
                     eigenvalues = sp_lobpcg(self, X=X, maxiter=niter, **kwargs_eig)[0]
@@ -1040,7 +1052,7 @@ class LinearOperator(_LinearOperator):
     def cond(
         self,
         uselobpcg: bool = False,
-        **kwargs_eig: Union[int, float, str],
+        **kwargs_eig: int | float | str,
     ) -> NDArray:
         r"""Condition number of linear operator.
 
@@ -1174,8 +1186,8 @@ class LinearOperator(_LinearOperator):
 
     def trace(
         self,
-        neval: Optional[int] = None,
-        method: Optional[str] = None,
+        neval: int | None = None,
+        method: str | None = None,
         backend: str = "numpy",
         **kwargs_trace,
     ) -> float:
@@ -1222,7 +1234,8 @@ class LinearOperator(_LinearOperator):
             If the ``method`` is not one of the available methods.
         """
         if self.shape[0] != self.shape[1]:
-            raise ValueError("operator is not square.")
+            msg = f"Operator must be square, got {self.shape}"
+            raise ValueError(msg)
 
         ncp = get_module(backend)
 
@@ -1240,7 +1253,8 @@ class LinearOperator(_LinearOperator):
         elif method_l == "na-hutch++":
             return trace_nahutchpp(self, neval=neval, backend=backend, **kwargs_trace)
         else:
-            raise NotImplementedError(f"method {method} not available.")
+            msg = f"`method={method}` not available."
+            raise NotImplementedError(msg)
 
     def reset_count(self) -> None:
         """Reset counters
@@ -1256,7 +1270,7 @@ class LinearOperator(_LinearOperator):
 
 def _get_dtype(
     operators: Sequence[LinearOperator],
-    dtypes: Optional[Sequence[DTypeLike]] = None,
+    dtypes: Sequence[DTypeLike] | None = None,
 ) -> DTypeLike:
     if dtypes is None:
         dtypes = []
@@ -1275,9 +1289,11 @@ class _ScaledLinearOperator(LinearOperator):
         alpha: float,
     ) -> None:
         if not isinstance(A, LinearOperator):
-            raise ValueError("LinearOperator expected as A")
+            msg = "LinearOperator expected as A"
+            raise ValueError(msg)
         if not np.isscalar(alpha):
-            raise ValueError("scalar expected as alpha")
+            msg = "Scalar expected as alpha"
+            raise ValueError(msg)
         if isinstance(alpha, complex) and not np.iscomplexobj(
             np.ones(1, dtype=A.dtype)
         ):
@@ -1287,7 +1303,7 @@ class _ScaledLinearOperator(LinearOperator):
             # if both the scalar and operator are of real or complex type, use type
             # of the operator
             dtype = A.dtype
-        super(_ScaledLinearOperator, self).__init__(dtype=dtype, shape=A.shape)
+        super().__init__(dtype=dtype, shape=A.shape)
         self.args = (A, alpha)
 
     def _matvec(self, x: NDArray) -> NDArray:
@@ -1312,8 +1328,9 @@ class _ConjLinearOperator(LinearOperator):
 
     def __init__(self, Op: LinearOperator) -> None:
         if not isinstance(Op, LinearOperator):
-            raise TypeError("Op must be a LinearOperator")
-        super(_ConjLinearOperator, self).__init__(Op, shape=Op.shape)
+            msg = "Op must be a LinearOperator"
+            raise TypeError(msg)
+        super().__init__(Op, shape=Op.shape)
         self.Op = Op
 
     def _matvec(self, x: NDArray) -> NDArray:
@@ -1339,8 +1356,9 @@ class _ColumnLinearOperator(LinearOperator):
         cols: InputDimsLike,
     ) -> None:
         if not isinstance(Op, LinearOperator):
-            raise TypeError("Op must be a LinearOperator")
-        super(_ColumnLinearOperator, self).__init__(Op)
+            msg = "Op must be a LinearOperator"
+            raise TypeError(msg)
+        super().__init__(Op)
         self.Op = Op
         self.cols = cols
         self._shape = (Op.shape[0], len(cols))
@@ -1372,7 +1390,7 @@ class _AdjointLinearOperator(LinearOperator):
 
     def __init__(self, A: LinearOperator):
         shape = (A.shape[1], A.shape[0])
-        super(_AdjointLinearOperator, self).__init__(shape=shape, dtype=A.dtype)
+        super().__init__(shape=shape, dtype=A.dtype)
         self.A = A
         self.args = (A,)
 
@@ -1394,7 +1412,7 @@ class _TransposedLinearOperator(LinearOperator):
 
     def __init__(self, A: LinearOperator):
         shape = (A.shape[1], A.shape[0])
-        super(_TransposedLinearOperator, self).__init__(shape=shape, dtype=A.dtype)
+        super().__init__(shape=shape, dtype=A.dtype)
         self.A = A
         self.args = (A,)
 
@@ -1416,11 +1434,13 @@ class _ProductLinearOperator(LinearOperator):
 
     def __init__(self, A: LinearOperator, B: LinearOperator):
         if not isinstance(A, LinearOperator) or not isinstance(B, LinearOperator):
-            raise ValueError(
-                f"both operands have to be a LinearOperator{type(A)} {type(B)}"
+            msg = (
+                f"Both operands have to be a LinearOperator - got {type(A)}, {type(B)}"
             )
+            raise ValueError(msg)
         if A.shape[1] != B.shape[0]:
-            raise ValueError("cannot add %r and %r: shape mismatch" % (A, B))
+            msg = f"Cannot add {A} and {B}: shape mismatch"
+            raise ValueError(msg)
         super().__init__(dtype=_get_dtype([A, B]), shape=(A.shape[0], B.shape[1]))
         self.args = (A, B)
 
@@ -1448,13 +1468,13 @@ class _SumLinearOperator(LinearOperator):
         B: LinearOperator,
     ) -> None:
         if not isinstance(A, LinearOperator) or not isinstance(B, LinearOperator):
-            raise ValueError("both operands have to be a LinearOperator")
+            msg = "Both operands have to be a LinearOperator"
+            raise ValueError(msg)
         if A.shape != B.shape:
-            raise ValueError("cannot add %r and %r: shape mismatch" % (A, B))
+            msg = f"Cannot add {A} to {B}: shape mismatch"
+            raise ValueError(msg)
         self.args = (A, B)
-        super(_SumLinearOperator, self).__init__(
-            dtype=_get_dtype([A, B]), shape=A.shape
-        )
+        super().__init__(dtype=_get_dtype([A, B]), shape=A.shape)
 
     def _matvec(self, x: NDArray) -> NDArray:
         return self.args[0].matvec(x) + self.args[1].matvec(x)
@@ -1476,13 +1496,16 @@ class _SumLinearOperator(LinearOperator):
 class _PowerLinearOperator(LinearOperator):
     def __init__(self, A: LinearOperator, p: int) -> None:
         if not isinstance(A, LinearOperator):
-            raise ValueError("LinearOperator expected as A")
+            msg = "LinearOperator expected as A"
+            raise ValueError(msg)
         if A.shape[0] != A.shape[1]:
-            raise ValueError("square LinearOperator expected, got %r" % A)
+            msg = f"Square LinearOperator expected, got {A}"
+            raise ValueError(msg)
         if not isintlike(p) or p < 0:
-            raise ValueError("non-negative integer expected as p")
+            msg = "Non-negative integer expected as p"
+            raise ValueError(msg)
 
-        super(_PowerLinearOperator, self).__init__(dtype=A.dtype, shape=A.shape)
+        super().__init__(dtype=A.dtype, shape=A.shape)
         self.args = (A, p)
 
     def _power(self, fun: Callable, x: NDArray) -> NDArray:
@@ -1525,8 +1548,9 @@ class _RealImagLinearOperator(LinearOperator):
         real: bool = True,
     ) -> None:
         if not isinstance(Op, LinearOperator):
-            raise TypeError("Op must be a LinearOperator")
-        super(_RealImagLinearOperator, self).__init__(Op, shape=Op.shape)
+            msg = "Op must be a LinearOperator"
+            raise TypeError(msg)
+        super().__init__(Op, shape=Op.shape)
         self.Op = Op
         self.real = real
         self.forw = forw
@@ -1554,7 +1578,7 @@ class _RealImagLinearOperator(LinearOperator):
         return y
 
 
-def aslinearoperator(Op: Union[spLinearOperator, LinearOperator]) -> LinearOperator:
+def aslinearoperator(Op: spLinearOperator | LinearOperator) -> LinearOperator:
     """Return Op as a LinearOperator.
 
     Converts any operator compatible with pylops definition of LinearOperator into a pylops

@@ -4,7 +4,8 @@ __all__ = [
     "PrestackInversion",
 ]
 
-from typing import Callable, List, Literal, Optional, Tuple, Union
+from collections.abc import Callable
+from typing import Literal
 
 import numpy as np
 from scipy.sparse.linalg import lsqr
@@ -41,13 +42,13 @@ _linearizations = {"akirich": 3, "fatti": 3, "ps": 3}
 def PrestackLinearModelling(
     wav: NDArray,
     theta: NDArray,
-    vsvp: Union[float, NDArray] = 0.5,
+    vsvp: float | NDArray = 0.5,
     nt0: int = 1,
-    spatdims: Optional[Union[int, ShapeLike]] = None,
+    spatdims: int | ShapeLike | None = None,
     linearization: Tavolinearization = "akirich",
     explicit: bool = False,
     kind: Literal["centered", "forward"] = "centered",
-    name: Optional[str] = None,
+    name: str | None = None,
 ) -> LinearOperator:
     r"""Pre-stack linearized seismic modelling operator.
 
@@ -143,7 +144,7 @@ def PrestackLinearModelling(
     ntheta = len(theta)
 
     # organize dimensions
-    dims: Optional[ShapeLike]
+    dims: ShapeLike | None
     if spatdims is None:
         dims = (nt0, ntheta)
         spatdims = None
@@ -226,10 +227,10 @@ def PrestackWaveletModelling(
     m: NDArray,
     theta: NDArray,
     nwav: int,
-    wavc: Optional[int] = None,
-    vsvp: Union[float, NDArray] = 0.5,
-    linearization: Union[Tavolinearization, Callable] = "akirich",
-    name: Optional[str] = None,
+    wavc: int | None = None,
+    vsvp: float | NDArray = 0.5,
+    linearization: Tavolinearization | Callable = "akirich",
+    name: str | None = None,
 ) -> LinearOperator:
     r"""Pre-stack linearized seismic modelling operator for wavelet.
 
@@ -322,9 +323,8 @@ def PrestackWaveletModelling(
     elif callable(linearization):
         G = linearization(theta, vsvp, n=nt0)
     else:
-        raise NotImplementedError(
-            "%s not an available linearization..." % linearization
-        )
+        msg = f"{linearization} is not an available linearization..."
+        raise NotImplementedError(msg)
     nG = len(G)
     G = [
         ncp.hstack([ncp.diag(G_[itheta] * ncp.ones(nt0, dtype=dtype)) for G_ in G])
@@ -356,19 +356,19 @@ def PrestackInversion(
     data: NDArray,
     theta: NDArray,
     wav: NDArray,
-    m0: Optional[NDArray] = None,
-    linearization: Union[Tavolinearization, List[Tavolinearization]] = "akirich",
+    m0: NDArray | None = None,
+    linearization: Tavolinearization | list[Tavolinearization] = "akirich",
     explicit: bool = False,
     simultaneous: bool = False,
-    epsI: Optional[float] = None,
-    epsR: Optional[float] = None,
+    epsI: float | None = None,
+    epsR: float | None = None,
     dottest: bool = False,
     returnres: bool = False,
-    epsRL1: Optional[float] = None,
+    epsRL1: float | None = None,
     kind: Literal["centered", "forward"] = "centered",
-    vsvp: Union[float, NDArray] = 0.5,
-    **kwargs_solver
-) -> Union[NDArray, Tuple[NDArray, NDArray]]:
+    vsvp: float | NDArray = 0.5,
+    **kwargs_solver,
+) -> NDArray | tuple[NDArray, NDArray]:
     r"""Pre-stack linearized seismic inversion.
 
     Invert pre-stack seismic operator to retrieve a set of elastic property
@@ -452,7 +452,8 @@ def PrestackInversion(
 
     # find out dimensions
     if m0 is None and linearization is None:
-        raise NotImplementedError("either m0 or linearization " "must be provided")
+        msg = "Either m0 or linearization must be provided"
+        raise NotImplementedError(msg)
     elif m0 is None:
         if isinstance(linearization, str):
             nm = _linearizations[linearization]
@@ -495,7 +496,8 @@ def PrestackInversion(
             or (dims >= 2 and nx != m0.shape[2])
             or (dims == 3 and ny != m0.shape[3])
         ):
-            raise ValueError("data and m0 must have same time and space axes")
+            msg = "data and m0 must have the same time and space axes"
+            raise ValueError(msg)
 
     # create operator
     if isinstance(linearization, str):
@@ -526,7 +528,7 @@ def PrestackInversion(
                 linearization=lin,
                 explicit=explicit,
             )
-            for w, lin in zip(wav, linearization)
+            for w, lin in zip(wav, linearization, strict=True)
         ]
         if explicit:
             PPop = MatrixMult(
@@ -562,7 +564,7 @@ def PrestackInversion(
                 minv = get_lstsq(data)(
                     PPop.A,
                     datar.reshape(n_lins * nt0 * ntheta, nspatprod).squeeze(),
-                    **kwargs_solver
+                    **kwargs_solver,
                 )[0]
             elif epsI is None and simultaneous:
                 # solve unregularized equations simultaneously
@@ -573,7 +575,7 @@ def PrestackInversion(
                         PPop,
                         datar,
                         x0=ncp.zeros(int(PPop.shape[1]), PPop.dtype),
-                        **kwargs_solver
+                        **kwargs_solver,
                     )[0]
             elif epsI is not None:
                 # create regularized normal equations
@@ -594,7 +596,7 @@ def PrestackInversion(
                             PPop_reg,
                             datarn.ravel(),
                             x0=ncp.zeros(int(PPop_reg.shape[1]), PPop_reg.dtype),
-                            **kwargs_solver
+                            **kwargs_solver,
                         )[0]
             # else:
             #    # create regularized normal eqs. and solve them simultaneously
@@ -611,14 +613,15 @@ def PrestackInversion(
                     PPop,
                     datar,
                     x0=ncp.zeros(int(PPop.shape[1]), PPop.dtype),
-                    **kwargs_solver
+                    **kwargs_solver,
                 )[0]
     else:
         # Create Thicknov regularization
         if epsI is not None:
             if isinstance(epsI, (list, tuple)):
                 if len(epsI) != nm:
-                    raise ValueError("epsI must be a scalar or a list of" "size nm")
+                    msg = f"epsI must be a scalar or a list of size nm, got {epsI}"
+                    raise ValueError(msg)
                 RegI = Diagonal(np.array(epsI), dims=(nt0, nm, nspatprod), axis=1)
             else:
                 RegI = epsI * Identity(nt0 * nm * nspatprod)
@@ -643,7 +646,7 @@ def PrestackInversion(
                 Regop,
                 x0=m0.ravel() if m0 is not None else None,
                 epsRs=epsR,
-                **kwargs_solver
+                **kwargs_solver,
             )[0]
         else:
             # Blockiness-promoting inversion with spatial regularization
@@ -694,7 +697,7 @@ def PrestackInversion(
                 niter_outer=niter_outer,
                 niter_inner=niter_inner,
                 x0=None if m0 is None else m0.ravel(),
-                **kwargs_solver
+                **kwargs_solver,
             )[0]
 
     # compute residual

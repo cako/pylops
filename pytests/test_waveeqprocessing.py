@@ -157,7 +157,7 @@ def test_MDC_1virtualsource(par):
     d = MDCop * mwav.ravel()
     d = d.reshape(nt2, parmod["ny"])
 
-    for it, amp in zip(it0_G, amp_G):
+    for it, amp in zip(it0_G, amp_G, strict=True):
         ittot = it0_m + it
         if par["twosided"]:
             ittot += par["nt"] - 1
@@ -224,7 +224,7 @@ def test_MDC_Nvirtualsources(par):
     d = MDCop * mwav.ravel()
     d = d.reshape(nt2, parmod["ny"], parmod["nx"])
 
-    for it, _ in zip(it0_G, amp_G):
+    for it, _ in zip(it0_G, amp_G, strict=True):
         ittot = it0_m + it
         if par["twosided"]:
             ittot += par["nt"] - 1

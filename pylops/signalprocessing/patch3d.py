@@ -4,7 +4,7 @@ __all__ = [
 ]
 
 import logging
-from typing import Optional, Sequence, Tuple
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -25,15 +25,15 @@ logger = logging.getLogger(__name__)
 
 def patch3d_design(
     dimsd: InputDimsLike,
-    nwin: Tuple[int, int, int],
-    nover: Tuple[int, int, int],
-    nop: Tuple[int, int, int],
+    nwin: tuple[int, int, int],
+    nover: tuple[int, int, int],
+    nop: tuple[int, int, int],
     verb: bool = True,
-) -> Tuple[
-    Tuple[int, int, int],
-    Tuple[int, int, int],
-    Tuple[Tuple[NDArray, NDArray], Tuple[NDArray, NDArray], Tuple[NDArray, NDArray]],
-    Tuple[Tuple[NDArray, NDArray], Tuple[NDArray, NDArray], Tuple[NDArray, NDArray]],
+) -> tuple[
+    tuple[int, int, int],
+    tuple[int, int, int],
+    tuple[tuple[NDArray, NDArray], tuple[NDArray, NDArray], tuple[NDArray, NDArray]],
+    tuple[tuple[NDArray, NDArray], tuple[NDArray, NDArray], tuple[NDArray, NDArray]],
 ]:
     """Design Patch3D operator
 
@@ -209,17 +209,16 @@ class Patch3D(LinearOperator):
         Op: LinearOperator,
         dims: InputDimsLike,
         dimsd: InputDimsLike,
-        nwin: Tuple[int, int, int],
-        nover: Tuple[int, int, int],
-        nop: Tuple[int, int, int],
-        tapertype: Optional[Ttaper] = "hanning",
+        nwin: tuple[int, int, int],
+        nover: tuple[int, int, int],
+        nop: tuple[int, int, int],
+        tapertype: Ttaper | None = "hanning",
         savetaper: bool = True,
-        scalings: Optional[Sequence[float]] = None,
+        scalings: Sequence[float] | None = None,
         name: str = "P",
     ) -> None:
-
-        dims: Tuple[int, ...] = _value_or_sized_to_tuple(dims)
-        dimsd: Tuple[int, ...] = _value_or_sized_to_tuple(dimsd)
+        dims: tuple[int, ...] = _value_or_sized_to_tuple(dims)
+        dimsd: tuple[int, ...] = _value_or_sized_to_tuple(dimsd)
 
         # data windows
         dwin0_ins, dwin0_ends = _slidingsteps(dimsd[0], nwin[0], nover[0])
@@ -243,12 +242,12 @@ class Patch3D(LinearOperator):
             or nwins1 * nop[1] != dims[1]
             or nwins2 * nop[2] != dims[2]
         ):
-            raise ValueError(
+            msg = (
                 f"Model shape (dims={dims}) is not consistent with chosen "
-                f"number of windows. Run patch3d_design to identify the "
-                f"correct number of windows for the current "
-                "model size..."
+                "number of windows. Run patch3d_design to identify the correct "
+                "number of windows for the current model size..."
             )
+            raise ValueError(msg)
 
         # create tapers
         self.tapertype = tapertype
@@ -441,9 +440,9 @@ class Patch3D(LinearOperator):
                 for itap in range(0, nwins1 * nwins2, nwins2):
                     taps[(nwins0 - 1) * nwins1 * nwins2 + itap] = tapfrontbottom
                 for itap in range(0, nwins1 * nwins2, nwins2):
-                    taps[
-                        (nwins0 - 1) * nwins1 * nwins2 + nwins2 + itap - 1
-                    ] = tapbackbottom
+                    taps[(nwins0 - 1) * nwins1 * nwins2 + nwins2 + itap - 1] = (
+                        tapbackbottom
+                    )
                 for itap in range(0, nwins, nwins1 * nwins2):
                     taps[itap] = tapleftfront
                 for itap in range(0, nwins, nwins1 * nwins2):
@@ -458,9 +457,9 @@ class Patch3D(LinearOperator):
                 taps[(nwins1 - 1) * nwins2 + nwins2 - 1] = taprighttopback
                 taps[(nwins0 - 1) * nwins1 * nwins2] = tapleftbottomfront
                 taps[(nwins0 - 1) * nwins1 * nwins2 + nwins2 - 1] = tapleftbottomback
-                taps[
-                    (nwins0 - 1) * nwins1 * nwins2 + (nwins1 - 1) * nwins2
-                ] = taprightbottomfront
+                taps[(nwins0 - 1) * nwins1 * nwins2 + (nwins1 - 1) * nwins2] = (
+                    taprightbottomfront
+                )
                 taps[
                     (nwins0 - 1) * nwins1 * nwins2 + (nwins1 - 1) * nwins2 + nwins2 - 1
                 ] = taprightbottomback

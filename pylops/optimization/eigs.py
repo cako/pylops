@@ -1,6 +1,5 @@
 __all__ = ["power_iteration"]
 
-from typing import Tuple
 
 import numpy as np
 
@@ -15,7 +14,7 @@ def power_iteration(
     tol: float = 1e-5,
     dtype: str = "float32",
     backend: Tbackend = "numpy",
-) -> Tuple[float, NDArray, int]:
+) -> tuple[float, NDArray, int]:
     """Power iteration algorithm.
 
     Power iteration algorithm, used to compute the largest eigenvector and
@@ -63,9 +62,8 @@ def power_iteration(
     ).astype(dtype)
     b_k = b_k / ncp.linalg.norm(b_k)
 
-    niter = 10 if niter is None else niter
     maxeig_old = 0.0
-    for iiter in range(niter):
+    for _iiter in range(niter):
         # compute largest eigenvector
         b1_k = Op.matvec(b_k)
 
@@ -79,4 +77,4 @@ def power_iteration(
             break
         maxeig_old = maxeig
 
-    return maxeig, b_k, iiter + 1
+    return maxeig, b_k, _iiter + 1

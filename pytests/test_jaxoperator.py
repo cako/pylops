@@ -49,7 +49,7 @@ def test_JaxOperator(par):
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
 @pytest.mark.parametrize("par", [(par1)])
-def test_TorchOperator_batch(par):
+def test_JaxOperator_batch(par):
     """Apply forward for input with multiple samples
     (= batch) and flattened arrays"""
 

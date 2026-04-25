@@ -1,5 +1,4 @@
-import warnings
-from typing import Tuple
+import logging
 
 import numpy as np
 
@@ -13,6 +12,8 @@ if jit_message is None:
     from pylops.utils._pwd2d_numba import _conv_allpass_numba
 else:
     _conv_allpass_numba = None
+
+logger = logging.getLogger(__name__)
 
 
 def _conv_allpass_python(
@@ -164,13 +165,13 @@ def _conv_allpass(
     if _conv_allpass_numba is not None:
         _conv_allpass_numba(din, dip, order, u1, u2)
     else:
-        warnings.warn(jit_message)
+        logger.warning(jit_message)
         _conv_allpass_python(din, dip, order, u1, u2)
 
 
 def _triangular_smoothing_from_boxcars(
-    nsmooth: Tuple[int, ...],
-    dims: Tuple[int, ...],
+    nsmooth: tuple[int, ...],
+    dims: tuple[int, ...],
     dtype: str | np.dtype = "float64",
 ):
     """Triangular smoother

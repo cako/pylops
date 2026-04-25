@@ -4,7 +4,6 @@ __all__ = [
 ]
 
 import logging
-from typing import Optional, Tuple, Union
 
 import numpy as np
 from scipy.signal import filtfilt
@@ -40,11 +39,11 @@ def _MDC(
     _Transpose=Transpose,
     _FFT=FFT,
     _Fredholm1=Fredholm1,
-    args_Identity: Optional[dict] = None,
-    args_FFT: Optional[dict] = None,
-    args_Identity1: Optional[dict] = None,
-    args_FFT1: Optional[dict] = None,
-    args_Fredholm1: Optional[dict] = None,
+    args_Identity: dict | None = None,
+    args_FFT: dict | None = None,
+    args_Identity1: dict | None = None,
+    args_FFT1: dict | None = None,
+    args_Fredholm1: dict | None = None,
 ) -> LinearOperator:
     r"""Multi-dimensional convolution.
 
@@ -67,7 +66,8 @@ def _MDC(
         args_Fredholm1 = {}
 
     if twosided and nt % 2 == 0:
-        raise ValueError("nt must be odd number")
+        msg = f"nt must be a odd number when twosided=True, got nt={nt}"
+        raise ValueError(msg)
 
     # find out dtype of G
     dtype = G[0, 0, 0].dtype
@@ -266,8 +266,8 @@ def MDD(
     d: NDArray,
     dt: float = 0.004,
     dr: float = 1.0,
-    nfmax: Optional[int] = None,
-    wav: Optional[NDArray] = None,
+    nfmax: int | None = None,
+    wav: NDArray | None = None,
     twosided: bool = True,
     causality_precond: bool = False,
     adjoint: bool = False,
@@ -278,11 +278,11 @@ def MDD(
     smooth_precond: int = 0,
     fftengine: Tfftengine_nsf = "numpy",
     **kwargs_solver,
-) -> Union[
-    Tuple[NDArray, NDArray],
-    Tuple[NDArray, NDArray, NDArray],
-    Tuple[NDArray, NDArray, NDArray, NDArray],
-]:
+) -> (
+    tuple[NDArray, NDArray]
+    | tuple[NDArray, NDArray, NDArray]
+    | tuple[NDArray, NDArray, NDArray, NDArray]
+):
     r"""Multi-dimensional deconvolution.
 
     Solve multi-dimensional deconvolution problem using

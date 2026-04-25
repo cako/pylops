@@ -84,7 +84,8 @@ class Regression(LinearOperator):
     ) -> None:
         ncp = get_array_module(taxis)
         if not isinstance(taxis, ncp.ndarray):
-            raise TypeError("t must be ndarray...")
+            msg = "t must be ndarray..."
+            raise TypeError(msg)
         else:
             self.taxis = taxis
         self.order = order

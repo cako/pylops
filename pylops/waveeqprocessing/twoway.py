@@ -1,6 +1,6 @@
 __all__ = ["AcousticWave2D"]
 
-from typing import Any, NewType, Tuple
+from typing import Any, NewType
 
 import numpy as np
 
@@ -242,7 +242,7 @@ class AcousticWave2D(LinearOperator):
 
     def _srcillumination_oneshot(
         self, solver: AcousticWaveSolverType, isrc: int
-    ) -> Tuple[NDArray, NDArray]:
+    ) -> tuple[NDArray, NDArray]:
         """Source wavefield and illumination for one shot
 
         Parameters

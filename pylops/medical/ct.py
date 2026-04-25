@@ -3,7 +3,6 @@ __all__ = [
 ]
 
 import warnings
-from typing import Optional
 
 import numpy as np
 
@@ -119,9 +118,9 @@ class CT2D(LinearOperator):
         thetas: NDArray,
         engine: Tctengine,
         proj_geom_type: Tctprojgeom = "parallel",
-        source_origin_dist: Optional[float] = None,
-        origin_detector_dist: Optional[float] = None,
-        projector_type: Optional[Tctprojectortype] = None,
+        source_origin_dist: float | None = None,
+        origin_detector_dist: float | None = None,
+        projector_type: Tctprojectortype | None = None,
         dtype: DTypeLike = "float32",
         name: str = "C",
     ) -> None:
@@ -143,18 +142,20 @@ class CT2D(LinearOperator):
                 projector_type = "strip"
             # fanflat geometry projectors need an appropriate suffix (unless it's "cuda")
             if projector_type == "cuda":
-                warnings.warn("'cuda' projector type specified with 'cpu' engine.")
+                warnings.warn(
+                    "'cuda' projector type specified with 'cpu' engine.", stacklevel=2
+                )
             elif proj_geom_type == "fanflat":
                 projector_type += "_fanflat"
         elif engine == "cuda":
             if projector_type in [None, "cuda"]:
                 projector_type = "cuda"
             else:
-                raise ValueError(
-                    "Only 'cuda' projector type is supported for 'cuda' engine."
-                )
+                msg = f"Only 'cuda' projector type is supported for 'cuda' engine. Got {projector_type}"
+                raise ValueError(msg)
         else:
-            raise NotImplementedError("Engine must be 'cpu' or 'cuda'")
+            msg = f"engine must be 'cpu' or 'cuda', got {engine}"
+            raise NotImplementedError(msg)
         self.projector_type = projector_type
 
         # create create volume and projection geometries as well as projector
@@ -217,7 +218,8 @@ class CT2D(LinearOperator):
         if x_dtype != ncp.float32:
             warnings.warn(
                 "CT2D operator received input that is not of float32 dtype. It will "
-                "be cast into float32 internally for ASTRA compatibility."
+                "be cast into float32 internally for ASTRA compatibility.",
+                stacklevel=2,
             )
             x = x.astype(ncp.float32)
         if self.engine == "cpu":
@@ -235,7 +237,8 @@ class CT2D(LinearOperator):
                 # should throw an error later
                 warnings.warn(
                     "CT2D operator received input that is not of contiguous. It will be "
-                    "cast into a contiguous array internally for ASTRA compatibility."
+                    "cast into a contiguous array internally for ASTRA compatibility.",
+                    stacklevel=2,
                 )
                 x = ncp.ascontiguousarray(x)
             x = ncp.expand_dims(x, axis=0)

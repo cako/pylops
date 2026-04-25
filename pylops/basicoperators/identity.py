@@ -1,8 +1,6 @@
 __all__ = ["Identity"]
 
 
-from typing import Optional, Union
-
 import numpy as np
 
 from pylops import LinearOperator
@@ -119,10 +117,10 @@ class Identity(LinearOperator):
 
     def __init__(
         self,
-        N: Union[int, InputDimsLike],
-        M: Optional[Union[int, InputDimsLike]] = None,
+        N: int | InputDimsLike,
+        M: int | InputDimsLike | None = None,
         inplace: bool = True,
-        forceflat: Optional[bool] = None,
+        forceflat: bool | None = None,
         dtype: DTypeLike = "float64",
         name: str = "I",
     ) -> None:
@@ -164,19 +162,21 @@ class Identity(LinearOperator):
                 self._sliceN = tuple([slice(0, n) for n in N])
                 self._sliceM = tuple([slice(0, m) for m in M])
             else:
-                raise ValueError(
+                msg = (
                     "N and M are not identical, "
                     "and some values are larger in N and some in M"
                 )
+                raise ValueError(msg)
             super().__init__(
                 dtype=np.dtype(dtype), dims=M, dimsd=N, forceflat=forceflat, name=name
             )
         else:
-            raise NotImplementedError(
-                f"N and M must have same type and equal to "
-                f"int, tuple, or list, instead their types"
+            msg = (
+                "N and M must have same type and equal to "
+                "int, tuple, or list, instead their types"
                 f" are type(N)={type(N)} and type(M)={type(M)}"
             )
+            raise NotImplementedError(msg)
         self.inplace = inplace
 
     @reshaped

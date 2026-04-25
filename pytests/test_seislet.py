@@ -46,8 +46,10 @@ def test_predict_trace(par):
     t = np.arange(par["nt"]) * par["dt"]
     for slope in [-0.2, 0.0, 0.3]:
         Fop = FunctionOperator(
-            lambda x: _predict_trace(x, t, par["dt"], par["dx"], slope),
-            lambda x: _predict_trace(x, t, par["dt"], par["dx"], slope, adj=True),
+            lambda x, slope=slope: _predict_trace(x, t, par["dt"], par["dx"], slope),
+            lambda x, slope=slope: _predict_trace(
+                x, t, par["dt"], par["dx"], slope, adj=True
+            ),
             par["nt"],
             par["nt"],
         )
@@ -79,7 +81,10 @@ def test_predict(par):
             slope = np.random.normal(0, 0.1, (2 ** (repeat + 1) * par["nx"], par["nt"]))
             for backward in (False, True):
                 Fop = FunctionOperator(
-                    lambda x: _predict_reshape(
+                    lambda x,
+                    predictor=predictor,
+                    slope=slope,
+                    backward=backward: _predict_reshape(
                         predictor,
                         x,
                         par["nt"],
@@ -89,7 +94,10 @@ def test_predict(par):
                         slope,
                         backward=backward,
                     ),
-                    lambda x: _predict_reshape(
+                    lambda x,
+                    predictor=predictor,
+                    slope=slope,
+                    backward=backward: _predict_reshape(
                         predictor,
                         x,
                         par["nt"],

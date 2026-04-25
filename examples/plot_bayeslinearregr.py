@@ -88,7 +88,7 @@ noise_map = np.sqrt(np.sum((yn - LRop @ x_map) ** 2) / (N - 1))
 # Let's plot the best fitting line for the case of noise free and noisy data
 fig, ax = plt.subplots(figsize=(8, 4))
 for est, est_label, c in zip(
-    [x, x_mle, x_map], ["True", "MLE", "MAP"], ["k", "C0", "C1"]
+    [x, x_mle, x_map], ["True", "MLE", "MAP"], ["k", "C0", "C1"], strict=True
 ):
     ax.plot(
         np.array([t.min(), t.max()]),
@@ -219,7 +219,7 @@ az.plot_hdi(
     ax=ax,
 )
 for est, est_label, c in zip(
-    [x, x_mle, x_map], ["True", "MLE", "MAP"], ["k", "C0", "C1"]
+    [x, x_mle, x_map], ["True", "MLE", "MAP"], ["k", "C0", "C1"], strict=True
 ):
     ax.plot(
         np.array([t.min(), t.max()]),

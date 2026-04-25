@@ -5,8 +5,8 @@ __all__ = [
     "count",
 ]
 
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable, Optional
 
 from pylops.config import disabled_ndarray_multiplication
 
@@ -71,8 +71,8 @@ def add_ndarray_support_to_solver(func: Callable) -> Callable:
 
 
 def reshaped(
-    func: Optional[Callable] = None,
-    forward: Optional[bool] = None,
+    func: Callable | None = None,
+    forward: bool | None = None,
     swapaxis: bool = False,
     axis: int = -1,
 ) -> Callable:
@@ -157,8 +157,8 @@ def reshaped(
 
 
 def count(
-    func: Optional[Callable] = None,
-    forward: Optional[bool] = None,
+    func: Callable | None = None,
+    forward: bool | None = None,
     matmat: bool = False,
 ) -> Callable:
     """Decorator used to count the number of forward and adjoint performed by an operator.

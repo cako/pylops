@@ -7,7 +7,8 @@ __all__ = [
     "splitbregman",
 ]
 
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, Optional
 
 from pylops.optimization.callback import (
     CostNanInfCallback,
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
 def irls(
     Op: "LinearOperator",
     y: NDArray,
-    x0: Optional[NDArray] = None,
+    x0: NDArray | None = None,
     nouter: int = 10,
     threshR: bool = False,
     epsR: float = 1e-10,
@@ -41,11 +42,11 @@ def irls(
     kind: Tirlskind = "data",
     engine: Tsolverengine = "scipy",
     show: bool = False,
-    itershow: Tuple[int, int, int] = (10, 10, 10),
-    callback: Optional[Callable] = None,
+    itershow: tuple[int, int, int] = (10, 10, 10),
+    callback: Callable | None = None,
     preallocate: bool = False,
     **kwargs_solver,
-) -> Tuple[NDArray, int]:
+) -> tuple[NDArray, int]:
     r"""Iteratively reweighted least squares.
 
     Solve an optimization problem with :math:`L_1` cost function (data IRLS)
@@ -126,7 +127,10 @@ def irls(
     irlssolve = IRLS(Op)
     if callback is not None:
         irlssolve.callback = callback
-    x, nouter, = irlssolve.solve(
+    (
+        x,
+        nouter,
+    ) = irlssolve.solve(
         y,
         x0=x0,
         nouter=nouter,
@@ -158,10 +162,10 @@ def omp(
     optimal_coeff: bool = False,
     engine: Tsolverengine = "scipy",
     show: bool = False,
-    itershow: Tuple[int, int, int] = (10, 10, 10),
-    callback: Optional[Callable] = None,
+    itershow: tuple[int, int, int] = (10, 10, 10),
+    callback: Callable | None = None,
     preallocate: bool = False,
-) -> Tuple[NDArray, int, NDArray]:
+) -> tuple[NDArray, int, NDArray]:
     r"""Orthogonal Matching Pursuit (OMP).
 
     Solve an optimization problem with :math:`L^0` regularization function given
@@ -277,24 +281,24 @@ def omp(
 def ista(
     Op: "LinearOperator",
     y: NDArray,
-    x0: Optional[NDArray] = None,
+    x0: NDArray | None = None,
     niter: int = 10,
     SOp: Optional["LinearOperator"] = None,
     eps: float = 0.1,
-    alpha: Optional[float] = None,
-    eigsdict: Optional[Dict[str, Any]] = None,
+    alpha: float | None = None,
+    eigsdict: dict[str, Any] | None = None,
     tol: float = 1e-10,
     rtol: float = 0.0,
     rtol1: float = 0.0,
     threshkind: Tthreshkind = "soft",
-    perc: Optional[float] = None,
-    decay: Optional[NDArray] = None,
+    perc: float | None = None,
+    decay: NDArray | None = None,
     monitorres: bool = False,
     show: bool = False,
-    itershow: Tuple[int, int, int] = (10, 10, 10),
-    callback: Optional[Callable] = None,
+    itershow: tuple[int, int, int] = (10, 10, 10),
+    callback: Callable | None = None,
     preallocate: bool = False,
-) -> Tuple[NDArray, int, NDArray]:
+) -> tuple[NDArray, int, NDArray]:
     r"""Iterative Shrinkage-Thresholding Algorithm (ISTA).
 
     Solve an optimization problem with :math:`L^p, \; p=0, 0.5, 1`
@@ -431,24 +435,24 @@ def ista(
 def fista(
     Op: "LinearOperator",
     y: NDArray,
-    x0: Optional[NDArray] = None,
+    x0: NDArray | None = None,
     niter: int = 10,
     SOp: Optional["LinearOperator"] = None,
     eps: float = 0.1,
-    alpha: Optional[float] = None,
-    eigsdict: Optional[Dict[str, Any]] = None,
+    alpha: float | None = None,
+    eigsdict: dict[str, Any] | None = None,
     tol: float = 1e-10,
     rtol: float = 0.0,
     rtol1: float = 0.0,
     threshkind: Tthreshkind = "soft",
-    perc: Optional[float] = None,
-    decay: Optional[NDArray] = None,
+    perc: float | None = None,
+    decay: NDArray | None = None,
     monitorres: bool = False,
     show: bool = False,
-    itershow: Tuple[int, int, int] = (10, 10, 10),
-    callback: Optional[Callable] = None,
+    itershow: tuple[int, int, int] = (10, 10, 10),
+    callback: Callable | None = None,
     preallocate: bool = False,
-) -> Tuple[NDArray, int, NDArray]:
+) -> tuple[NDArray, int, NDArray]:
     r"""Fast Iterative Shrinkage-Thresholding Algorithm (FISTA).
 
     Solve an optimization problem with :math:`L^p, \; p=0, 0.5, 1`
@@ -584,13 +588,13 @@ def fista(
 def spgl1(
     Op: "LinearOperator",
     y: NDArray,
-    x0: Optional[NDArray] = None,
+    x0: NDArray | None = None,
     SOp: Optional["LinearOperator"] = None,
     tau: float = 0.0,
     sigma: float = 0.0,
     show: bool = False,
     **kwargs_spgl1,
-) -> Tuple[NDArray, NDArray, Dict[str, Any]]:
+) -> tuple[NDArray, NDArray, dict[str, Any]]:
     r"""Spectral Projected-Gradient for L1 norm.
 
     Solve a constrained system of equations given the operator ``Op``
@@ -700,15 +704,15 @@ def spgl1(
 def splitbregman(
     Op: "LinearOperator",
     y: NDArray,
-    RegsL1: List["LinearOperator"],
-    x0: Optional[NDArray] = None,
+    RegsL1: list["LinearOperator"],
+    x0: NDArray | None = None,
     niter_outer: int = 3,
     niter_inner: int = 5,
-    RegsL2: Optional[List["LinearOperator"]] = None,
-    dataregsL2: Optional[List[NDArray]] = None,
+    RegsL2: list["LinearOperator"] | None = None,
+    dataregsL2: list[NDArray] | None = None,
     mu: float = 1.0,
-    epsRL1s: Optional[SamplingLike] = None,
-    epsRL2s: Optional[SamplingLike] = None,
+    epsRL1s: SamplingLike | None = None,
+    epsRL2s: SamplingLike | None = None,
     tol: float = 1e-10,
     rtol: float = 0.0,
     rtol1: float = 0.0,
@@ -716,12 +720,12 @@ def splitbregman(
     restart: bool = False,
     engine: Tsolverengine = "scipy",
     show: bool = False,
-    itershow: Tuple[int, int, int] = (10, 10, 10),
+    itershow: tuple[int, int, int] = (10, 10, 10),
     show_inner: bool = False,
-    callback: Optional[Callable] = None,
+    callback: Callable | None = None,
     preallocate: bool = False,
     **kwargs_lsqr,
-) -> Tuple[NDArray, int, NDArray]:
+) -> tuple[NDArray, int, NDArray]:
     r"""Split Bregman for mixed L2-L1 norms.
 
     Solve an unconstrained system of equations with mixed :math:`L_2` and :math:`L_1`

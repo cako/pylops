@@ -3,7 +3,6 @@ __all__ = [
     "SecondDirectionalDerivative",
 ]
 
-from typing import Union
 
 from pylops import LinearOperator
 from pylops.basicoperators import Diagonal, Gradient, Sum
@@ -80,7 +79,7 @@ class FirstDirectionalDerivative(LinearOperator):
         self,
         dims: InputDimsLike,
         v: NDArray,
-        sampling: Union[float, InputDimsLike] = 1.0,
+        sampling: float | InputDimsLike = 1.0,
         edge: bool = False,
         kind: Tderivkind = "centered",
         dtype: DTypeLike = "float64",
@@ -110,7 +109,7 @@ class FirstDirectionalDerivative(LinearOperator):
     def _calc_first_ddop(
         dims: InputDimsLike,
         v: NDArray,
-        sampling: Union[float, InputDimsLike],
+        sampling: float | InputDimsLike,
         edge: bool,
         kind: Tderivkind,
         dtype: DTypeLike,
@@ -188,7 +187,7 @@ class SecondDirectionalDerivative(LinearOperator):
         self,
         dims: InputDimsLike,
         v: NDArray,
-        sampling: Union[float, InputDimsLike] = 1.0,
+        sampling: float | InputDimsLike = 1.0,
         edge: bool = False,
         kind: Tderivkind = "centered",
         dtype: DTypeLike = "float64",

@@ -3,7 +3,7 @@ __all__ = [
     "PoststackInversion",
 ]
 
-from typing import Literal, Optional, Tuple, Union
+from typing import Literal
 
 import numpy as np
 from scipy.sparse.linalg import lsqr
@@ -41,9 +41,9 @@ def _PoststackLinearModelling(
     _MatrixMult=MatrixMult,
     _Convolve1D=Convolve1D,
     _FirstDerivative=FirstDerivative,
-    args_MatrixMult: Optional[dict] = None,
-    args_Convolve1D: Optional[dict] = None,
-    args_FirstDerivative: Optional[dict] = None,
+    args_MatrixMult: dict | None = None,
+    args_Convolve1D: dict | None = None,
+    args_FirstDerivative: dict | None = None,
 ):
     """Post-stack linearized seismic modelling operator.
 
@@ -71,9 +71,10 @@ def _PoststackLinearModelling(
     dtype = wav.dtype  # ensure wav.dtype rules that of operator
 
     if len(wav.shape) == 2 and wav.shape[0] != nt0:
-        raise ValueError("Provide 1d wavelet or 2d wavelet composed of nt0 " "wavelets")
+        msg = "Must provide 1d wavelet or 2d wavelet composed of nt0 wavelets"
+        raise ValueError(msg)
 
-    spatdims: Union[int, ShapeLike]
+    spatdims: int | ShapeLike
     # organize dimensions
     if spatdims is None:
         dims = (nt0,)
@@ -117,14 +118,14 @@ def _PoststackLinearModelling(
                 offset=len(wav) // 2,
                 axis=0,
                 dtype=dtype,
-                **args_Convolve1D
+                **args_Convolve1D,
             )
         else:
             Cop = _MatrixMult(
                 nonstationary_convmtx(wav, nt0, hc=wav.shape[1] // 2, pad=(nt0, nt0)),
                 otherdims=spatdims,
                 dtype=dtype,
-                **args_MatrixMult
+                **args_MatrixMult,
             )
         # Create derivative operator
         Dop = _FirstDerivative(
@@ -137,11 +138,11 @@ def _PoststackLinearModelling(
 def PoststackLinearModelling(
     wav: NDArray,
     nt0: int,
-    spatdims: Optional[Union[int, ShapeLike]] = None,
+    spatdims: int | ShapeLike | None = None,
     explicit: bool = False,
     sparse: bool = False,
     kind: Literal["centered", "forward"] = "centered",
-    name: Optional[str] = None,
+    name: str | None = None,
 ) -> LinearOperator:
     r"""Post-stack linearized seismic modelling operator.
 
@@ -224,15 +225,15 @@ def PoststackLinearModelling(
 def PoststackInversion(
     data: NDArray,
     wav: NDArray,
-    m0: Optional[NDArray] = None,
+    m0: NDArray | None = None,
     explicit: bool = False,
     simultaneous: bool = False,
-    epsI: Optional[float] = None,
-    epsR: Optional[float] = None,
+    epsI: float | None = None,
+    epsR: float | None = None,
     dottest: bool = False,
-    epsRL1: Optional[float] = None,
-    **kwargs_solver
-) -> Tuple[NDArray, NDArray]:
+    epsRL1: float | None = None,
+    **kwargs_solver,
+) -> tuple[NDArray, NDArray]:
     r"""Post-stack linearized seismic inversion.
 
     Invert post-stack seismic operator to retrieve an elastic parameter of
@@ -321,9 +322,10 @@ def PoststackInversion(
 
     # check if background model and data have same shape
     if m0 is not None and data.shape != m0.shape:
-        raise ValueError("data and m0 must have same shape")
+        msg = "data and m0 must have the same shape"
+        raise ValueError(msg)
 
-    nspat: Optional[Union[int, ShapeLike]]
+    nspat: int | ShapeLike | None
     # find out dimensions
     if data.ndim == 1:
         dims = 1
@@ -374,7 +376,7 @@ def PoststackInversion(
                         PPop,
                         datar,
                         x0=ncp.zeros(int(PPop.shape[1]), PPop.dtype),
-                        **kwargs_solver
+                        **kwargs_solver,
                     )[0]
             elif epsI is not None:
                 # create regularized normal equations
@@ -393,7 +395,7 @@ def PoststackInversion(
                             PPop_reg,
                             datar.ravel(),
                             x0=ncp.zeros(int(PPop_reg.shape[1]), PPop_reg.dtype),
-                            **kwargs_solver
+                            **kwargs_solver,
                         )[0]
             else:
                 # create regularized normal eqs. and solve them simultaneously
@@ -410,7 +412,7 @@ def PoststackInversion(
                     PPop,
                     datar,
                     x0=ncp.zeros(int(PPop.shape[1]), PPop.dtype),
-                    **kwargs_solver
+                    **kwargs_solver,
                 )[0]
     else:
         if epsRL1 is None:
@@ -428,7 +430,7 @@ def PoststackInversion(
                 [Regop],
                 x0=None if m0 is None else m0.ravel(),
                 epsRs=[epsR],
-                **kwargs_solver
+                **kwargs_solver,
             )[0]
         else:
             # Blockiness-promoting inversion with spatial regularization
@@ -476,7 +478,7 @@ def PoststackInversion(
                 niter_outer=niter_outer,
                 niter_inner=niter_inner,
                 x0=None if m0 is None else m0.ravel(),
-                **kwargs_solver
+                **kwargs_solver,
             )[0]
 
     # compute residual

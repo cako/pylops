@@ -1,6 +1,6 @@
 import warnings
+from collections.abc import Sequence
 from enum import Enum, auto
-from typing import Optional, Sequence, Union
 
 import numpy as np
 
@@ -29,9 +29,9 @@ class _BaseFFT(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         axis: int = -1,
-        nfft: Optional[int] = None,
+        nfft: int | None = None,
         sampling: float = 1.0,
         norm: str = "ortho",
         real: bool = False,
@@ -68,9 +68,10 @@ class _BaseFFT(LinearOperator):
             warnings.warn(
                 f"nfft={self.nfft} has been selected to be smaller than the size of "
                 f"the original signal (dims[axis]={dims[axis]}).\n"
-                f"This is rarely intended behavior as the original signal will be "
-                f"truncated prior to applying FFT. "
-                f"If this is the required behaviour ignore this message."
+                "This is rarely intended behavior as the original signal will be "
+                "truncated prior to applying FFT. "
+                "If this is the required behaviour ignore this message.",
+                stacklevel=True,
             )
 
         if norm == "ortho":
@@ -80,15 +81,14 @@ class _BaseFFT(LinearOperator):
         elif norm.lower() == "1/n":
             self.norm = _FFTNorms.ONE_OVER_N
         elif norm == "backward":
-            raise ValueError(
-                'To use no scaling on the forward transform, use "none". Note that in this case, the adjoint transform will *not* have a 1/n scaling.'
-            )
+            msg = 'To use no scaling on the forward transform, use "none". Note that in this case, the adjoint transform will *not* have a 1/n scaling.'
+            raise ValueError(msg)
         elif norm == "forward":
-            raise ValueError(
-                'To use 1/n scaling on the forward transform, use "1/n". Note that in this case, the adjoint transform will *also* have a 1/n scaling.'
-            )
+            msg = 'To use 1/n scaling on the forward transform, use "1/n". Note that in this case, the adjoint transform will *also* have a 1/n scaling.'
+            raise ValueError(msg)
         else:
-            raise ValueError(f"'{norm}' is not one of 'ortho', 'none' or '1/n'")
+            msg = f"`norm`={norm} is not one of 'ortho', 'none' or '1/n'"
+            raise ValueError(msg)
 
         self.real = real
         self.ifftshift_before = ifftshift_before
@@ -102,7 +102,9 @@ class _BaseFFT(LinearOperator):
         if self.fftshift_after:
             if self.real:
                 warnings.warn(
-                    "Using fftshift_after with real=True. fftshift should only be applied after a complex FFT. This is rarely intended behavior but if it is, ignore this message."
+                    "Using fftshift_after with real=True. fftshift should only be applied after a complex FFT. "
+                    "This is rarely intended behavior but if it is, ignore this message.",
+                    stacklevel=2,
                 )
             self.f = np.fft.fftshift(self.f)
 
@@ -120,14 +122,12 @@ class _BaseFFT(LinearOperator):
         super().__init__(dtype=self.cdtype, dims=dims, dimsd=dimsd, clinear=clinear)
 
     def _matvec(self, x: NDArray) -> NDArray:
-        raise NotImplementedError(
-            "_BaseFFT does not provide _matvec. It must be implemented separately."
-        )
+        msg = "_BaseFFT does not provide _matvec. It must be implemented separately."
+        raise NotImplementedError(msg)
 
     def _rmatvec(self, x: NDArray) -> NDArray:
-        raise NotImplementedError(
-            "_BaseFFT does not provide _rmatvec. It must be implemented separately."
-        )
+        msg = "_BaseFFT does not provide _rmatvec. It must be implemented separately."
+        raise NotImplementedError(msg)
 
 
 class _BaseFFTND(LinearOperator):
@@ -135,10 +135,10 @@ class _BaseFFTND(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
-        axes: Optional[Union[int, InputDimsLike]] = None,
-        nffts: Optional[Union[int, InputDimsLike]] = None,
-        sampling: Union[float, Sequence[float]] = 1.0,
+        dims: int | InputDimsLike,
+        axes: int | InputDimsLike | None = None,
+        nffts: int | InputDimsLike | None = None,
+        sampling: float | Sequence[float] = 1.0,
         norm: str = "ortho",
         real: bool = False,
         ifftshift_before: bool = False,
@@ -156,13 +156,14 @@ class _BaseFFTND(LinearOperator):
         self.naxes = len(self.axes)
         if self.naxes != len(np.unique(self.axes)):
             warnings.warn(
-                "At least one direction is repeated. This may cause unexpected results."
+                "At least one direction is repeated. This may cause unexpected results.",
+                stacklevel=2,
             )
 
         nffts = _value_or_sized_to_array(nffts, repeat=self.naxes)
         if len(nffts[np.equal(nffts, None)]) > 0:  # Found None(s) in nffts
             nffts[np.equal(nffts, None)] = np.array(
-                [dims[d] for d, n in zip(axes, nffts) if n is None]
+                [dims[d] for d, n in zip(axes, nffts, strict=True) if n is None]
             )
             nffts = nffts.astype(np.array(dims).dtype)
         _raise_on_wrong_dtype(nffts, np.integer, "nffts")
@@ -192,25 +193,27 @@ class _BaseFFTND(LinearOperator):
             or self.naxes != len(self.ifftshift_before)
             or self.naxes != len(self.fftshift_after)
         ):
-            raise ValueError(
-                (
-                    "`axes`, `nffts`, `sampling`, `ifftshift_before` and "
-                    "`fftshift_after` must the have same number of elements. Received "
-                    f"{self.naxes}, {len(self.nffts)}, {len(self.sampling)}, "
-                    f"{len(self.ifftshift_before)} and {len(self.fftshift_after)}, "
-                    "respectively."
-                )
+            msg = (
+                "`axes`, `nffts`, `sampling`, `ifftshift_before` and "
+                "`fftshift_after` must the have same number of elements. Received "
+                f"{self.naxes}, {len(self.nffts)}, {len(self.sampling)}, "
+                f"{len(self.ifftshift_before)} and {len(self.fftshift_after)}, "
+                "respectively."
             )
+            raise ValueError(msg)
 
         # Check if the user provided nfft smaller than n. See _BaseFFT for
         # details
         nfftshort = [
-            nfft < dims[direction] for direction, nfft in zip(self.axes, self.nffts)
+            nfft < dims[direction]
+            for direction, nfft in zip(self.axes, self.nffts, strict=True)
         ]
         self.doifftpad = any(nfftshort)
         if self.doifftpad:
             self.ifftpad = [(0, 0)] * self.ndim
-            for idir, (direction, nfshort) in enumerate(zip(self.axes, nfftshort)):
+            for idir, (direction, nfshort) in enumerate(
+                zip(self.axes, nfftshort, strict=True)
+            ):
                 if nfshort:
                     self.ifftpad[direction] = (
                         0,
@@ -218,8 +221,9 @@ class _BaseFFTND(LinearOperator):
                     )
             warnings.warn(
                 f"nffts in directions {np.where(nfftshort)[0]} have been selected to be smaller than the size of the original signal. "
-                f"This is rarely intended behavior as the original signal will be truncated prior to applying fft, "
-                f"if this is the required behaviour ignore this message."
+                "This is rarely intended behavior as the original signal will be truncated prior to applying fft, "
+                f"if this is the required behaviour ignore this message.",
+                stacklevel=2,
             )
 
         if norm == "ortho":
@@ -229,15 +233,14 @@ class _BaseFFTND(LinearOperator):
         elif norm.lower() == "1/n":
             self.norm = _FFTNorms.ONE_OVER_N
         elif norm == "backward":
-            raise ValueError(
-                'To use no scaling on the forward transform, use "none". Note that in this case, the adjoint transform will *not* have a 1/n scaling.'
-            )
+            msg = 'To use no scaling on the forward transform, use "none". Note that in this case, the adjoint transform will *not* have a 1/n scaling.'
+            raise ValueError(msg)
         elif norm == "forward":
-            raise ValueError(
-                'To use 1/n scaling on the forward transform, use "1/n". Note that in this case, the adjoint transform will *also* have a 1/n scaling.'
-            )
+            msg = 'To use 1/n scaling on the forward transform, use "1/n". Note that in this case, the adjoint transform will *also* have a 1/n scaling.'
+            raise ValueError(msg)
         else:
-            raise ValueError(f"'{norm}' is not one of 'ortho', 'none' or '1/n'")
+            msg = f"`norm`={norm} is not one of 'ortho', 'none' or '1/n'"
+            raise ValueError(msg)
 
         self.real = real
 
@@ -245,20 +248,21 @@ class _BaseFFTND(LinearOperator):
             np.fft.fftshift(np.fft.fftfreq(n, d=s))
             if fftshift
             else np.fft.fftfreq(n, d=s)
-            for n, s, fftshift in zip(self.nffts, self.sampling, self.fftshift_after)
+            for n, s, fftshift in zip(
+                self.nffts, self.sampling, self.fftshift_after, strict=True
+            )
         ]
         if self.real:
             fs[-1] = np.fft.rfftfreq(self.nffts[-1], d=self.sampling[-1])
             if self.fftshift_after[-1]:
                 warnings.warn(
-                    (
-                        "Using real=True and fftshift_after on the last direction. "
-                        "fftshift should only be applied on directions with negative "
-                        "and positive frequencies. When using FFTND with real=True, "
-                        "are all directions except the last. If you wish to proceed "
-                        "applying fftshift on a frequency axis with only positive "
-                        "frequencies, ignore this message."
-                    )
+                    "Using real=True and fftshift_after on the last direction. "
+                    "fftshift should only be applied on directions with negative "
+                    "and positive frequencies. When using FFTND with real=True, "
+                    "are all directions except the last. If you wish to proceed "
+                    "applying fftshift on a frequency axis with only positive "
+                    "frequencies, ignore this message.",
+                    stacklevel=2,
                 )
                 fs[-1] = np.fft.fftshift(fs[-1])
         self.fs = tuple(fs)
@@ -278,11 +282,9 @@ class _BaseFFTND(LinearOperator):
         super().__init__(dtype=self.cdtype, dims=dims, dimsd=dimsd, clinear=clinear)
 
     def _matvec(self, x: NDArray) -> NDArray:
-        raise NotImplementedError(
-            "_BaseFFT does not provide _matvec. It must be implemented separately."
-        )
+        msg = "_BaseFFT does not provide _matvec. It must be implemented separately."
+        raise NotImplementedError(msg)
 
     def _rmatvec(self, x: NDArray) -> NDArray:
-        raise NotImplementedError(
-            "_BaseFFT does not provide _rmatvec. It must be implemented separately."
-        )
+        msg = "_BaseFFT does not provide _rmatvec. It must be implemented separately."
+        raise NotImplementedError(msg)

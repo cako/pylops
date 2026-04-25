@@ -1,6 +1,5 @@
 __all__ = ["Smoothing2D"]
 
-from typing import Union
 
 import numpy as np
 
@@ -71,7 +70,7 @@ class Smoothing2D(Convolve2D):
     def __init__(
         self,
         nsmooth: InputDimsLike,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         axes: InputDimsLike = (-2, -1),
         dtype: DTypeLike = "float64",
         name: str = "S",

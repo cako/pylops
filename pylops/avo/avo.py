@@ -9,7 +9,6 @@ __all__ = [
     "AVOLinearModelling",
 ]
 
-from typing import List, Optional, Tuple, Union
 
 import numpy as np
 from numpy import cos, sin, tan
@@ -28,7 +27,7 @@ def zoeppritz_scattering(
     vp0: float,
     vs0: float,
     rho0: float,
-    theta1: Union[float, NDArray],
+    theta1: float | NDArray,
 ) -> NDArray:
     r"""Zoeppritz solution.
 
@@ -144,7 +143,7 @@ def zoeppritz_element(
     vp0: float,
     vs0: float,
     rho0: float,
-    theta1: Union[float, NDArray],
+    theta1: float | NDArray,
     element: str = "PdPu",
 ) -> NDArray:
     """Single element of Zoeppritz solution.
@@ -208,7 +207,7 @@ def zoeppritz_pp(
     vp0: float,
     vs0: float,
     rho0: float,
-    theta1: Union[float, NDArray],
+    theta1: float | NDArray,
 ) -> NDArray:
     """PP reflection coefficient from the Zoeppritz scattering matrix.
 
@@ -249,13 +248,13 @@ def zoeppritz_pp(
 
 
 def approx_zoeppritz_pp(
-    vp1: Union[List, Tuple, NDArray],
-    vs1: Union[List, Tuple, NDArray],
-    rho1: Union[List, Tuple, NDArray],
-    vp0: Union[List, Tuple, NDArray],
-    vs0: Union[List, Tuple, NDArray],
-    rho0: Union[List, Tuple, NDArray],
-    theta1: Union[float, NDArray],
+    vp1: list | tuple | NDArray,
+    vs1: list | tuple | NDArray,
+    rho1: list | tuple | NDArray,
+    vp0: list | tuple | NDArray,
+    vs0: list | tuple | NDArray,
+    rho0: list | tuple | NDArray,
+    theta1: float | NDArray,
 ) -> NDArray:
     """PP reflection coefficient from the approximate Zoeppritz equation.
 
@@ -335,9 +334,9 @@ def approx_zoeppritz_pp(
 
 def akirichards(
     theta: NDArray,
-    vsvp: Union[float, NDArray],
+    vsvp: float | NDArray,
     n: int = 1,
-) -> Tuple[NDArray, NDArray, NDArray]:
+) -> tuple[NDArray, NDArray, NDArray]:
     r"""Three terms Aki-Richards approximation.
 
     Computes the coefficients of the of three terms Aki-Richards approximation
@@ -409,9 +408,9 @@ def akirichards(
 
 def fatti(
     theta: NDArray,
-    vsvp: Union[float, NDArray],
+    vsvp: float | NDArray,
     n: int = 1,
-) -> Tuple[NDArray, NDArray, NDArray]:
+) -> tuple[NDArray, NDArray, NDArray]:
     r"""Three terms Fatti approximation.
 
     Computes the coefficients of the three terms Fatti approximation
@@ -485,9 +484,9 @@ def fatti(
 
 def ps(
     theta: NDArray,
-    vsvp: Union[float, NDArray],
+    vsvp: float | NDArray,
     n: int = 1,
-) -> Tuple[NDArray, NDArray, NDArray]:
+) -> tuple[NDArray, NDArray, NDArray]:
     r"""PS reflection coefficient
 
     Computes the coefficients for the PS approximation
@@ -646,9 +645,9 @@ class AVOLinearModelling(LinearOperator):
     def __init__(
         self,
         theta: NDArray,
-        vsvp: Union[float, NDArray] = 0.5,
+        vsvp: float | NDArray = 0.5,
         nt0: int = 1,
-        spatdims: Optional[Union[int, Tuple[int]]] = None,
+        spatdims: int | tuple[int] | None = None,
         linearization: Tavolinearization = "akirich",
         dtype: DTypeLike = "float64",
         name: str = "A",
@@ -671,8 +670,8 @@ class AVOLinearModelling(LinearOperator):
                 "%s not an available linearization..." % linearization
             )
         self.npars = len(Gs)
-        dims: Tuple[int, ...] = (self.nt0, self.npars)
-        dimsd: Tuple[int, ...] = (self.nt0, self.ntheta)
+        dims: tuple[int, ...] = (self.nt0, self.npars)
+        dimsd: tuple[int, ...] = (self.nt0, self.ntheta)
         if spatdims is not None:
             dims += self.spatdims
             dimsd += self.spatdims

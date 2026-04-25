@@ -1,6 +1,5 @@
 __all__ = ["Gradient"]
 
-from typing import Union
 
 from pylops import LinearOperator
 from pylops.basicoperators import FirstDerivative, VStack
@@ -79,8 +78,8 @@ class Gradient(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
-        sampling: Union[float, InputDimsLike] = 1.0,
+        dims: int | InputDimsLike,
+        sampling: float | InputDimsLike = 1.0,
         edge: bool = False,
         kind: Tderivkind = "centered",
         dtype: DTypeLike = "float64",

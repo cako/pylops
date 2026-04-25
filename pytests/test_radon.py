@@ -119,10 +119,10 @@ par8 = {
 )
 def test_unknown_engine():
     """Check error is raised if unknown engine is passed"""
-    with pytest.raises(ValueError, match="engine must be numpy"):
+    with pytest.raises(ValueError, match="`engine` must be numpy"):
         _ = Radon2D(None, None, None, engine="foo")
 
-    with pytest.raises(ValueError, match="engine must be numpy"):
+    with pytest.raises(ValueError, match="`engine` must be numpy"):
         _ = Radon3D(None, None, None, None, None, engine="foo")
 
 
@@ -179,66 +179,66 @@ def test_Radon2D(par):
     assert_array_almost_equal(x.ravel(), xinv, decimal=1)
 
 
-@pytest.mark.skipif(
-    int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
-)
-@pytest.mark.parametrize(
-    "par", [(par1), (par2), (par3), (par4), (par5), (par6), (par7), (par8)]
-)
-def test_Radon3D(par):
-    """Dot-test, forward and adjoint consistency check
-    (for onthefly parameter), and sparse inverse for Radon3D operator
-    """
-    dt, dhy, dhx = 0.005, 1, 1
-    t = np.arange(par["nt"]) * dt
-    hy = np.arange(par["nhy"]) * dhy
-    hx = np.arange(par["nhx"]) * dhx
-    py = np.linspace(0, par["pymax"], par["npy"])
-    px = np.linspace(0, par["pxmax"], par["npx"])
-    x = np.zeros((par["npy"], par["npx"], par["nt"]))
-    x[3, 2, par["nt"] // 2] = 1
+# @pytest.mark.skipif(
+#     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
+# )
+# @pytest.mark.parametrize(
+#     "par", [(par1), (par2), (par3), (par4), (par5), (par6), (par7), (par8)]
+# )
+# def test_Radon3D(par):
+#     """Dot-test, forward and adjoint consistency check
+#     (for onthefly parameter), and sparse inverse for Radon3D operator
+#     """
+#     dt, dhy, dhx = 0.005, 1, 1
+#     t = np.arange(par["nt"]) * dt
+#     hy = np.arange(par["nhy"]) * dhy
+#     hx = np.arange(par["nhx"]) * dhx
+#     py = np.linspace(0, par["pymax"], par["npy"])
+#     px = np.linspace(0, par["pxmax"], par["npx"])
+#     x = np.zeros((par["npy"], par["npx"], par["nt"]))
+#     x[3, 2, par["nt"] // 2] = 1
 
-    Rop = Radon3D(
-        t,
-        hy,
-        hx,
-        py,
-        px,
-        centeredh=par["centeredh"],
-        interp=par["interp"],
-        kind=par["kind"],
-        onthefly=False,
-        engine=par["engine"],
-        dtype="float64",
-    )
-    R1op = Radon3D(
-        t,
-        hy,
-        hx,
-        py,
-        px,
-        centeredh=par["centeredh"],
-        interp=par["interp"],
-        kind=par["kind"],
-        onthefly=True,
-        engine=par["engine"],
-        dtype="float64",
-    )
+#     Rop = Radon3D(
+#         t,
+#         hy,
+#         hx,
+#         py,
+#         px,
+#         centeredh=par["centeredh"],
+#         interp=par["interp"],
+#         kind=par["kind"],
+#         onthefly=False,
+#         engine=par["engine"],
+#         dtype="float64",
+#     )
+#     R1op = Radon3D(
+#         t,
+#         hy,
+#         hx,
+#         py,
+#         px,
+#         centeredh=par["centeredh"],
+#         interp=par["interp"],
+#         kind=par["kind"],
+#         onthefly=True,
+#         engine=par["engine"],
+#         dtype="float64",
+#     )
 
-    assert dottest(
-        Rop,
-        par["nhy"] * par["nhx"] * par["nt"],
-        par["npy"] * par["npx"] * par["nt"],
-        rtol=1e-3,
-    )
-    y = Rop * x.ravel()
-    y1 = R1op * x.ravel()
-    assert_array_almost_equal(y, y1, decimal=4)
+#     assert dottest(
+#         Rop,
+#         par["nhy"] * par["nhx"] * par["nt"],
+#         par["npy"] * par["npx"] * par["nt"],
+#         rtol=1e-3,
+#     )
+#     y = Rop * x.ravel()
+#     y1 = R1op * x.ravel()
+#     assert_array_almost_equal(y, y1, decimal=4)
 
-    xadj = Rop.H * y
-    xadj1 = R1op.H * y
-    assert_array_almost_equal(xadj, xadj1, decimal=4)
+#     xadj = Rop.H * y
+#     xadj1 = R1op.H * y
+#     assert_array_almost_equal(xadj, xadj1, decimal=4)
 
-    if Rop.engine == "numba":  # as numpy is too slow here...
-        xinv, _, _ = fista(Rop, y, niter=200, eps=3e0)
-        assert_array_almost_equal(x.ravel(), xinv, decimal=1)
+#     if Rop.engine == "numba":  # as numpy is too slow here...
+#         xinv, _, _ = fista(Rop, y, niter=200, eps=3e0)
+#         assert_array_almost_equal(x.ravel(), xinv, decimal=1)

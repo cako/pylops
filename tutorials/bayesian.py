@@ -42,6 +42,7 @@ and
     \mathbf{R}  \mathbf{C}_{x_0}
 
 """
+
 import matplotlib.pyplot as plt
 
 # sphinx_gallery_thumbnail_number = 2
@@ -63,9 +64,14 @@ def prior_realization(f0, a0, phi0, sigmaf, sigmaa, sigmaphi, dt, nt, nfft):
     """
     f = np.fft.rfftfreq(nfft, dt)
     df = f[1] - f[0]
-    ifreqs = [int(np.random.normal(f, sigma) / df) for f, sigma in zip(f0, sigmaf)]
-    amps = [np.random.normal(a, sigma) for a, sigma in zip(a0, sigmaa)]
-    phis = [np.random.normal(phi, sigma) for phi, sigma in zip(phi0, sigmaphi)]
+    ifreqs = [
+        int(np.random.normal(f, sigma) / df)
+        for f, sigma in zip(f0, sigmaf, strict=True)
+    ]
+    amps = [np.random.normal(a, sigma) for a, sigma in zip(a0, sigmaa, strict=True)]
+    phis = [
+        np.random.normal(phi, sigma) for phi, sigma in zip(phi0, sigmaphi, strict=True)
+    ]
 
     # input signal in frequency domain
     X = np.zeros(nfft // 2 + 1, dtype="complex128")
@@ -183,8 +189,11 @@ Cmpost_ana = Cm - Cm @ R.T @ (np.linalg.solve(R @ Cm @ R.T + Cd, R @ Cm))
 # Next we solve the same Bayesian inversion equation iteratively. We will see
 # that provided we use enough iterations we can retrieve the same values of
 # the analytical posterior mean
-xpost_iter = x0 + Cm_op * Rop.H * (
-    lsqr(Rop * Cm_op * Rop.H + Cd_op, yn - Rop * x0, iter_lim=400)[0]
+xpost_iter = (
+    x0
+    + Cm_op
+    * Rop.H
+    * (lsqr(Rop * Cm_op * Rop.H + Cd_op, yn - Rop * x0, iter_lim=400)[0])
 )
 
 ###############################################################################
@@ -200,7 +209,7 @@ xpost_iter = x0 + Cm_op * Rop.H * (
 nreals = 1000
 
 xrto = []
-for ireal in range(nreals):
+for _ in range(nreals):
     yreal = yn + Rop * np.random.normal(0, sigmad, nt)
     xrto.append(
         x0

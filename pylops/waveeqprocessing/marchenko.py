@@ -1,7 +1,7 @@
 __all__ = ["Marchenko"]
 
 import logging
-from typing import Any, Dict, Literal, Optional, Tuple, Union
+from typing import Any, Literal
 
 import numpy as np
 from scipy.signal import filtfilt
@@ -23,8 +23,8 @@ def directwave(
     trav: NDArray,
     nt: int,
     dt: float,
-    nfft: Optional[int] = None,
-    dist: Optional[NDArray] = None,
+    nfft: int | None = None,
+    dist: NDArray | None = None,
     kind: Literal["2d", "3d"] = "2d",
     derivative: bool = True,
 ) -> NDArray:
@@ -90,9 +90,9 @@ def directwave(
     nr = len(trav)
     nfft = nt if nfft is None or nfft < nt else nfft
     W = np.abs(np.fft.rfft(wav, nfft)) * dt
-    F: NDArray = 2 * np.pi * ncp.arange(nfft) / (dt * nfft)
+    F: NDArray = 2 * np.pi * ncp.arange(nfft // 2 + 1) / (dt * nfft)
     direct = ncp.zeros((nfft // 2 + 1, nr), dtype=np.complex128)
-    for iw, (w, f) in enumerate(zip(W, F)):
+    for iw, (w, f) in enumerate(zip(W, F, strict=True)):
         if kind == "2d":
             # direct[iw] = (
             #     w
@@ -254,17 +254,17 @@ class Marchenko:
         self,
         R: NDArray,
         dt: float = 0.004,
-        nt: Optional[int] = None,
+        nt: int | None = None,
         dr: float = 1.0,
-        nfmax: Optional[int] = None,
-        wav: Optional[NDArray] = None,
+        nfmax: int | None = None,
+        wav: NDArray | None = None,
         toff: float = 0.0,
         nsmooth: int = 10,
         saveRt: bool = True,
         prescaled: bool = False,
         fftengine: Tfftengine_nsf = "numpy",
         dtype: DTypeLike = "float64",
-        kwargs_fft: Optional[Dict[str, Any]] = None,
+        kwargs_fft: dict[str, Any] | None = None,
     ) -> None:
         # Save inputs into class
         self.dt = dt
@@ -286,7 +286,8 @@ class Marchenko:
             self.nfmax = nfmax
         else:
             if nt is None:
-                raise ValueError("nt must be provided as R is in frequency")
+                msg = "nt must be provided as R is in frequency"
+                raise ValueError(msg)
             self.ns, self.nr, self.nfmax = R.shape
             self.nt = nt
 
@@ -316,19 +317,19 @@ class Marchenko:
     def apply_onepoint(
         self,
         trav: NDArray,
-        G0: Optional[NDArray] = None,
-        nfft: Optional[int] = None,
+        G0: NDArray | None = None,
+        nfft: int | None = None,
         rtm: bool = False,
         greens: bool = False,
         dottest: bool = False,
         usematmul: bool = False,
         **kwargs_solver,
-    ) -> Union[
-        Tuple[NDArray, NDArray, NDArray, NDArray, NDArray],
-        Tuple[NDArray, NDArray, NDArray, NDArray],
-        Tuple[NDArray, NDArray, NDArray],
-        Tuple[NDArray, NDArray],
-    ]:
+    ) -> (
+        tuple[NDArray, NDArray, NDArray, NDArray, NDArray]
+        | tuple[NDArray, NDArray, NDArray, NDArray]
+        | tuple[NDArray, NDArray, NDArray]
+        | tuple[NDArray, NDArray]
+    ):
         r"""Marchenko redatuming for one point
 
         Solve the Marchenko redatuming inverse problem for a single point
@@ -462,10 +463,8 @@ class Marchenko:
                 ).T
                 G0 = to_cupy_conditional(self.Rtwosided_fft, G0)
             else:
-                raise ValueError(
-                    "wav and/or nfft are not provided. "
-                    "Provide either G0 or wav and nfft..."
-                )
+                msg = "wav and/or nfft are not provided. Provide either G0 or wav and nfft..."
+                raise ValueError(msg)
         fd_plus = np.concatenate(
             (np.fliplr(G0).T, self.ncp.zeros((self.nt - 1, self.nr), dtype=self.dtype))
         )
@@ -521,19 +520,19 @@ class Marchenko:
     def apply_multiplepoints(
         self,
         trav: NDArray,
-        G0: Optional[NDArray] = None,
-        nfft: Optional[int] = None,
+        G0: NDArray | None = None,
+        nfft: int | None = None,
         rtm: bool = False,
         greens: bool = False,
         dottest: bool = False,
         usematmul: bool = False,
         **kwargs_solver,
-    ) -> Union[
-        Tuple[NDArray, NDArray, NDArray, NDArray, NDArray],
-        Tuple[NDArray, NDArray, NDArray, NDArray],
-        Tuple[NDArray, NDArray, NDArray],
-        Tuple[NDArray, NDArray],
-    ]:
+    ) -> (
+        tuple[NDArray, NDArray, NDArray, NDArray, NDArray]
+        | tuple[NDArray, NDArray, NDArray, NDArray]
+        | tuple[NDArray, NDArray, NDArray]
+        | tuple[NDArray, NDArray]
+    ):
         r"""Marchenko redatuming for multiple points
 
         Solve the Marchenko redatuming inverse problem for multiple
@@ -678,10 +677,8 @@ class Marchenko:
                     ).T
                 G0 = to_cupy_conditional(self.Rtwosided_fft, G0)
             else:
-                raise ValueError(
-                    "wav and/or nfft are not provided. "
-                    "Provide either G0 or wav and nfft..."
-                )
+                msg = "wav and/or nfft are not provided. Provide either G0 or wav and nfft..."
+                raise ValueError(msg)
         fd_plus = np.concatenate(
             (
                 np.flip(G0, axis=-1).transpose(2, 0, 1),

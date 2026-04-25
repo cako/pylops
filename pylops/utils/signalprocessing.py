@@ -7,7 +7,7 @@ __all__ = [
 ]
 
 import warnings
-from typing import Sequence, Tuple, Union
+from collections.abc import Sequence
 
 import numpy as np
 from scipy.ndimage import gaussian_filter
@@ -58,6 +58,7 @@ def convmtx(h: NDArray, n: int, offset: int = 0) -> NDArray:
         "with the documentation. Users are highly encouraged "
         "to modify their codes accordingly.",
         FutureWarning,
+        stacklevel=2,
     )
 
     ncp = get_array_module(h)
@@ -74,7 +75,7 @@ def nonstationary_convmtx(
     H: NDArray,
     n: int,
     hc: int = 0,
-    pad: Tuple[int] = (0, 0),
+    pad: tuple[int] = (0, 0),
 ) -> NDArray:
     r"""Convolution matrix from a bank of filters
 
@@ -118,7 +119,7 @@ def slope_estimate(
     smooth: float = 5.0,
     eps: float = 0.0,
     dips: bool = False,
-) -> Tuple[NDArray, NDArray]:
+) -> tuple[NDArray, NDArray]:
     r"""Local slope estimation
 
     Local slopes are estimated using the *Structure Tensor* algorithm [1]_.
@@ -269,7 +270,7 @@ def dip_estimate(
     dx: float = 1.0,
     smooth: int = 5,
     eps: float = 0.0,
-) -> Tuple[NDArray, NDArray]:
+) -> tuple[NDArray, NDArray]:
     r"""Local dip estimation
 
     Local dips are estimated using the *Structure Tensor* algorithm [1]_.
@@ -322,7 +323,7 @@ def pwd_slope_estimate(
     liter: int = 20,
     order: int = 2,
     smoothing: Tpwdsmoothing = "triangle",
-    nsmooth: Union[int, Sequence[int]] = 10,
+    nsmooth: int | Sequence[int] = 10,
     damp: float = 0.0,
     axis: int = -1,
 ) -> NDArray:
@@ -381,9 +382,11 @@ def pwd_slope_estimate(
 
     """
     if order not in (1, 2):
-        raise ValueError("order must be 1 (B3) or 2 (B5)")
+        msg = f"order must be 1 (B3) or 2 (B5), got {order}"
+        raise ValueError(msg)
     if d.ndim not in (2, 3):
-        raise ValueError("input data must be 2D or 3D")
+        msg = f"input array must be 2D or 3D, got {d.ndim}D"
+        raise ValueError(msg)
 
     # Re-arrange dimensions to work on first two axes
     nsmooth = _value_or_sized_to_tuple(nsmooth, d.ndim)
@@ -410,7 +413,8 @@ def pwd_slope_estimate(
     elif smoothing == "boxcar":
         Sop = smoothcls(nsmooth=nsmooth, dims=dims, axes=smoothaxes, dtype=dtype)
     else:
-        raise ValueError("smoothing must be either 'triangle' or 'boxcar'")
+        msg = f"smoothing must be either 'triangle' or 'boxcar', got {smoothing}"
+        raise ValueError(msg)
 
     # Estimate slopes
     for _ in range(niter):

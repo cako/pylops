@@ -1,3 +1,8 @@
 [run]
 branch = True
 source = pylops
+omit =
+    pylops/basicoperators/_*.py
+    pylops/signalprocessing/_*.py
+    pylops/utils/_*.py
+    pylops/waveeqprocessing/_*.py

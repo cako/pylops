@@ -28,7 +28,8 @@ def _choose_random_axes(ndim, n_choices=2):
             [-1, -2], [-2, 1], [1, -2], [0, -1] or [-1, 0].
     """
     if ndim < n_choices:
-        raise ValueError("ndim < n_choices")
+        msg = "ndim < n_choices"
+        raise ValueError(msg)
     axes_choices = list(range(-ndim, ndim))
     axes = []
     for _ in range(n_choices):
@@ -289,7 +290,7 @@ np.random.seed(5)
 @pytest.mark.parametrize("par", [par1])
 def test_unknown_engine(par):
     """Check error is raised if unknown engine is passed"""
-    with pytest.raises(ValueError, match="engine must be"):
+    with pytest.raises(ValueError, match="`engine` must be"):
         _ = FFT(
             dims=(par["nt"],),
             nfft=par["nfft"],
@@ -298,7 +299,7 @@ def test_unknown_engine(par):
             engine="foo",
         )
 
-    with pytest.raises(ValueError, match="engine must be"):
+    with pytest.raises(ValueError, match="`engine` must be"):
         _ = FFT2D(
             dims=(par["nx"], par["nt"]),
             nfft=(par["nfft"], par["nfft"]),
@@ -307,7 +308,7 @@ def test_unknown_engine(par):
             engine="foo",
         )
 
-    with pytest.raises(ValueError, match="engine must be"):
+    with pytest.raises(ValueError, match="`engine` must be"):
         _ = FFTND(
             dims=(par["ny"], par["nx"], par["nt"]),
             nfft=(par["nfft"], par["nfft"], par["nfft"]),
@@ -333,7 +334,7 @@ par_lists_fft_small_real = dict(
 )
 # Generate all combinations of the above parameters
 pars_fft_small_real = [
-    dict(zip(par_lists_fft_small_real.keys(), value))
+    dict(zip(par_lists_fft_small_real.keys(), value, strict=True))
     for value in itertools.product(*par_lists_fft_small_real.values())
 ]
 
@@ -408,7 +409,7 @@ par_lists_fft_random_real = dict(
     engine=["numpy", "fftw", "scipy", "mkl_fft"],
 )
 pars_fft_random_real = [
-    dict(zip(par_lists_fft_random_real.keys(), value))
+    dict(zip(par_lists_fft_random_real.keys(), value, strict=True))
     for value in itertools.product(*par_lists_fft_random_real.values())
 ]
 
@@ -470,7 +471,7 @@ par_lists_fft_small_cpx = dict(
     engine=["numpy", "fftw", "scipy", "mkl_fft"],
 )
 pars_fft_small_cpx = [
-    dict(zip(par_lists_fft_small_cpx.keys(), value))
+    dict(zip(par_lists_fft_small_cpx.keys(), value, strict=True))
     for value in itertools.product(*par_lists_fft_small_cpx.values())
 ]
 
@@ -544,7 +545,7 @@ par_lists_fft_random_cpx = dict(
     engine=["numpy", "fftw", "scipy", "mkl_fft"],
 )
 pars_fft_random_cpx = [
-    dict(zip(par_lists_fft_random_cpx.keys(), value))
+    dict(zip(par_lists_fft_random_cpx.keys(), value, strict=True))
     for value in itertools.product(*par_lists_fft_random_cpx.values())
 ]
 
@@ -629,7 +630,7 @@ par_lists_fft2d_random_real = dict(
     engine=["numpy", "scipy", "mkl_fft"],
 )
 pars_fft2d_random_real = [
-    dict(zip(par_lists_fft2d_random_real.keys(), value))
+    dict(zip(par_lists_fft2d_random_real.keys(), value, strict=True))
     for value in itertools.product(*par_lists_fft2d_random_real.values())
 ]
 
@@ -696,7 +697,7 @@ par_lists_fft2d_random_cpx = dict(
 )
 # Generate all combinations of the above parameters
 pars_fft2d_random_cpx = [
-    dict(zip(par_lists_fft2d_random_cpx.keys(), value))
+    dict(zip(par_lists_fft2d_random_cpx.keys(), value, strict=True))
     for value in itertools.product(*par_lists_fft2d_random_cpx.values())
 ]
 
@@ -733,11 +734,11 @@ def test_FFT2D_random_complex(par):
 
         # Compute FFT of x independently
         x_ishift = x.copy()
-        for axis, ishift in zip(axes, ifftshift_before):
+        for axis, ishift in zip(axes, ifftshift_before, strict=True):
             if ishift:
                 x_ishift = np.fft.ifftshift(x_ishift, axes=int(axis))
         y_true = np.fft.fft2(x_ishift, axes=axes, norm="ortho")
-        for axis, fshift in zip(axes, fftshift_after):
+        for axis, fshift in zip(axes, fftshift_after, strict=True):
             if fshift:
                 y_true = np.fft.fftshift(y_true, axes=int(axis))
         y_true = y_true.ravel()
@@ -779,7 +780,7 @@ par_lists_fftnd_random_real = dict(
     engine=["numpy", "scipy", "mkl_fft"],
 )
 pars_fftnd_random_real = [
-    dict(zip(par_lists_fftnd_random_real.keys(), value))
+    dict(zip(par_lists_fftnd_random_real.keys(), value, strict=True))
     for value in itertools.product(*par_lists_fftnd_random_real.values())
 ]
 
@@ -842,7 +843,7 @@ par_lists_fftnd_random_cpx = dict(
 )
 # Generate all combinations of the above parameters
 pars_fftnd_random_cpx = [
-    dict(zip(par_lists_fftnd_random_cpx.keys(), value))
+    dict(zip(par_lists_fftnd_random_cpx.keys(), value, strict=True))
     for value in itertools.product(*par_lists_fftnd_random_cpx.values())
 ]
 
@@ -881,11 +882,11 @@ def test_FFTND_random_complex(par):
 
     # Compute FFT of x independently
     x_ishift = x.copy()
-    for axis, ishift in zip(axes, ifftshift_before):
+    for axis, ishift in zip(axes, ifftshift_before, strict=True):
         if ishift:
             x_ishift = np.fft.ifftshift(x_ishift, axes=int(axis))
     y_true = np.fft.fft2(x_ishift, axes=axes, norm="ortho")
-    for axis, fshift in zip(axes, fftshift_after):
+    for axis, fshift in zip(axes, fftshift_after, strict=True):
         if fshift:
             y_true = np.fft.fftshift(y_true, axes=int(axis))
     y_true = y_true.ravel()
@@ -920,7 +921,7 @@ par_lists_fft2dnd_small_cpx = dict(
     engine=["numpy", "scipy", "mkl_fft"],
 )
 pars_fft2dnd_small_cpx = [
-    dict(zip(par_lists_fft2dnd_small_cpx.keys(), value))
+    dict(zip(par_lists_fft2dnd_small_cpx.keys(), value, strict=True))
     for value in itertools.product(*par_lists_fft2dnd_small_cpx.values())
 ]
 
@@ -1058,6 +1059,8 @@ def test_FFTND_small_complex(par):
 def test_FFT_1dsignal(par):
     if par["engine"] == "mkl_fft" and not mkl_fft_enabled:
         pytest.skip("mkl_fft is not installed")
+    if par["engine"] == "fftw" and backend == "cupy":
+        pytest.skip("fftw does not work with CuPy arrays")
     np.random.seed(5)
     """Dot-test and inversion for FFT operator for 1d signal"""
     decimal = 3 if np.real(np.ones(1, par["dtype"])).dtype == np.float32 else 8
@@ -1177,6 +1180,8 @@ def test_FFT_2dsignal(par):
     """
     if par["engine"] == "mkl_fft" and not mkl_fft_enabled:
         pytest.skip("mkl_fft is not installed")
+    if par["engine"] == "fftw" and backend == "cupy":
+        pytest.skip("fftw does not work with CuPy arrays")
     np.random.seed(5)
     decimal = 3 if np.real(np.ones(1, par["dtype"])).dtype == np.float32 else 8
 
@@ -1394,6 +1399,8 @@ def test_FFT_3dsignal(par):
     """
     if par["engine"] == "mkl_fft" and not mkl_fft_enabled:
         pytest.skip("mkl_fft is not installed")
+    if par["engine"] == "fftw" and backend == "cupy":
+        pytest.skip("fftw does not work with CuPy arrays")
     np.random.seed(5)
     decimal = 3 if np.real(np.ones(1, par["dtype"])).dtype == np.float32 else 8
 

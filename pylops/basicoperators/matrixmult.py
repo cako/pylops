@@ -2,7 +2,6 @@ __all__ = ["MatrixMult"]
 
 import logging
 import warnings
-from typing import Optional, Union
 
 import numpy as np
 import scipy as sp
@@ -75,8 +74,8 @@ class MatrixMult(LinearOperator):
     def __init__(
         self,
         A: NDArray,
-        otherdims: Optional[Union[int, InputDimsLike]] = None,
-        forceflat: Optional[bool] = None,
+        otherdims: int | InputDimsLike | None = None,
+        forceflat: bool | None = None,
         dtype: DTypeLike = "float64",
         name: str = "M",
     ) -> None:
@@ -116,7 +115,9 @@ class MatrixMult(LinearOperator):
         # Check dtype for correctness (upcast to complex when A is complex)
         if np.iscomplexobj(A) and not np.iscomplexobj(np.ones(1, dtype=dtype)):
             dtype = A.dtype
-            warnings.warn("Matrix A is a complex object, dtype cast to %s" % dtype)
+            warnings.warn(
+                "Matrix A is a complex object, dtype cast to %s" % dtype, stacklevel=2
+            )
         super().__init__(
             dtype=np.dtype(dtype),
             dims=dims,

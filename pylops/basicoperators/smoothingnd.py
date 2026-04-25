@@ -1,6 +1,5 @@
 __all__ = ["SmoothingND"]
 
-from typing import Union
 
 import numpy as np
 
@@ -70,7 +69,7 @@ class SmoothingND(ConvolveND):
     def __init__(
         self,
         nsmooth: InputDimsLike,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         axes: InputDimsLike = (-2, -1),
         dtype: DTypeLike = "float64",
         name: str = "S",

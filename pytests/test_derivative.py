@@ -497,7 +497,7 @@ def test_SecondDerivative_forwaback(par):
     xx, yy = np.meshgrid(x, y)  # produces arrays of size (ny,nx)
     xxx, yyy, zzz = np.meshgrid(x, y, z)  # produces arrays of size (ny,nx,nz)
 
-    for kind in ("forward", "backward"):
+    for _ in ("forward", "backward"):
         # 1d
         D2op = SecondDerivative(
             par["nx"],
