@@ -264,7 +264,6 @@ print(f"Adjoint evaluations: {Dop.rmatvec_count}")
 # operator acts on one dimension of a 2d-array. We will see how in this case the forward
 # and adjoint passes can be applied on the flattened array as well as on the 2d-array directly
 
-#
 m, n = 10, 5
 d = np.arange(n) + 1.0
 x = np.ones((m, n))
