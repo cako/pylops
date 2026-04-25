@@ -40,7 +40,6 @@ jobs:
         pip install -r requirements-torch.txt
     - name: Install pylops
       run: |
-        # python -m setuptools_scm
         pip install .
     - name: Tests with pytest
       run: |

@@ -23,7 +23,6 @@ dependencies:
   - pip:
     - torch
     - pytest-runner
-    - setuptools_scm
     - shibuya
     - sphinx-design
     - sphinx-gallery
