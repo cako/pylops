@@ -141,24 +141,37 @@ def test_zoeppritz_and_approx_multipleangles():
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4)])
-def test_AVOLinearModelling(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_AVOLinearModelling(par, dtype):
     """Dot-test and inversion for AVOLinearModelling"""
     AVOop = AVOLinearModelling(
-        np.asarray(theta),
-        vsvp=par["vsvp"] if isinstance(par["vsvp"], float) else np.asarray(par["vsvp"]),
+        np.asarray(theta).astype(dtype),
+        vsvp=par["vsvp"]
+        if isinstance(par["vsvp"], float)
+        else np.asarray(par["vsvp"]).astype(dtype),
         nt0=nt0,
         linearization=par["linearization"],
+        dtype=dtype,
     )
-    assert dottest(AVOop, ntheta * nt0, 3 * nt0, backend=backend)
+    assert dottest(
+        AVOop,
+        ntheta * nt0,
+        3 * nt0,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
 
+    d = AVOop * np.asarray(m).astype(dtype)
     minv = lsqr(
         AVOop,
-        AVOop * np.asarray(m),
-        x0=np.zeros_like(m),
+        d,
+        x0=np.zeros_like(m).astype(dtype),
         damp=1e-20,
         niter=1000,
         atol=1e-8,
         btol=1e-8,
         show=0,
     )[0]
+
+    assert d.dtype == dtype
     assert_array_almost_equal(m, minv, decimal=3)

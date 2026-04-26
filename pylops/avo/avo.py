@@ -677,7 +677,9 @@ class AVOLinearModelling(LinearOperator):
             dimsd += self.spatdims
         super().__init__(dtype=np.dtype(dtype), dims=dims, dimsd=dimsd, name=name)
 
-        self.G = self.ncp.concatenate([gs.T[:, self.ncp.newaxis] for gs in Gs], axis=1)
+        self.G = self.ncp.concatenate(
+            [gs.astype(dtype).T[:, self.ncp.newaxis] for gs in Gs], axis=1
+        )
         # add dimensions to G to account for horizonal axes
         for _ in range(len(self.spatdims)):
             self.G = self.G[..., np.newaxis]

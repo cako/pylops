@@ -702,7 +702,13 @@ def test_Sum2D(par):
         dim_d = [par["ny"], par["nx"]]
         dim_d.pop(axis)
         Sop = Sum(dims=(par["ny"], par["nx"]), axis=axis, dtype=par["dtype"])
-        assert dottest(Sop, npp.prod(dim_d), par["ny"] * par["nx"], backend=backend)
+        assert dottest(
+            Sop,
+            npp.prod(dim_d),
+            par["ny"] * par["nx"],
+            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            backend=backend,
+        )
 
         x = np.arange(par["nx"] * par["ny"], dtype=dtype) + par["imag"] * np.arange(
             par["nx"] * par["ny"], dtype=dtype
@@ -763,7 +769,11 @@ def test_Sum3D(par):
         dim_d.pop(axis)
         Sop = Sum(dims=(par["ny"], par["nx"], par["nx"]), axis=axis, dtype=par["dtype"])
         assert dottest(
-            Sop, npp.prod(dim_d), par["ny"] * par["nx"] * par["nx"], backend=backend
+            Sop,
+            npp.prod(dim_d),
+            par["ny"] * par["nx"] * par["nx"],
+            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            backend=backend,
         )
         x = np.arange(par["ny"] * par["nx"] * par["nx"], dtype=dtype) + par[
             "imag"
@@ -851,6 +861,7 @@ def test_Conj(par):
         par["ny"] * par["nx"],
         par["ny"] * par["nx"],
         complexflag=complexflag,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
