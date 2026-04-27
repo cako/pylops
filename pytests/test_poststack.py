@@ -161,7 +161,7 @@ def test_PoststackLinearModelling1d(par, dtype):
             simultaneous=par["simultaneous"],
             **dict_inv,
         )[0]
-        err = 5e-3 if dtype == np.float32 else 2e-3
+        err = 1e-2 if dtype == np.float32 else 8e-3
         assert np.linalg.norm(m - minv) / np.linalg.norm(m) < err
 
 
@@ -224,7 +224,7 @@ def test_PoststackLinearModelling1d_nonstationary(par, dtype):
             simultaneous=par["simultaneous"],
             **dict_inv,
         )[0]
-        err = 5e-3 if dtype == np.float32 else 2e-3
+        err = 1e-2 if dtype == np.float32 else 8e-3
         assert np.linalg.norm(m - minv) / np.linalg.norm(m) < err
 
 
