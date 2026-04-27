@@ -138,8 +138,12 @@ def test_PoststackLinearModelling1d(par, dtype):
     for explicit, data in zip([True, False], [d_dense, d], strict=True):
         if par["epsR"] is None:
             dict_inv = (
-                dict() if not explicit else dict(cond=1e-6)
-            )  # to avoid instability
+                dict()
+                if not explicit
+                else dict(rcond=1e-6)
+                if int(os.environ.get("TEST_CUPY_PYLOPS", 0))
+                else dict(cond=1e-6)
+            )  # to avoid instability (cond for scipy abd rcond for cupy)
         else:
             dict_inv = (
                 dict(damp=0 if par["epsI"] is None else par["epsI"], iter_lim=80)
@@ -198,8 +202,12 @@ def test_PoststackLinearModelling1d_nonstationary(par, dtype):
     for explicit, data in zip([True, False], [d_dense, d], strict=True):
         if par["epsR"] is None:
             dict_inv = (
-                dict() if not explicit else dict(cond=1e-6)
-            )  # to avoid instability
+                dict()
+                if not explicit
+                else dict(rcond=1e-6)
+                if int(os.environ.get("TEST_CUPY_PYLOPS", 0))
+                else dict(cond=1e-6)
+            )  # to avoid instability (cond for scipy abd rcond for cupy)
         else:
             dict_inv = (
                 dict(damp=0 if par["epsI"] is None else par["epsI"], iter_lim=80)
@@ -266,8 +274,12 @@ def test_PoststackLinearModelling2d(par, dtype):
     for explicit, data in zip([True, False], [d_dense, d], strict=True):
         if explicit and not par["simultaneous"] and par["epsR"] is None:
             dict_inv = (
-                dict() if not explicit else dict(cond=1e-6)
-            )  # to avoid instability
+                dict()
+                if not explicit
+                else dict(rcond=1e-6)
+                if int(os.environ.get("TEST_CUPY_PYLOPS", 0))
+                else dict(cond=1e-6)
+            )  # to avoid instability (cond for scipy abd rcond for cupy)
         elif explicit and not par["simultaneous"] and par["epsR"] is not None:
             dict_inv = (
                 dict(damp=0 if par["epsI"] is None else par["epsI"], iter_lim=10)
