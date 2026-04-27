@@ -142,6 +142,7 @@ def test_MatrixMult(par):
     """Dot-test and inversion for MatrixMult operator"""
     np.random.seed(10)
     dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     G = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype) + par[
         "imag"
     ] * np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype)
@@ -178,6 +179,7 @@ def test_MatrixMult_sparse(par):
     """
     np.random.seed(10)
     dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     G = rand(par["ny"], par["nx"], density=0.75).astype(dtype) + par["imag"] * rand(
         par["ny"], par["nx"], density=0.75
     ).astype(dtype)
@@ -229,6 +231,7 @@ def test_MatrixMult_repeated(par):
     """
     np.random.seed(10)
     dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     G = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype) + par[
         "imag"
     ] * np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype)
@@ -268,6 +271,7 @@ def test_Identity_inplace(par):
     """Dot-test, forward and adjoint for Identity operator"""
     np.random.seed(10)
     dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     Iop = Identity(par["ny"], par["nx"], dtype=par["dtype"], inplace=True)
     assert dottest(
         Iop,
@@ -299,6 +303,7 @@ def test_Identity_noinplace(par):
     """Dot-test, forward and adjoint for Identity operator (not in place)"""
     np.random.seed(10)
     dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     Iop = Identity(par["ny"], par["nx"], dtype=par["dtype"], inplace=False)
     assert dottest(
         Iop,
@@ -334,6 +339,7 @@ def test_Zero(par):
     """Dot-test, forward and adjoint for Zero operator"""
     np.random.seed(10)
     dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     Zop = Zero(par["ny"], par["nx"], dtype=par["dtype"])
     assert dottest(
         Zop,
@@ -360,6 +366,7 @@ def test_Flip1D(par):
     """Dot-test, forward and adjoint for Flip operator on 1d signal"""
     np.random.seed(10)
     dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     x = np.arange(par["ny"], dtype=dtype) + par["imag"] * np.arange(
         par["ny"], dtype=dtype
     )
@@ -387,6 +394,7 @@ def test_Flip2D(par):
     """Dot-test, forward and adjoint for Flip operator on 2d signal"""
     np.random.seed(10)
     dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     x = {}
     x["0"] = np.outer(
         np.arange(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
@@ -428,6 +436,7 @@ def test_Flip3D(par):
     """Dot-test, forward and adjoint for Flip operator on 3d signal"""
     np.random.seed(10)
     dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     x = {}
     x["0"] = np.outer(
         np.arange(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
@@ -475,6 +484,7 @@ def test_Symmetrize1D(par):
     """Dot-test, forward and inverse for Symmetrize operator on 1d signal"""
     np.random.seed(10)
     dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     x = np.arange(par["ny"], dtype=dtype) + par["imag"] * np.arange(
         par["ny"], dtype=dtype
     )
@@ -501,6 +511,7 @@ def test_Symmetrize2D(par):
     """Dot-test, forward and inverse for Symmetrize operator on 2d signal"""
     np.random.seed(10)
     dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     x = {}
     x["0"] = np.outer(
         np.arange(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
@@ -540,6 +551,7 @@ def test_Symmetrize3D(par):
     """Dot-test, forward and adjoint for Symmetrize operator on 3d signal"""
     np.random.seed(10)
     dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     x = {}
     x["0"] = np.outer(
         np.arange(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
@@ -585,6 +597,7 @@ def test_Roll1D(par):
     """Dot-test, forward and adjoint for Roll operator on 1d signal"""
     np.random.seed(10)
     dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     x = np.arange(par["ny"], dtype=dtype) + par["imag"] * np.arange(
         par["ny"], dtype=dtype
     )
@@ -612,6 +625,7 @@ def test_Roll2D(par):
     """Dot-test, forward and inverse for Roll operator on 2d signal"""
     np.random.seed(10)
     dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     x = {}
     x["0"] = np.outer(
         np.arange(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
@@ -653,6 +667,7 @@ def test_Roll3D(par):
     """Dot-test, forward and adjoint for Roll operator on 3d signal"""
     np.random.seed(10)
     dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     x = {}
     x["0"] = np.outer(
         np.arange(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
@@ -885,10 +900,11 @@ def test_ToCupy(par):
     """Forward and adjoint for ToCupy operator (checking that it works also
     when cupy is not available)
     """
+    np.random.seed(10)
     dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     Top = ToCupy(par["nx"], dtype=par["dtype"])
 
-    np.random.seed(10)
     x = np.random.randn(par["nx"]).astype(dtype) + par["imag"] * np.random.randn(
         par["nx"]
     ).astype(dtype)
