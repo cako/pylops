@@ -101,27 +101,45 @@ par7 = {
 
 
 @pytest.mark.parametrize("par", [(par1), (par2)])
-def test_PoststackLinearModelling1d(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_PoststackLinearModelling1d(par, dtype):
     """Dot-test, comparison of dense vs lop implementation and
     inversion for PoststackLinearModelling in 1d with stationary wavelet
     """
     # Dense
-    PPop_dense = PoststackLinearModelling(wav, nt0=nt0, explicit=True)
-    assert dottest(PPop_dense, nt0, nt0, rtol=1e-4, backend=backend)
+    PPop_dense = PoststackLinearModelling(wav.astype(dtype), nt0=nt0, explicit=True)
+    assert dottest(
+        PPop_dense,
+        nt0,
+        nt0,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
 
     # Linear operator
-    PPop = PoststackLinearModelling(wav, nt0=nt0, explicit=False)
-    assert dottest(PPop, nt0, nt0, rtol=1e-4, backend=backend)
+    PPop = PoststackLinearModelling(wav.astype(dtype), nt0=nt0, explicit=False)
+    assert dottest(
+        PPop, nt0, nt0, rtol=1e-4 if dtype == np.float32 else 1e-6, backend=backend
+    )
 
-    # Compare data
-    d = PPop * m.ravel()
-    d_dense = PPop_dense * m.T.ravel()
+    # Compare data (dense vs lop) and check dtype
+    d = PPop * m.astype(dtype)
+    d_dense = PPop_dense * m.astype(dtype)
+    madj = PPop.H * d
+    madj_dense = PPop_dense.H * d_dense
+    assert d.dtype == dtype
+    assert d_dense.dtype == dtype
+    assert madj.dtype == dtype
+    assert madj_dense.dtype == dtype
     assert_array_almost_equal(d, d_dense, decimal=4)
 
-    # Inversion
-    for explicit in [True, False]:
+    # Inversion (note that since the operator is ill-conditioned, we cannot
+    # expect a perfect reconstruction, hence the large relative error threshold)
+    for explicit, data in zip([True, False], [d_dense, d], strict=True):
         if par["epsR"] is None:
-            dict_inv = {}
+            dict_inv = (
+                dict() if not explicit else dict(cond=1e-6)
+            )  # to avoid instability
         else:
             dict_inv = (
                 dict(damp=0 if par["epsI"] is None else par["epsI"], iter_lim=80)
@@ -130,40 +148,58 @@ def test_PoststackLinearModelling1d(par):
             )
 
         minv = PoststackInversion(
-            d,
-            wav,
-            m0=mback,
+            data,
+            wav.astype(dtype),
+            m0=mback.astype(dtype),
             explicit=explicit,
             epsR=par["epsR"],
             epsI=par["epsI"],
             simultaneous=par["simultaneous"],
-            **dict_inv
+            **dict_inv,
         )[0]
-        assert np.linalg.norm(m - minv) / np.linalg.norm(minv) < 1e-2
+        err = 5e-3 if dtype == np.float32 else 2e-3
+        assert np.linalg.norm(m - minv) / np.linalg.norm(m) < err
 
 
 @pytest.mark.parametrize("par", [(par1), (par2)])
-def test_PoststackLinearModelling1d_nonstationary(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_PoststackLinearModelling1d_nonstationary(par, dtype):
     """Dot-test, comparison of dense vs lop implementation and
     inversion for PoststackLinearModelling in 1d with nonstationary wavelet
     """
     # Dense
-    PPop_dense = PoststackLinearModelling(wavs, nt0=nt0, explicit=True)
-    assert dottest(PPop_dense, nt0, nt0, rtol=1e-4, backend=backend)
+    PPop_dense = PoststackLinearModelling(wavs.astype(dtype), nt0=nt0, explicit=True)
+    assert dottest(
+        PPop_dense,
+        nt0,
+        nt0,
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
 
     # Linear operator
-    PPop = PoststackLinearModelling(wavs, nt0=nt0, explicit=False)
-    assert dottest(PPop, nt0, nt0, rtol=1e-4, backend=backend)
+    PPop = PoststackLinearModelling(wavs.astype(dtype), nt0=nt0, explicit=False)
+    assert dottest(
+        PPop, nt0, nt0, rtol=1e-3 if dtype == np.float32 else 1e-6, backend=backend
+    )
 
-    # Compare data
-    d = PPop * m.ravel()
-    d_dense = PPop_dense * m.T.ravel()
+    # Compare data (dense vs lop) and check dtype
+    d = PPop * m.astype(dtype)
+    d_dense = PPop_dense * m.astype(dtype)
+    madj = PPop.H * d
+    madj_dense = PPop_dense.H * d_dense
+    assert d.dtype == dtype
+    assert d_dense.dtype == dtype
+    assert madj.dtype == dtype
+    assert madj_dense.dtype == dtype
     assert_array_almost_equal(d, d_dense, decimal=4)
 
     # Inversion
-    for explicit in [True, False]:
+    for explicit, data in zip([True, False], [d_dense, d], strict=True):
         if par["epsR"] is None:
-            dict_inv = {}
+            dict_inv = (
+                dict() if not explicit else dict(cond=1e-6)
+            )  # to avoid instability
         else:
             dict_inv = (
                 dict(damp=0 if par["epsI"] is None else par["epsI"], iter_lim=80)
@@ -171,41 +207,67 @@ def test_PoststackLinearModelling1d_nonstationary(par):
                 else dict(damp=0 if par["epsI"] is None else par["epsI"], niter=80)
             )
         minv = PoststackInversion(
-            d,
-            wavs,
-            m0=mback,
+            data,
+            wavs.astype(dtype),
+            m0=mback.astype(dtype),
             explicit=explicit,
             epsR=par["epsR"],
             epsI=par["epsI"],
             simultaneous=par["simultaneous"],
-            **dict_inv
+            **dict_inv,
         )[0]
-        assert np.linalg.norm(m - minv) / np.linalg.norm(minv) < 1e-2
+        err = 5e-3 if dtype == np.float32 else 2e-3
+        assert np.linalg.norm(m - minv) / np.linalg.norm(m) < err
 
 
 @pytest.mark.parametrize(
     "par", [(par1), (par2), (par3), (par4), (par5), (par6), (par7)]
 )
-def test_PoststackLinearModelling2d(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_PoststackLinearModelling2d(par, dtype):
     """Dot-test and inversion for PoststackLinearModelling in 2d"""
 
     # Dense
-    PPop_dense = PoststackLinearModelling(wav, nt0=nz, spatdims=nx, explicit=True)
-    assert dottest(PPop_dense, nz * nx, nz * nx, rtol=1e-4, backend=backend)
+    PPop_dense = PoststackLinearModelling(
+        wav.astype(dtype), nt0=nz, spatdims=nx, explicit=True
+    )
+    assert dottest(
+        PPop_dense,
+        nz * nx,
+        nz * nx,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
 
     # Linear operator
-    PPop = PoststackLinearModelling(wav, nt0=nz, spatdims=nx, explicit=False)
-    assert dottest(PPop, nz * nx, nz * nx, rtol=1e-4, backend=backend)
+    PPop = PoststackLinearModelling(
+        wav.astype(dtype), nt0=nz, spatdims=nx, explicit=False
+    )
+    assert dottest(
+        PPop,
+        nz * nx,
+        nz * nx,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
 
     # Compare data
-    d = (PPop * m2d.ravel()).reshape(nz, nx)
-    d_dense = (PPop_dense * m2d.ravel()).reshape(nz, nx)
+    d = PPop * m2d.astype(dtype)
+    d_dense = PPop_dense * m2d.astype(dtype)
+    madj = PPop.H * d
+    madj_dense = PPop_dense.H * d_dense
+    assert d.dtype == dtype
+    assert d_dense.dtype == dtype
+    assert madj.dtype == dtype
+    assert madj_dense.dtype == dtype
     assert_array_almost_equal(d, d_dense, decimal=4)
 
     # Inversion
-    for explicit in [True, False]:
+    for explicit, data in zip([True, False], [d_dense, d], strict=True):
         if explicit and not par["simultaneous"] and par["epsR"] is None:
-            dict_inv = {}
+            dict_inv = (
+                dict() if not explicit else dict(cond=1e-6)
+            )  # to avoid instability
         elif explicit and not par["simultaneous"] and par["epsR"] is not None:
             dict_inv = (
                 dict(damp=0 if par["epsI"] is None else par["epsI"], iter_lim=10)
@@ -219,14 +281,15 @@ def test_PoststackLinearModelling2d(par):
                 else dict(damp=0 if par["epsI"] is None else par["epsI"], niter=10)
             )
         minv2d = PoststackInversion(
-            d,
-            wav,
-            m0=mback2d,
+            data,
+            wav.astype(dtype),
+            m0=mback2d.astype(dtype),
             explicit=explicit,
             epsI=par["epsI"],
             epsR=par["epsR"],
             epsRL1=par["epsRL1"],
             simultaneous=par["simultaneous"],
-            **dict_inv
+            **dict_inv,
         )[0]
-        assert np.linalg.norm(m2d - minv2d) / np.linalg.norm(m2d) < 1e-1
+        err = 5e-1 if dtype == np.float32 else 1e-1
+        assert np.linalg.norm(m2d - minv2d) / np.linalg.norm(m2d) < err

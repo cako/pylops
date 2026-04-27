@@ -162,6 +162,7 @@ def test_AVOLinearModelling(par, dtype):
     )
 
     d = AVOop * np.asarray(m).astype(dtype)
+    madj = AVOop.H * d
     minv = lsqr(
         AVOop,
         d,
@@ -174,4 +175,5 @@ def test_AVOLinearModelling(par, dtype):
     )[0]
 
     assert d.dtype == dtype
+    assert madj.dtype == dtype
     assert_array_almost_equal(m, minv, decimal=3)
