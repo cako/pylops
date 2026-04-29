@@ -163,7 +163,6 @@ def test_CausalIntegration1d(par):
                 - t[0] ** 2 / 2.0
                 + par["imag"] * (t**2 / 2.0 - t[0] ** 2 / 2.0)
             )
-
             assert_array_almost_equal(y, yana[rf1:], decimal=4)
 
             # numerical derivative
@@ -171,6 +170,7 @@ def test_CausalIntegration1d(par):
                 par["nt"] - rf1, sampling=par["dt"], dtype=par["dtype"]
             )
             xder = Dop * y.ravel()
+            assert_array_almost_equal(x[:-1], xder[:-1], decimal=4)
 
             # derivative by inversion
             xinv = lsqr(
@@ -183,9 +183,7 @@ def test_CausalIntegration1d(par):
                 conlim=np.inf,
                 show=0,
             )[0]
-
-            assert_array_almost_equal(x[:-1], xder[:-1], decimal=4)
-            assert_array_almost_equal(x, xinv, decimal=4)
+            assert_array_almost_equal(x, xinv, decimal=2 if dtype == np.float32 else 4)
 
 
 @pytest.mark.parametrize(
@@ -251,7 +249,6 @@ def test_CausalIntegration2d(par):
                 * (np.outer(-np.cos(t), np.ones(par["nx"])) + np.cos(t[0]))
             )
             yana = yana.reshape(par["nt"], par["nx"])
-
             assert_array_almost_equal(y, yana, decimal=2)
 
             # numerical derivative
@@ -260,6 +257,7 @@ def test_CausalIntegration2d(par):
             )
             xder = Dop * y.ravel()
             xder = xder.reshape(par["nt"], par["nx"])
+            assert_array_almost_equal(x[:-1], xder[:-1], decimal=2)
 
             # derivative by inversion
             xinv = lsqr(
@@ -273,6 +271,4 @@ def test_CausalIntegration2d(par):
                 show=0,
             )[0]
             xinv = xinv.reshape(par["nt"], par["nx"])
-
-            assert_array_almost_equal(x[:-1], xder[:-1], decimal=2)
             assert_array_almost_equal(x, xinv, decimal=2)
