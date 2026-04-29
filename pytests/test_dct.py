@@ -28,11 +28,11 @@ def test_DCT1D(par, dtype):
             par["ny"],
             par["ny"],
             complexflag=0,
-            rtol=1e-3 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
         )
 
         y = Dct.H * (Dct * t)
-        np.testing.assert_allclose(t, y, rtol=1e-3 if dtype == np.float32 else 1e-6)
+        np.testing.assert_allclose(t, y, rtol=5e-4 if dtype == np.float32 else 1e-6)
 
 
 @pytest.mark.skipif(
@@ -55,11 +55,11 @@ def test_DCT2D(par, dtype):
                 par["nx"] * par["ny"],
                 par["nx"] * par["ny"],
                 complexflag=0,
-                rtol=1e-3 if dtype == np.float32 else 1e-6,
+                rtol=5e-4 if dtype == np.float32 else 1e-6,
             )
 
             y = Dct.H * (Dct * t)
-            np.testing.assert_allclose(t, y, rtol=1e-3 if dtype == np.float32 else 1e-6)
+            np.testing.assert_allclose(t, y, rtol=5e-4 if dtype == np.float32 else 1e-6)
 
 
 @pytest.mark.skipif(
@@ -80,11 +80,11 @@ def test_DCT3D(par, dtype):
                 par["nx"] * par["nx"] * par["nx"],
                 par["nx"] * par["nx"] * par["nx"],
                 complexflag=0,
-                rtol=1e-3 if dtype == np.float32 else 1e-6,
+                rtol=5e-4 if dtype == np.float32 else 1e-6,
             )
 
             y = Dct.H * (Dct * t)
-            np.testing.assert_allclose(t, y, rtol=1e-3 if dtype == np.float32 else 1e-6)
+            np.testing.assert_allclose(t, y, rtol=5e-4 if dtype == np.float32 else 1e-6)
 
 
 @pytest.mark.skipif(
@@ -102,8 +102,8 @@ def test_DCT_workers(par, dtype):
         par["ny"],
         par["ny"],
         complexflag=0,
-        rtol=1e-3 if dtype == np.float32 else 1e-6,
+        rtol=5e-4 if dtype == np.float32 else 1e-6,
     )
 
     y = Dct.H * (Dct * t)
-    np.testing.assert_allclose(t, y, rtol=1e-3 if dtype == np.float32 else 1e-6)
+    np.testing.assert_allclose(t, y, rtol=5e-4 if dtype == np.float32 else 1e-6)
