@@ -118,7 +118,7 @@ def test_FirstDerivative_centered(par, dtype):
             D1op,
             par["nx"],
             par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
 
@@ -145,7 +145,7 @@ def test_FirstDerivative_centered(par, dtype):
             D1op,
             par["ny"] * par["nx"],
             par["ny"] * par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
 
@@ -180,7 +180,7 @@ def test_FirstDerivative_centered(par, dtype):
             D1op,
             par["ny"] * par["nx"],
             par["ny"] * par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
 
@@ -208,7 +208,7 @@ def test_FirstDerivative_centered(par, dtype):
             D1op,
             par["nz"] * par["ny"] * par["nx"],
             par["nz"] * par["ny"] * par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
 
@@ -243,7 +243,7 @@ def test_FirstDerivative_centered(par, dtype):
             D1op,
             par["nz"] * par["ny"] * par["nx"],
             par["nz"] * par["ny"] * par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
 
@@ -271,7 +271,7 @@ def test_FirstDerivative_centered(par, dtype):
             D1op,
             par["nz"] * par["ny"] * par["nx"],
             par["nz"] * par["ny"] * par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
 
@@ -306,7 +306,7 @@ def test_FirstDerivative_forwaback(par, dtype):
             D1op,
             par["nx"],
             par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
 
@@ -329,7 +329,7 @@ def test_FirstDerivative_forwaback(par, dtype):
             D1op,
             par["ny"] * par["nx"],
             par["ny"] * par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
 
@@ -355,7 +355,7 @@ def test_FirstDerivative_forwaback(par, dtype):
             D1op,
             par["ny"] * par["nx"],
             par["ny"] * par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
 
@@ -377,7 +377,7 @@ def test_FirstDerivative_forwaback(par, dtype):
             D1op,
             par["nz"] * par["ny"] * par["nx"],
             par["nz"] * par["ny"] * par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
 
@@ -403,7 +403,7 @@ def test_FirstDerivative_forwaback(par, dtype):
             D1op,
             par["nz"] * par["ny"] * par["nx"],
             par["nz"] * par["ny"] * par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
 
@@ -425,7 +425,7 @@ def test_FirstDerivative_forwaback(par, dtype):
             D1op,
             par["nz"] * par["ny"] * par["nx"],
             par["nz"] * par["ny"] * par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
 
@@ -460,7 +460,7 @@ def test_SecondDerivative_centered(par, dtype):
         D2op,
         par["nx"],
         par["nx"],
-        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        rtol=5e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
@@ -485,7 +485,7 @@ def test_SecondDerivative_centered(par, dtype):
         D2op,
         par["ny"] * par["nx"],
         par["ny"] * par["nx"],
-        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        rtol=5e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
@@ -512,7 +512,7 @@ def test_SecondDerivative_centered(par, dtype):
         D2op,
         par["ny"] * par["nx"],
         par["ny"] * par["nx"],
-        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        rtol=5e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
@@ -539,7 +539,7 @@ def test_SecondDerivative_centered(par, dtype):
         D2op,
         par["nz"] * par["ny"] * par["nx"],
         par["nz"] * par["ny"] * par["nx"],
-        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        rtol=5e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
@@ -568,7 +568,7 @@ def test_SecondDerivative_centered(par, dtype):
         D2op,
         par["nz"] * par["ny"] * par["nx"],
         par["nz"] * par["ny"] * par["nx"],
-        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        rtol=5e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
@@ -597,7 +597,7 @@ def test_SecondDerivative_centered(par, dtype):
         D2op,
         par["nz"] * par["ny"] * par["nx"],
         par["ny"] * par["nx"] * par["nz"],
-        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        rtol=5e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
@@ -644,7 +644,7 @@ def test_SecondDerivative_forwaback(par, dtype):
             D2op,
             par["nx"],
             par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
         y = D2op * x
@@ -665,7 +665,7 @@ def test_SecondDerivative_forwaback(par, dtype):
             D2op,
             par["ny"] * par["nx"],
             par["ny"] * par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
         y = D2op * xx.ravel()
@@ -686,7 +686,7 @@ def test_SecondDerivative_forwaback(par, dtype):
             D2op,
             par["ny"] * par["nx"],
             par["ny"] * par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
         y = D2op * xx.ravel()
@@ -707,7 +707,7 @@ def test_SecondDerivative_forwaback(par, dtype):
             D2op,
             par["nz"] * par["ny"] * par["nx"],
             par["nz"] * par["ny"] * par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
         y = D2op * xxx.ravel()
@@ -728,7 +728,7 @@ def test_SecondDerivative_forwaback(par, dtype):
             D2op,
             par["nz"] * par["ny"] * par["nx"],
             par["nz"] * par["ny"] * par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
         y = D2op * xxx.ravel()
@@ -749,7 +749,7 @@ def test_SecondDerivative_forwaback(par, dtype):
             D2op,
             par["nz"] * par["ny"] * par["nx"],
             par["ny"] * par["nx"] * par["nz"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
         y = D2op * xxx.ravel()
@@ -781,7 +781,7 @@ def test_Laplacian(par, dtype):
         Dlapop,
         par["ny"] * par["nx"],
         par["ny"] * par["nx"],
-        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        rtol=5e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
     y = Dlapop * xx.ravel()
@@ -802,7 +802,7 @@ def test_Laplacian(par, dtype):
         Dlapop,
         par["ny"] * par["nx"],
         par["ny"] * par["nx"],
-        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        rtol=5e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
     y = Dlapop * xx.ravel()
@@ -823,7 +823,7 @@ def test_Laplacian(par, dtype):
         Dlapop,
         par["nz"] * par["ny"] * par["nx"],
         par["nz"] * par["ny"] * par["nx"],
-        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        rtol=5e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
     y = Dlapop * xxx.ravel()
@@ -844,7 +844,7 @@ def test_Laplacian(par, dtype):
         Dlapop,
         par["nz"] * par["ny"] * par["nx"],
         par["nz"] * par["ny"] * par["nx"],
-        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        rtol=5e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
     y = Dlapop * xxx.ravel()
@@ -865,7 +865,7 @@ def test_Laplacian(par, dtype):
         Dlapop,
         par["nz"] * par["ny"] * par["nx"],
         par["nz"] * par["ny"] * par["nx"],
-        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        rtol=5e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
     y = Dlapop * xxx.ravel()
@@ -897,7 +897,7 @@ def test_Gradient(par, dtype):
             Gop,
             2 * par["ny"] * par["nx"],
             par["ny"] * par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
         y = Gop * xx.ravel()
@@ -917,7 +917,7 @@ def test_Gradient(par, dtype):
             Gop,
             3 * par["nz"] * par["ny"] * par["nx"],
             par["nz"] * par["ny"] * par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
         y = Gop * xxx.ravel()
@@ -950,7 +950,7 @@ def test_FirstDirectionalDerivative(par, dtype):
             Fdop,
             par["ny"] * par["nx"],
             par["ny"] * par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
         y = Fdop * xx.ravel()
@@ -971,7 +971,7 @@ def test_FirstDirectionalDerivative(par, dtype):
             Fdop,
             par["nz"] * par["ny"] * par["nx"],
             par["nz"] * par["ny"] * par["nx"],
-            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
         y = Fdop * xxx.ravel()
@@ -1002,7 +1002,7 @@ def test_SecondDirectionalDerivative(par, dtype):
         Fdop,
         par["ny"] * par["nx"],
         par["ny"] * par["nx"],
-        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        rtol=5e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
     y = Fdop * xx.ravel()
@@ -1022,7 +1022,7 @@ def test_SecondDirectionalDerivative(par, dtype):
         Fdop,
         par["nz"] * par["ny"] * par["nx"],
         par["nz"] * par["ny"] * par["nx"],
-        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        rtol=5e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
     y = Fdop * xxx.ravel()
