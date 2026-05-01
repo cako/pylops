@@ -55,7 +55,7 @@ def _linearinterp(
     # find indices and weights
     iva_l = ncp.floor(iava).astype(int)
     iva_r = iva_l + 1
-    weights = iava - iva_l
+    weights = (iava - iva_l).astype(dtype)
 
     # create operators
     Op = Diagonal(1 - weights, dims=dimsd, axis=axis, dtype=dtype) * Restriction(
@@ -81,7 +81,7 @@ def _sincinterp(
     nreg = dims[axis]
     ireg = ncp.arange(nreg)
     sinc = ncp.tile(iava[:, np.newaxis], (1, nreg)) - ncp.tile(ireg, (len(iava), 1))
-    sinc = ncp.sinc(sinc)
+    sinc = ncp.sinc(sinc).astype(dtype)
 
     # identify additional dimensions and create MatrixMult operator
     otherdims = np.array(dims)
