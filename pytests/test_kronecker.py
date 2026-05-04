@@ -55,6 +55,7 @@ def test_Kroneker(par):
         par["ny"] ** 2,
         par["nx"] ** 2,
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
     y = Kop * x
