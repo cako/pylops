@@ -72,7 +72,7 @@ def test_trace_hutchpp(par):
     assert type(trace_true) == npp.dtype(dtype)
 
     trace_expl = Aop.trace(backend=backend)
-    assert to_numpy(trace_expl).dtype == np.dtype(dtype)
+    assert to_numpy(trace_expl).dtype == npp.dtype(dtype)
     assert_almost_equal(trace_true, trace_expl, decimal=5)
 
     # Hutch++
@@ -82,7 +82,7 @@ def test_trace_hutchpp(par):
         sampler=sampler,
         backend=backend,
     )
-    assert to_numpy(trace_est).dtype == np.dtype(dtype)
+    assert to_numpy(trace_est).dtype == npp.dtype(dtype)
     assert_almost_equal(trace_true, trace_est, decimal=5)
 
 
@@ -99,7 +99,7 @@ def test_trace_nahutchpp(par):
     assert type(trace_true) == npp.dtype(dtype)
 
     trace_expl = Aop.trace(backend=backend)
-    assert to_numpy(trace_expl).dtype == np.dtype(dtype)
+    assert to_numpy(trace_expl).dtype == npp.dtype(dtype)
     assert_almost_equal(trace_true, trace_expl, decimal=5)
 
     # NA-Hutch++
@@ -109,5 +109,5 @@ def test_trace_nahutchpp(par):
         sampler=sampler,
         backend=backend,
     )
-    assert to_numpy(trace_est).dtype == np.dtype(dtype)
+    assert to_numpy(trace_est).dtype == npp.dtype(dtype)
     assert_almost_equal(trace_true, trace_est, decimal=-1)

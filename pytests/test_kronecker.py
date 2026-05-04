@@ -16,19 +16,34 @@ from pylops.basicoperators import FirstDerivative, Identity, Kronecker, MatrixMu
 from pylops.optimization.basic import lsqr
 from pylops.utils import dottest
 
-par1 = {"ny": 11, "nx": 11, "imag": 0, "dtype": "float64"}  # square real
-par2 = {"ny": 21, "nx": 11, "imag": 0, "dtype": "float64"}  # overdetermined real
+par1 = {"ny": 11, "nx": 11, "imag": 0, "dtype": "float64"}  # square real (fp64)
+par2 = {"ny": 21, "nx": 11, "imag": 0, "dtype": "float64"}  # overdetermined real (fp64)
+par1s = {"ny": 11, "nx": 11, "imag": 0, "dtype": "float32"}  # square real (fp32)
+par2s = {
+    "ny": 21,
+    "nx": 11,
+    "imag": 0,
+    "dtype": "float32",
+}  # overdetermined real (fp32)
 par1j = {"ny": 11, "nx": 11, "imag": 1j, "dtype": "complex128"}  # square imag
 par2j = {"ny": 21, "nx": 11, "imag": 1j, "dtype": "complex128"}  # overdetermined imag
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j)])
+@pytest.mark.parametrize("par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j)])
 def test_Kroneker(par):
     """Dot-test, inversion and comparison with np.kron for Kronecker operator"""
     np.random.seed(10)
-    G1 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(par["dtype"])
-    G2 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(par["dtype"])
-    x = np.ones(par["nx"] ** 2) + par["imag"] * np.ones(par["nx"] ** 2)
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
+    G1 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype) + par[
+        "imag"
+    ] * np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype)
+    G2 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype) + par[
+        "imag"
+    ] * np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype)
+    x = np.ones(par["nx"] ** 2, dtype=dtype) + par["imag"] * np.ones(
+        par["nx"] ** 2, dtype=dtype
+    )
 
     Kop = Kronecker(
         MatrixMult(G1, dtype=par["dtype"]),
@@ -42,6 +57,10 @@ def test_Kroneker(par):
         complexflag=0 if par["imag"] == 0 else 3,
         backend=backend,
     )
+    y = Kop * x
+    xadj = Kop.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
 
     if backend == "numpy":  # cupy is not accurate enough for square systems
         xlsqr = lsqr(
@@ -49,7 +68,7 @@ def test_Kroneker(par):
             Kop * x,
             x0=np.zeros_like(x),
             damp=1e-20,
-            niter=300,
+            niter=1000,
             atol=0,
             btol=0,
             conlim=np.inf,
@@ -61,23 +80,25 @@ def test_Kroneker(par):
     assert_array_almost_equal(np.kron(G1, G2), Kop * np.eye(par["nx"] ** 2), decimal=3)
 
 
-@pytest.mark.parametrize("par", [(par1), (par2)])
+@pytest.mark.parametrize("par", [(par1), (par2), (par1s), (par2s)])
 def test_Kroneker_Derivative(par):
     """Use Kronecker operator to apply the Derivative operator over one axis
     and compare with FirstDerivative(... axis=axis)
     """
-    Dop = FirstDerivative(par["ny"], sampling=1, edge=True, dtype="float32")
+    Dop = FirstDerivative(par["ny"], sampling=1, edge=True, dtype=par["dtype"])
     D2op = FirstDerivative(
-        (par["ny"], par["nx"]), axis=0, sampling=1, edge=True, dtype="float32"
+        (par["ny"], par["nx"]), axis=0, sampling=1, edge=True, dtype=par["dtype"]
     )
 
     Kop = Kronecker(Dop, Identity(par["nx"], dtype=par["dtype"]), dtype=par["dtype"])
 
-    x = np.zeros((par["ny"], par["nx"])) + par["imag"] * np.zeros(
-        (par["ny"], par["nx"])
-    )
+    x = np.zeros((par["ny"], par["nx"]), dtype=par["dtype"])
     x[par["ny"] // 2, par["nx"] // 2] = 1
 
-    y = D2op * x.ravel()
     yk = Kop * x.ravel()
+    xadjk = Kop.H * yk
+    assert yk.dtype == par["dtype"]
+    assert xadjk.dtype == par["dtype"]
+
+    y = D2op * x.ravel()
     assert_array_equal(y, yk)
