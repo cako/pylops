@@ -97,54 +97,82 @@ par4 = {"niter": 10, "prescaled": False, "fftengine": "fftw", "kwargs_fft": None
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4)])
-def test_Marchenko_freq(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Marchenko_freq(par, dtype):
     """Solve marchenko equations using input Rs in frequency domain"""
+    dtypec = (np.empty(0, dtype=dtype) + 1j * np.empty(0, dtype=dtype)).dtype
+
     if par["prescaled"]:
         Rtwosided_fft_sc = np.sqrt(2 * nt - 1) * dt * dr * np.asarray(Rtwosided_fft)
     else:
         Rtwosided_fft_sc = np.asarray(Rtwosided_fft)
+    Rtwosided_fft_sc = Rtwosided_fft_sc.astype(dtypec)
+
     MarchenkoWM = Marchenko(
         Rtwosided_fft_sc,
         nt=nt,
         dt=dt,
         dr=dr,
         nfmax=nfmax,
-        wav=wav,
+        wav=wav.astype(dtype),
         toff=toff,
         nsmooth=nsmooth,
         prescaled=par["prescaled"],
         fftengine=par["fftengine"] if backend == "numpy" else "numpy",
         kwargs_fft=par["kwargs_fft"] if backend == "numpy" else None,
+        dtype=dtype,
     )
 
     solver_dict = (
         dict(iter_lim=par["niter"]) if backend == "numpy" else dict(niter=par["niter"])
     )
-    _, _, _, g_inv_minus, g_inv_plus = MarchenkoWM.apply_onepoint(
-        trav, G0=np.asarray(g0sub).T, rtm=True, greens=True, dottest=True, **solver_dict
+    _, _, p0_minus, g_inv_minus, g_inv_plus = MarchenkoWM.apply_onepoint(
+        trav.astype(dtype),
+        G0=np.asarray(g0sub.astype(dtype)).T,
+        rtm=True,
+        greens=True,
+        dottest=True if dtype == np.float64 else False,
+        **solver_dict,
     )
     ginvsub = (g_inv_minus + g_inv_plus)[:, nt - 1 :].T
     ginvsub_norm = ginvsub / ginvsub.max()
     gsub_norm = np.asarray(gsub / gsub.max())
+    assert p0_minus.dtype == dtype
+    assert ginvsub.dtype == dtype
     assert np.linalg.norm(gsub_norm - ginvsub_norm) / np.linalg.norm(gsub_norm) < 1e-1
 
 
 @pytest.mark.parametrize("par", [(par1)])
-def test_Marchenko_time(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Marchenko_time(par, dtype):
     """Solve marchenko equations using input Rs in time domain"""
     MarchenkoWM = Marchenko(
-        np.asarray(R), dt=dt, dr=dr, nfmax=nfmax, wav=wav, toff=toff, nsmooth=nsmooth
+        np.asarray(R.astype(dtype)),
+        dt=dt,
+        dr=dr,
+        nfmax=nfmax,
+        wav=wav.astype(dtype),
+        toff=toff,
+        nsmooth=nsmooth,
+        dtype=dtype,
     )
 
     solver_dict = (
         dict(iter_lim=par["niter"]) if backend == "numpy" else dict(niter=par["niter"])
     )
-    _, _, _, g_inv_minus, g_inv_plus = MarchenkoWM.apply_onepoint(
-        trav, G0=np.asarray(g0sub).T, rtm=True, greens=True, dottest=True, **solver_dict
+    _, _, p0_minus, g_inv_minus, g_inv_plus = MarchenkoWM.apply_onepoint(
+        trav.astype(dtype),
+        G0=np.asarray(g0sub.astype(dtype)).T,
+        rtm=True,
+        greens=True,
+        dottest=True if dtype == np.float64 else False,
+        **solver_dict,
     )
     ginvsub = (g_inv_minus + g_inv_plus)[:, nt - 1 :].T
     ginvsub_norm = ginvsub / ginvsub.max()
     gsub_norm = np.asarray(gsub / gsub.max())
+    assert p0_minus.dtype == dtype
+    assert ginvsub.dtype == dtype
     assert np.linalg.norm(gsub_norm - ginvsub_norm) / np.linalg.norm(gsub_norm) < 1e-1
 
 
@@ -170,21 +198,36 @@ def test_Marchenko_time_ana(par):
 
 
 @pytest.mark.parametrize("par", [(par1)])
-def test_Marchenko_timemulti_ana(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Marchenko_timemulti_ana(par, dtype):
     """Solve marchenko equations using input Rs in time domain with multiple
     points
     """
     MarchenkoWM = Marchenko(
-        np.asarray(R), dt=dt, dr=dr, nfmax=nfmax, wav=wav, toff=toff, nsmooth=nsmooth
+        np.asarray(R.astype(dtype)),
+        dt=dt,
+        dr=dr,
+        nfmax=nfmax,
+        wav=wav.astype(dtype),
+        toff=toff,
+        nsmooth=nsmooth,
+        dtype=dtype,
     )
 
     solver_dict = (
         dict(iter_lim=par["niter"]) if backend == "numpy" else dict(niter=par["niter"])
     )
-    _, _, g_inv_minus, g_inv_plus = MarchenkoWM.apply_multiplepoints(
-        trav_multi, nfft=2**11, rtm=False, greens=True, dottest=True, **solver_dict
+    _, _, p0_minus, g_inv_minus, g_inv_plus = MarchenkoWM.apply_multiplepoints(
+        trav_multi.astype(dtype),
+        nfft=2**11,
+        rtm=True,
+        greens=True,
+        dottest=True if dtype == np.float64 else False,
+        **solver_dict,
     )
     ginvsub = (g_inv_minus + g_inv_plus)[:, 1, nt - 1 :].T
     ginvsub_norm = ginvsub / ginvsub.max()
     gsub_norm = np.asarray(gsub / gsub.max())
+    assert p0_minus.dtype == dtype
+    assert ginvsub.dtype == dtype
     assert np.linalg.norm(gsub_norm - ginvsub_norm) / np.linalg.norm(gsub_norm) < 1e-1
