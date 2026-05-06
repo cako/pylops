@@ -38,7 +38,6 @@ par1 = {
     "nx": 10,
     "nt": 20,
     "kind": "p",
-    "dtype": "float32",
     "fftengine": "numpy",
     "kwargs_fft": {},
 }  # even, p, numpy
@@ -47,7 +46,6 @@ par2 = {
     "nx": 11,
     "nt": 21,
     "kind": "p",
-    "dtype": "float32",
     "fftengine": "numpy",
     "kwargs_fft": {},
 }  # odd, p, numpy
@@ -56,7 +54,6 @@ par1s = {
     "nx": 10,
     "nt": 20,
     "kind": "p",
-    "dtype": "float32",
     "fftengine": "scipy",
     "kwargs_fft": dict(workers=4),
 }  # even, p, scipy
@@ -65,7 +62,6 @@ par1w = {
     "nx": 10,
     "nt": 20,
     "kind": "p",
-    "dtype": "float32",
     "fftengine": "fft",
     "kwargs_fft": {},
 }  # even, p, fftw
@@ -74,14 +70,12 @@ par1v = {
     "nx": 10,
     "nt": 20,
     "kind": "vz",
-    "dtype": "float32",
 }  # even, vz, numpy
 par2v = {
     "ny": 9,
     "nx": 11,
     "nt": 21,
     "kind": "vz",
-    "dtype": "float32",
 }  # odd, vz, numpy
 
 # deghosting params
@@ -116,7 +110,8 @@ def create_data2D(datakind):
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par1s), (par1w)])
-def test_PhaseShift_2dsignal(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_PhaseShift_2dsignal(par, dtype):
     """Dot-test for PhaseShift of 2d signal"""
     vel = 1500.0
     zprop = 200
@@ -131,16 +126,27 @@ def test_PhaseShift_2dsignal(par):
         freq,
         kx,
         fftengine=par["fftengine"] if backend == "numpy" else "numpy",
-        dtype=par["dtype"],
+        dtype=dtype,
         **kwargs_fft,
     )
     assert dottest(
-        Pop, par["nt"] * par["nx"], par["nt"] * par["nx"], rtol=1e-3, backend=backend
+        Pop,
+        par["nt"] * par["nx"],
+        par["nt"] * par["nx"],
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
+
+    x = np.ones((par["nt"], par["nx"]), dtype=dtype)
+    y = Pop * x.ravel()
+    xadj = Pop.H * y
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
 
 
 @pytest.mark.parametrize("par", [(par1), (par2)])
-def test_PhaseShift_3dsignal(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_PhaseShift_3dsignal(par, dtype):
     """Dot-test for PhaseShift of 3d signal"""
     vel = 1500.0
     zprop = 200
@@ -148,14 +154,20 @@ def test_PhaseShift_3dsignal(par):
     kx = np.fft.fftshift(np.fft.fftfreq(par["nx"], 1.0))
     ky = np.fft.fftshift(np.fft.fftfreq(par["ny"], 1.0))
 
-    Pop = PhaseShift(vel, zprop, par["nt"], freq, kx, ky, dtype=par["dtype"])
+    Pop = PhaseShift(vel, zprop, par["nt"], freq, kx, ky, dtype=dtype)
     assert dottest(
         Pop,
         par["nt"] * par["nx"] * par["ny"],
         par["nt"] * par["nx"] * par["ny"],
-        rtol=1e-3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
+
+    x = np.ones((par["nt"], par["nx"], par["ny"]), dtype=dtype)
+    y = Pop * x.ravel()
+    xadj = Pop.H * y
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par1v), (par2v)])
@@ -176,7 +188,7 @@ def test_Deghosting_2dsignal(par):
         npad=0,
         ntaper=0,
         solver=lsqr,
-        dtype=par["dtype"],
+        dtype=np.float32,
         **dict(damp=1e-10, niter=60),
     )
 
