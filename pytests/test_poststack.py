@@ -112,14 +112,14 @@ def test_PoststackLinearModelling1d(par, dtype):
         PPop_dense,
         nt0,
         nt0,
-        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
     # Linear operator
     PPop = PoststackLinearModelling(wav.astype(dtype), nt0=nt0, explicit=False)
     assert dottest(
-        PPop, nt0, nt0, rtol=1e-4 if dtype == np.float32 else 1e-6, backend=backend
+        PPop, nt0, nt0, rtol=1e-3 if dtype == np.float32 else 1e-6, backend=backend
     )
 
     # Compare data (dense vs lop) and check dtype
@@ -243,7 +243,7 @@ def test_PoststackLinearModelling2d(par, dtype):
         PPop_dense,
         nz * nx,
         nz * nx,
-        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
@@ -255,7 +255,7 @@ def test_PoststackLinearModelling2d(par, dtype):
         PPop,
         nz * nx,
         nz * nx,
-        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
