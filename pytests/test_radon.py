@@ -235,13 +235,13 @@ def test_Radon3D(par, dtype):
         engine=par["engine"],
         dtype=dtype,
     )
-
     assert dottest(
         Rop,
         par["nhy"] * par["nhx"] * par["nt"],
         par["npy"] * par["npx"] * par["nt"],
         rtol=1e-3 if dtype == np.float32 else 1e-6,
     )
+
     y = Rop * x.ravel()
     y1 = R1op * x.ravel()
     assert y.dtype == dtype

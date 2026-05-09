@@ -237,15 +237,18 @@ par3b = {
         (par3b),
     ],
 )
-def test_PrestackLinearModelling(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_PrestackLinearModelling(par, dtype):
     """Dot-test, comparison of dense vs lop implementation and
     inversion for PrestackLinearModelling
     """
     # Dense
     PPop_dense = PrestackLinearModelling(
-        wav,
-        theta,
-        vsvp=par["vsvp"],
+        wav.astype(dtype),
+        theta.astype(dtype),
+        vsvp=par["vsvp"]
+        if isinstance(par["vsvp"], float)
+        else par["vsvp"].astype(dtype),
         nt0=nt0,
         linearization=par["linearization"],
         explicit=True,
@@ -255,29 +258,45 @@ def test_PrestackLinearModelling(par):
         PPop_dense,
         nt0 * ntheta,
         nt0 * _linearizations[par["linearization"]],
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
     # Linear operator
     PPop = PrestackLinearModelling(
-        wav,
-        theta,
-        vsvp=par["vsvp"],
+        wav.astype(dtype),
+        theta.astype(dtype),
+        vsvp=par["vsvp"]
+        if isinstance(par["vsvp"], float)
+        else par["vsvp"].astype(dtype),
         nt0=nt0,
         linearization=par["linearization"],
         explicit=False,
         kind=par["kind"],
     )
     assert dottest(
-        PPop, nt0 * ntheta, nt0 * _linearizations[par["linearization"]], backend=backend
+        PPop,
+        nt0 * ntheta,
+        nt0 * _linearizations[par["linearization"]],
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # Compare data
-    d = PPop * m.ravel()
+    d = PPop * m.astype(dtype).ravel()
     d = d.reshape(nt0, ntheta)
-    d_dense = PPop_dense * m.T.ravel()
+    d_dense = PPop_dense * m.astype(dtype).T.ravel()
     d_dense = d_dense.reshape(ntheta, nt0).T
+    madj = PPop.H * d.ravel()
+    madj = madj.reshape(nt0, _linearizations[par["linearization"]])
+    madj_dense = PPop_dense.H * d_dense.T.ravel()
+    madj_dense = madj_dense.reshape(_linearizations[par["linearization"]], nt0).T
+    assert d.dtype == dtype
+    assert d_dense.dtype == dtype
+    assert madj.dtype == dtype
+    assert madj_dense.dtype == dtype
     assert_array_almost_equal(d, d_dense, decimal=4)
+    assert_array_almost_equal(madj, madj_dense, decimal=4)
 
     # Inversion
     for explicit in [True, False]:
@@ -294,9 +313,9 @@ def test_PrestackLinearModelling(par):
             )
         minv = PrestackInversion(
             d,
-            theta,
-            wav,
-            m0=mback,
+            theta.astype(dtype),
+            wav.astype(dtype),
+            m0=mback.astype(dtype),
             explicit=explicit,
             epsI=par["epsI"],
             epsR=par["epsR"],
@@ -305,36 +324,56 @@ def test_PrestackLinearModelling(par):
             kind=par["kind"],
             **dict_inv,
         )
-        assert np.linalg.norm(m - minv) / np.linalg.norm(minv) < 4e-2
+        err = 1e-1 if dtype == np.float32 else 5e-2
+        assert np.linalg.norm(m - minv) / np.linalg.norm(minv) < err
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4)])
-def test_PrestackWaveletModelling(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_PrestackWaveletModelling(par, dtype):
     """Dot-test and inversion for PrestackWaveletModelling"""
     # Operators
     Wavestop = PrestackWaveletModelling(
-        m,
-        theta,
+        m.astype(dtype),
+        theta.astype(dtype),
         nwav=ntwav,
         wavc=wavc,
-        vsvp=par["vsvp"],
+        vsvp=par["vsvp"]
+        if isinstance(par["vsvp"], float)
+        else par["vsvp"].astype(dtype),
         linearization=par["linearization"],
     )
-    assert dottest(Wavestop, nt0 * ntheta, ntwav, backend=backend)
+    assert dottest(
+        Wavestop,
+        nt0 * ntheta,
+        ntwav,
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
 
     Wavestop_phase = PrestackWaveletModelling(
-        m,
-        theta,
+        m.astype(dtype),
+        theta.astype(dtype),
         nwav=ntwav,
         wavc=wavc,
-        vsvp=par["vsvp"],
+        vsvp=par["vsvp"]
+        if isinstance(par["vsvp"], float)
+        else par["vsvp"].astype(dtype),
         linearization=par["linearization"],
     )
-    assert dottest(Wavestop_phase, nt0 * ntheta, ntwav, backend=backend)
+    assert dottest(
+        Wavestop_phase,
+        nt0 * ntheta,
+        ntwav,
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
 
     # Create data
     d = (Wavestop * wav).reshape(ntheta, nt0).T
     d_phase = (Wavestop_phase * wav_phase).reshape(ntheta, nt0).T
+    assert d.dtype == dtype
+    assert d_phase.dtype == dtype
 
     # Estimate wavelet
     wav_est = lsqr(
@@ -367,38 +406,59 @@ def test_PrestackWaveletModelling(par):
 @pytest.mark.parametrize(
     "par", [(par1), (par3), (par2s), (par4s), (par1r), (par3r), (par1b), (par3b)]
 )
-def test_PrestackLinearModelling2d(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_PrestackLinearModelling2d(par, dtype):
     """Dot-test and inversion for PoststackLinearModelling in 2d"""
     nm = _linearizations[par["linearization"]]
     # Dense
     PPop_dense = PrestackLinearModelling(
-        wav,
-        theta,
-        vsvp=par["vsvp"],
+        wav.astype(dtype),
+        theta.astype(dtype),
+        vsvp=par["vsvp"]
+        if isinstance(par["vsvp"], float)
+        else par["vsvp"].astype(dtype),
         nt0=nz,
         spatdims=(nx,),
         linearization=par["linearization"],
         explicit=True,
     )
-    assert dottest(PPop_dense, nz * ntheta * nx, nz * nm * nx, backend=backend)
+    assert dottest(
+        PPop_dense,
+        nz * ntheta * nx,
+        nz * nm * nx,
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
 
     # Linear operator
     PPop = PrestackLinearModelling(
-        wav,
-        theta,
-        vsvp=par["vsvp"],
+        wav.astype(dtype),
+        theta.astype(dtype),
+        vsvp=par["vsvp"]
+        if isinstance(par["vsvp"], float)
+        else par["vsvp"].astype(dtype),
         nt0=nz,
         spatdims=(nx,),
         linearization=par["linearization"],
         explicit=False,
     )
-    assert dottest(PPop_dense, nz * ntheta * nx, nz * nm * nx, backend=backend)
+    assert dottest(
+        PPop_dense,
+        nz * ntheta * nx,
+        nz * nm * nx,
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
 
     # Compare data
-    d = (PPop * m2d.ravel()).reshape(nz, ntheta, nx)
+    d = (PPop * m2d.astype(dtype).ravel()).reshape(nz, ntheta, nx)
     d_dense = (
-        (PPop_dense * m2d.swapaxes(0, 1).ravel()).reshape(ntheta, nz, nx).swapaxes(0, 1)
+        (PPop_dense * m2d.astype(dtype).swapaxes(0, 1).ravel())
+        .reshape(ntheta, nz, nx)
+        .swapaxes(0, 1)
     )
+    assert d.dtype == dtype
+    assert d_dense.dtype == dtype
     assert_array_almost_equal(d, d_dense, decimal=4)
 
     # Inversion
@@ -416,9 +476,9 @@ def test_PrestackLinearModelling2d(par):
             )
         minv2d = PrestackInversion(
             d,
-            theta,
-            wav,
-            m0=mback2d,
+            theta.astype(dtype),
+            wav.astype(dtype),
+            m0=mback2d.astype(dtype),
             explicit=explicit,
             epsI=par["epsI"],
             epsR=par["epsR"],
@@ -426,4 +486,5 @@ def test_PrestackLinearModelling2d(par):
             simultaneous=par["simultaneous"],
             **dict_inv,
         )
-        assert np.linalg.norm(m2d - minv2d) / np.linalg.norm(minv2d) < 2e-1
+        err = 1e-1 if dtype == np.float32 else 5e-2
+        assert np.linalg.norm(m2d - minv2d) / np.linalg.norm(minv2d) < err

@@ -15,8 +15,8 @@ import pytest
 from pylops.basicoperators import Pad
 from pylops.utils import dottest
 
-par1 = {"ny": 11, "nx": 11, "pad": ((0, 2), (4, 5)), "dtype": "float64"}  # square
-par2 = {"ny": 21, "nx": 11, "pad": ((3, 1), (0, 3)), "dtype": "float64"}  # rectangular
+par1 = {"ny": 11, "nx": 11, "pad": ((0, 2), (4, 5))}  # square
+par2 = {"ny": 21, "nx": 11, "pad": ((3, 1), (0, 3))}  # rectangular
 
 np.random.seed(10)
 
@@ -36,26 +36,46 @@ def test_Pad_2d_negative(par):
 
 
 @pytest.mark.parametrize("par", [(par1)])
-def test_Pad1d(par):
-    """Dot-test and adjoint for Pad operator on 1d signal"""
-    Pop = Pad(dims=par["ny"], pad=par["pad"][0], dtype=par["dtype"])
-    assert dottest(Pop, Pop.shape[0], Pop.shape[1], backend=backend)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Pad1d(par, dtype):
+    """Dot-test and forward/adjoint for Pad operator on 1d signal"""
+    Pop = Pad(dims=par["ny"], pad=par["pad"][0], dtype=dtype)
+    assert dottest(
+        Pop,
+        Pop.shape[0],
+        Pop.shape[1],
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
 
-    x = np.arange(par["ny"], dtype=par["dtype"]) + 1.0
+    x = np.arange(par["ny"], dtype=dtype) + 1.0
     y = Pop * x
-    xinv = Pop.H * y
-    assert_array_equal(x, xinv)
+    xadj = Pop.H * y
+
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+    assert_array_equal(x, xadj)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2)])
-def test_Pad2d(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Pad2d(par, dtype):
     """Dot-test and adjoint for Pad operator on 2d signal"""
-    Pop = Pad(dims=(par["ny"], par["nx"]), pad=par["pad"], dtype=par["dtype"])
-    assert dottest(Pop, Pop.shape[0], Pop.shape[1], backend=backend)
+    Pop = Pad(dims=(par["ny"], par["nx"]), pad=par["pad"], dtype=dtype)
+    assert dottest(
+        Pop,
+        Pop.shape[0],
+        Pop.shape[1],
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
 
-    x = (np.arange(par["ny"] * par["nx"], dtype=par["dtype"]) + 1.0).reshape(
+    x = (np.arange(par["ny"] * par["nx"], dtype=dtype) + 1.0).reshape(
         par["ny"], par["nx"]
     )
     y = Pop * x.ravel()
     xadj = Pop.H * y
+
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
     assert_array_equal(x.ravel(), xadj)

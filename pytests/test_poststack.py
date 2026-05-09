@@ -132,6 +132,7 @@ def test_PoststackLinearModelling1d(par, dtype):
     assert madj.dtype == dtype
     assert madj_dense.dtype == dtype
     assert_array_almost_equal(d, d_dense, decimal=4)
+    assert_array_almost_equal(madj, madj_dense, decimal=4)
 
     # Inversion (note that since the operator is ill-conditioned, we cannot
     # expect a perfect reconstruction, hence the large relative error threshold)
