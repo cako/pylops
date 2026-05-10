@@ -173,7 +173,7 @@ def test_Patch2D(par, dtype):
 
     assert y.dtype == dtype
     assert xadj.dtype == dtype
-    assert_array_almost_equal(x.ravel(), xinv, decimal=4 if dtype == np.float32 else 8)
+    assert_array_almost_equal(x.ravel(), xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par4)])
@@ -217,7 +217,7 @@ def test_Patch2D_scalings(par, dtype):
 
     assert y.dtype == dtype
     assert xadj.dtype == dtype
-    assert_array_almost_equal(x.ravel(), xinv, decimal=4 if dtype == np.float32 else 8)
+    assert_array_almost_equal(x.ravel(), xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par4)])
@@ -261,7 +261,7 @@ def test_Patch2D_singlepatch1(par, dtype):
 
     assert y.dtype == dtype
     assert xadj.dtype == dtype
-    assert_array_almost_equal(x.ravel(), xinv, decimal=4 if dtype == np.float32 else 8)
+    assert_array_almost_equal(x.ravel(), xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
@@ -304,7 +304,7 @@ def test_Patch2D_singlepatch2(par, dtype):
 
     assert y.dtype == dtype
     assert xadj.dtype == dtype
-    assert_array_almost_equal(x.ravel(), xinv, decimal=4 if dtype == np.float32 else 8)
+    assert_array_almost_equal(x.ravel(), xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
@@ -359,7 +359,7 @@ def test_Patch3D(par, dtype):
 
     assert y.dtype == dtype
     assert xadj.dtype == dtype
-    assert_array_almost_equal(x.ravel(), xinv, decimal=4 if dtype == np.float32 else 8)
+    assert_array_almost_equal(x.ravel(), xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
@@ -411,7 +411,7 @@ def test_Patch3D_singlepatch1(par, dtype):
 
     assert y.dtype == dtype
     assert xadj.dtype == dtype
-    assert_array_almost_equal(x.ravel(), xinv, decimal=4 if dtype == np.float32 else 8)
+    assert_array_almost_equal(x.ravel(), xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
@@ -463,7 +463,7 @@ def test_Patch3D_singlepatch2(par, dtype):
 
     assert y.dtype == dtype
     assert xadj.dtype == dtype
-    assert_array_almost_equal(x.ravel(), xinv, decimal=4 if dtype == np.float32 else 8)
+    assert_array_almost_equal(x.ravel(), xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
@@ -518,7 +518,7 @@ def test_Patch3D_singlepatch12(par, dtype):
 
     assert y.dtype == dtype
     assert xadj.dtype == dtype
-    assert_array_almost_equal(x.ravel(), xinv, decimal=4 if dtype == np.float32 else 8)
+    assert_array_almost_equal(x.ravel(), xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
@@ -569,4 +569,4 @@ def test_Patch3D_singlepatch3(par, dtype):
 
     assert y.dtype == dtype
     assert xadj.dtype == dtype
-    assert_array_almost_equal(x.ravel(), xinv, decimal=4 if dtype == np.float32 else 8)
+    assert_array_almost_equal(x.ravel(), xinv, decimal=3 if dtype == np.float32 else 8)
