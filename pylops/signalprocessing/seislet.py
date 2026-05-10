@@ -451,7 +451,7 @@ class Seislet(LinearOperator):
         super().__init__(dtype=np.dtype(dtype), dims=dims, dimsd=dimsd, name=name)
 
         pad = [(0, ndimpow2 - self.dims[0])] + [(0, 0)] * (len(self.dims) - 1)
-        self.pad = Pad(self.dims, pad)
+        self.pad = Pad(self.dims, pad, dtype=self.dtype)
         self.nx, self.nt = self.dimsd
 
         # define levels
@@ -473,7 +473,9 @@ class Seislet(LinearOperator):
     def _matvec(self, x: NDArray) -> NDArray:
         x = self.pad.matvec(x)
         x = np.reshape(x, self.dimsd)
-        y = np.zeros((np.sum(self.levels_size) + self.levels_size[-1], self.nt))
+        y = np.zeros(
+            (np.sum(self.levels_size) + self.levels_size[-1], self.nt), dtype=self.dtype
+        )
         for ilevel in range(self.level):
             odd = x[1::2]
             even = x[::2]
@@ -519,7 +521,7 @@ class Seislet(LinearOperator):
                     backward=False,
                     adj=True,
                 )
-                y = np.zeros((2 * even.shape[0], self.nt))
+                y = np.zeros((2 * even.shape[0], self.nt), dtype=self.dtype)
                 y[1::2] = odd
                 y[::2] = even
             y = self.pad.rmatvec(y.ravel())
@@ -542,7 +544,7 @@ class Seislet(LinearOperator):
             odd = res + self.predict(
                 even, self.dt, self.dx, self.slopes, repeat=ilevel - 1, backward=False
             )
-            y = np.zeros((2 * even.shape[0], self.nt))
+            y = np.zeros((2 * even.shape[0], self.nt), dtype=self.dtype)
             y[1::2] = odd
             y[::2] = even
         y = self.pad.rmatvec(y.ravel())
