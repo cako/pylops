@@ -13,6 +13,7 @@ else:
 import pytest
 
 from pylops.basicoperators import MatrixMult
+from pylops.optimization.basic import cgls
 from pylops.signalprocessing import Patch2D, Patch3D
 from pylops.signalprocessing.patch2d import patch2d_design
 from pylops.signalprocessing.patch3d import patch3d_design
@@ -166,14 +167,14 @@ def test_Patch2D(par, dtype):
         rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
-    x = np.ones(par["ny"] * nwins[0] * par["nt"] * nwins[1], dtype=dtype)
+    x = np.ones((nwins[0], nwins[1], par["ny"], par["nt"]), dtype=dtype)
     y = Pop * x.ravel()
     xadj = Pop.H * y
-    xinv = Pop / y
+    xinv = cgls(Pop, y, niter=50)[0]
 
     assert y.dtype == dtype
     assert xadj.dtype == dtype
-    assert_array_almost_equal(x.ravel(), xinv, decimal=3 if dtype == np.float32 else 8)
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par4)])
@@ -210,14 +211,14 @@ def test_Patch2D_scalings(par, dtype):
         rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
-    x = np.ones(par["ny"] * nwins[0] * par["nt"] * nwins[1], dtype=dtype)
+    x = np.ones((nwins[0], nwins[1], par["ny"], par["nt"]), dtype=dtype)
     y = Pop * x.ravel()
     xadj = Pop.H * y
-    xinv = Pop / y
+    xinv = cgls(Pop, y, niter=50)[0]
 
     assert y.dtype == dtype
     assert xadj.dtype == dtype
-    assert_array_almost_equal(x.ravel(), xinv, decimal=3 if dtype == np.float32 else 8)
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par4)])
@@ -254,14 +255,14 @@ def test_Patch2D_singlepatch1(par, dtype):
         rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
-    x = np.ones(par["npy"] * nwins[0] * par["nt"] * nwins[1], dtype=dtype)
+    x = np.ones((nwins[0], nwins[1], par["npy"], par["nt"]), dtype=dtype)
     y = Pop * x.ravel()
     xadj = Pop.H * y
-    xinv = Pop / y
+    xinv = cgls(Pop, y, niter=50)[0]
 
     assert y.dtype == dtype
     assert xadj.dtype == dtype
-    assert_array_almost_equal(x.ravel(), xinv, decimal=3 if dtype == np.float32 else 8)
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
@@ -297,14 +298,14 @@ def test_Patch2D_singlepatch2(par, dtype):
         rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
-    x = np.ones(par["ny"] * nwins[0] * par["npt"] * nwins[1], dtype=dtype)
+    x = np.ones((nwins[0], nwins[1], par["ny"], par["nt"]), dtype=dtype)
     y = Pop * x.ravel()
     xadj = Pop.H * y
-    xinv = Pop / y
+    xinv = cgls(Pop, y, niter=50)[0]
 
     assert y.dtype == dtype
     assert xadj.dtype == dtype
-    assert_array_almost_equal(x.ravel(), xinv, decimal=3 if dtype == np.float32 else 8)
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
@@ -351,15 +352,15 @@ def test_Patch3D(par, dtype):
         backend=backend,
     )
     x = np.ones(
-        (par["ny"] * nwins[0], par["nx"] * nwins[1], par["nt"] * nwins[2]), dtype=dtype
+        (nwins[0], nwins[1], nwins[2], par["ny"], par["nx"], par["nt"]),
     )
     y = Pop * x.ravel()
     xadj = Pop.H * y
-    xinv = Pop / y
+    xinv = cgls(Pop, y, niter=50)[0]
 
     assert y.dtype == dtype
     assert xadj.dtype == dtype
-    assert_array_almost_equal(x.ravel(), xinv, decimal=3 if dtype == np.float32 else 8)
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
@@ -403,15 +404,15 @@ def test_Patch3D_singlepatch1(par, dtype):
         backend=backend,
     )
     x = np.ones(
-        (par["npy"] * nwins[0], par["nx"] * nwins[1], par["nt"] * nwins[2]), dtype=dtype
+        (nwins[0], nwins[1], nwins[2], par["npy"], par["nx"], par["nt"]),
     )
     y = Pop * x.ravel()
     xadj = Pop.H * y
-    xinv = Pop / y
+    xinv = cgls(Pop, y, niter=50)[0]
 
     assert y.dtype == dtype
     assert xadj.dtype == dtype
-    assert_array_almost_equal(x.ravel(), xinv, decimal=3 if dtype == np.float32 else 8)
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
@@ -455,15 +456,15 @@ def test_Patch3D_singlepatch2(par, dtype):
         backend=backend,
     )
     x = np.ones(
-        (par["ny"] * nwins[0], par["npx"] * nwins[1], par["nt"] * nwins[2]), dtype=dtype
+        (nwins[0], nwins[1], nwins[2], par["ny"], par["npx"], par["nt"]),
     )
     y = Pop * x.ravel()
     xadj = Pop.H * y
-    xinv = Pop / y
+    xinv = cgls(Pop, y, niter=50)[0]
 
     assert y.dtype == dtype
     assert xadj.dtype == dtype
-    assert_array_almost_equal(x.ravel(), xinv, decimal=3 if dtype == np.float32 else 8)
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
@@ -509,16 +510,16 @@ def test_Patch3D_singlepatch12(par, dtype):
         backend=backend,
     )
     x = np.ones(
-        (par["npy"] * nwins[0], par["npx"] * nwins[1], par["nt"] * nwins[2]),
+        (nwins[0], nwins[1], nwins[2], par["npy"], par["npx"], par["nt"]),
         dtype=dtype,
     )
     y = Pop * x.ravel()
     xadj = Pop.H * y
-    xinv = Pop / y
+    xinv = cgls(Pop, y, niter=50)[0]
 
     assert y.dtype == dtype
     assert xadj.dtype == dtype
-    assert_array_almost_equal(x.ravel(), xinv, decimal=3 if dtype == np.float32 else 8)
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
@@ -561,12 +562,12 @@ def test_Patch3D_singlepatch3(par, dtype):
         backend=backend,
     )
     x = np.ones(
-        (par["ny"] * nwins[0], par["nx"] * nwins[1], par["npt"] * nwins[2]), dtype=dtype
+        (nwins[0], nwins[1], nwins[2], par["ny"], par["nx"], par["npt"]),
     )
     y = Pop * x.ravel()
     xadj = Pop.H * y
-    xinv = Pop / y
+    xinv = cgls(Pop, y, niter=50)[0]
 
     assert y.dtype == dtype
     assert xadj.dtype == dtype
-    assert_array_almost_equal(x.ravel(), xinv, decimal=3 if dtype == np.float32 else 8)
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
