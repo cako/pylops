@@ -17,28 +17,31 @@ import torch
 from pylops import MatrixMult, TorchOperator
 from pylops.utils.backend import to_numpy
 
-par1 = {"ny": 11, "nx": 11, "dtype": np.float32}  # square
-par2 = {"ny": 21, "nx": 11, "dtype": np.float32}  # overdetermined
+par1 = {"ny": 11, "nx": 11}  # square
+par2 = {"ny": 21, "nx": 11}  # overdetermined
 
 np.random.seed(0)
 
 
 @pytest.mark.skipif(platform.system() == "Darwin", reason="Not OSX enabled")
 @pytest.mark.parametrize("par", [(par1)])
-def test_TorchOperator(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_TorchOperator(par, dtype):
     """Apply forward and gradient. As for linear operators the gradient
     must equal the adjoint of operator applied to the same vector, the two
     results are also checked to be the same.
     """
     device = "cpu" if backend == "numpy" else "cuda"
 
-    Dop = MatrixMult(np.random.normal(0.0, 1.0, (par["ny"], par["nx"])))
+    Dop = MatrixMult(
+        np.random.normal(0.0, 1.0, (par["ny"], par["nx"])).astype(dtype), dtype=dtype
+    )
     Top = TorchOperator(Dop, batch=False, device="cpu" if backend == "numpy" else "gpu")
 
-    x = np.random.normal(0.0, 1.0, par["nx"])
+    x = np.random.normal(0.0, 1.0, par["nx"]).astype(dtype)
     xt = torch.from_numpy(to_numpy(x)).to(device).view(-1)
     xt.requires_grad = True
-    v = np.random.normal(0.0, 1.0, par["ny"])
+    v = np.random.normal(0.0, 1.0, par["ny"]).astype(dtype)
     vt = torch.from_numpy(to_numpy(v)).to(device).view(-1)
 
     # pylops operator
@@ -48,46 +51,60 @@ def test_TorchOperator(par):
     # torch operator
     yt = Top.apply(xt)
     yt.backward(vt, retain_graph=True)
+    yt = yt.detach().cpu()
+    xadjt = xt.grad.cpu()
 
-    assert_array_equal(y, yt.detach().cpu().numpy())
-    assert_array_equal(xadj, xt.grad.cpu().numpy())
+    assert yt.dtype == torch.from_numpy(x).dtype
+    assert xadjt.dtype == torch.from_numpy(x).dtype
+    assert_array_equal(y, yt.numpy())
+    assert_array_equal(xadj, xadjt.numpy())
 
 
 @pytest.mark.skipif(platform.system() == "Darwin", reason="Not OSX enabled")
 @pytest.mark.parametrize("par", [(par1)])
-def test_TorchOperator_batch(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_TorchOperator_batch(par, dtype):
     """Apply forward for input with multiple samples (= batch) and flattened arrays"""
     device = "cpu" if backend == "numpy" else "cuda"
 
-    Dop = MatrixMult(np.random.normal(0.0, 1.0, (par["ny"], par["nx"])))
+    Dop = MatrixMult(
+        np.random.normal(0.0, 1.0, (par["ny"], par["nx"])).astype(dtype), dtype=dtype
+    )
     Top = TorchOperator(Dop, batch=True, device="cpu" if backend == "numpy" else "gpu")
 
-    x = np.random.normal(0.0, 1.0, (4, par["nx"]))
+    x = np.random.normal(0.0, 1.0, (4, par["nx"])).astype(dtype)
     xt = torch.from_numpy(to_numpy(x)).to(device)
     xt.requires_grad = True
 
     y = Dop.matmat(x.T).T
     yt = Top.apply(xt)
 
+    assert yt.dtype == torch.from_numpy(x).dtype
     assert_array_equal(y, yt.detach().cpu().numpy())
 
 
 @pytest.mark.skipif(platform.system() == "Darwin", reason="Not OSX enabled")
 @pytest.mark.parametrize("par", [(par1)])
-def test_TorchOperator_batch_nd(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_TorchOperator_batch_nd(par, dtype):
     """Apply forward for input with multiple samples (= batch) and nd-arrays"""
     device = "cpu" if backend == "numpy" else "cuda"
 
-    Dop = MatrixMult(np.random.normal(0.0, 1.0, (par["ny"], par["nx"])), otherdims=(2,))
+    Dop = MatrixMult(
+        np.random.normal(0.0, 1.0, (par["ny"], par["nx"])).astype(dtype),
+        otherdims=(2,),
+        dtype=dtype,
+    )
     Top = TorchOperator(
         Dop, batch=True, flatten=False, device="cpu" if backend == "numpy" else "cuda"
     )
 
-    x = np.random.normal(0.0, 1.0, (4, par["nx"], 2))
+    x = np.random.normal(0.0, 1.0, (4, par["nx"], 2)).astype(dtype)
     xt = torch.from_numpy(to_numpy(x)).to(device)
     xt.requires_grad = True
 
     y = (Dop @ x.transpose(1, 2, 0)).transpose(2, 0, 1)
     yt = Top.apply(xt)
 
+    assert yt.dtype == torch.from_numpy(x).dtype
     assert_array_equal(y, yt.detach().cpu().numpy())
