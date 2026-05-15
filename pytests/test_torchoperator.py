@@ -108,6 +108,4 @@ def test_TorchOperator_batch_nd(par, dtype):
     yt = yt.detach().cpu().numpy()
 
     assert yt.dtype == dtype
-    assert_array_equal(
-        y,
-    )
+    assert_array_equal(y, yt)
