@@ -51,13 +51,13 @@ def test_TorchOperator(par, dtype):
     # torch operator
     yt = Top.apply(xt)
     yt.backward(vt, retain_graph=True)
-    yt = yt.detach().cpu()
-    xadjt = xt.grad.cpu()
+    yt = yt.detach().cpu().numpy()
+    xadjt = xt.grad.cpu().numpy()
 
-    assert yt.dtype == torch.from_numpy(x).dtype
-    assert xadjt.dtype == torch.from_numpy(x).dtype
-    assert_array_equal(y, yt.numpy())
-    assert_array_equal(xadj, xadjt.numpy())
+    assert yt.dtype == x.dtype
+    assert xadjt.dtype == x.dtype
+    assert_array_equal(y, yt)
+    assert_array_equal(xadj, xadjt)
 
 
 @pytest.mark.skipif(platform.system() == "Darwin", reason="Not OSX enabled")
@@ -78,9 +78,9 @@ def test_TorchOperator_batch(par, dtype):
 
     y = Dop.matmat(x.T).T
     yt = Top.apply(xt)
-
-    assert yt.dtype == torch.from_numpy(x).dtype
-    assert_array_equal(y, yt.detach().cpu().numpy())
+    yt = yt.detach().cpu().numpy()
+    assert yt.dtype == x.dtype
+    assert_array_equal(y, yt)
 
 
 @pytest.mark.skipif(platform.system() == "Darwin", reason="Not OSX enabled")
@@ -105,6 +105,9 @@ def test_TorchOperator_batch_nd(par, dtype):
 
     y = (Dop @ x.transpose(1, 2, 0)).transpose(2, 0, 1)
     yt = Top.apply(xt)
+    yt = yt.detach().cpu().numpy()
 
-    assert yt.dtype == torch.from_numpy(x).dtype
-    assert_array_equal(y, yt.detach().cpu().numpy())
+    assert yt.dtype == dtype
+    assert_array_equal(
+        y,
+    )
