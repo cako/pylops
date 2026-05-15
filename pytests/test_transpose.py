@@ -39,6 +39,7 @@ def test_Transpose_2dsignal(par):
         npp.prod(dims),
         npp.prod(dims),
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
     y = Top * x.ravel()
@@ -69,6 +70,7 @@ def test_Transpose_3dsignal(par):
         npp.prod(dims),
         npp.prod(dims),
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
