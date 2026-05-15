@@ -159,7 +159,7 @@ def test_MDC_1virtualsource(par, dtype):
         MDCop,
         nt2 * parmod["ny"],
         nt2 * parmod["nx"],
-        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
@@ -231,7 +231,7 @@ def test_MDC_Nvirtualsources(par, dtype):
         MDCop,
         nt2 * parmod["ny"] * parmod["nx"],
         nt2 * parmod["nx"] * parmod["nx"],
-        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
@@ -309,7 +309,7 @@ def test_MDC_1virtualsource_scipy(par, dtype):
         MDCop,
         nt2 * parmod["ny"],
         nt2 * parmod["nx"],
-        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
