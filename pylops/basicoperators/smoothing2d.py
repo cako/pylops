@@ -80,7 +80,9 @@ class Smoothing2D(Convolve2D):
             nsmooth[0] += 1
         if nsmooth[1] % 2 == 0:
             nsmooth[1] += 1
-        h = np.ones((nsmooth[0], nsmooth[1])) / float(nsmooth[0] * nsmooth[1])
+        h = np.ones((nsmooth[0], nsmooth[1]), dtype=dtype) / float(
+            nsmooth[0] * nsmooth[1]
+        )
         offset = [(nsmooth[0] - 1) // 2, (nsmooth[1] - 1) // 2]
         super().__init__(
             dims=dims, h=h, offset=offset, axes=axes, dtype=dtype, name=name

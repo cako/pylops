@@ -78,7 +78,7 @@ class SmoothingND(ConvolveND):
         for i in range(len(nsmooth)):
             if nsmooth[i] % 2 == 0:
                 nsmooth[i] += 1
-        h = np.ones(nsmooth) / float(np.prod(nsmooth))
+        h = np.ones(nsmooth, dtype=dtype) / float(np.prod(nsmooth))
         offset = [(nsm - 1) // 2 for nsm in nsmooth]
         super().__init__(
             dims=dims, h=h, offset=offset, axes=axes, dtype=dtype, name=name
