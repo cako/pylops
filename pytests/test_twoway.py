@@ -61,3 +61,9 @@ def test_acwave2d():
     assert dottest(
         Dop, par["ns"] * par["nr"] * Dop.geometry.nt, par["nz"] * par["nx"], atol=1e-1
     )
+
+    x = np.ones(par["nz"] * par["nx"], dtype="float32")
+    y = Dop * x
+    xadj = Dop.H * y
+    assert y.dtype == "float32"
+    assert xadj.dtype == "float32"
