@@ -1,6 +1,5 @@
 __all__ = ["Smoothing1D"]
 
-from typing import Union
 
 import numpy as np
 
@@ -81,14 +80,14 @@ class Smoothing1D(Convolve1D):
     def __init__(
         self,
         nsmooth: int,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         axis: int = -1,
         dtype: DTypeLike = "float64",
         name: str = "S",
     ):
         if nsmooth % 2 == 0:
             nsmooth += 1
-        h = np.ones(nsmooth) / float(nsmooth)
+        h = np.ones(nsmooth, dtype=dtype) / float(nsmooth)
         offset = (nsmooth - 1) // 2
         super().__init__(
             dims=dims, h=h, axis=axis, offset=offset, dtype=dtype, name=name

@@ -6,23 +6,22 @@ __all__ = [
 
 from itertools import chain
 from types import ModuleType
-from typing import Optional, Tuple
 
 import numpy
-import numpy.typing as npt
 
 from pylops.utils.backend import get_module
+from pylops.utils.typing import NDArray, Tbackend, Tsampler, Tsampler2
 
 
 def _sampler_gaussian(
     m: float, batch_size: int, backend_module: ModuleType = numpy
-) -> Tuple[float, npt.ArrayLike]:
+) -> tuple[float, NDArray]:
     return backend_module.random.randn(m, batch_size)
 
 
 def _sampler_rayleigh(
     m: float, batch_size: int, backend_module: ModuleType = numpy
-) -> npt.ArrayLike:
+) -> NDArray:
     z = backend_module.random.randn(m, batch_size)
     for i in range(batch_size):
         z[:, i] *= m / backend_module.dot(z[:, i].T, z[:, i])
@@ -31,7 +30,7 @@ def _sampler_rayleigh(
 
 def _sampler_rademacher(
     m: float, batch_size: int, backend_module: ModuleType = numpy
-) -> npt.ArrayLike:
+) -> NDArray:
     return 2 * backend_module.random.binomial(1, 0.5, size=(m, batch_size)) - 1
 
 
@@ -44,10 +43,10 @@ _SAMPLERS = {
 
 def trace_hutchinson(
     Op,
-    neval: Optional[int] = None,
-    batch_size: Optional[int] = None,
-    sampler: str = "rademacher",
-    backend: str = "numpy",
+    neval: int | None = None,
+    batch_size: int | None = None,
+    sampler: Tsampler = "rademacher",
+    backend: Tbackend = "numpy",
 ) -> float:
     r"""Trace of linear operator using the Hutchinson method.
 
@@ -142,27 +141,28 @@ def trace_hutchinson(
             for i, idx in enumerate(z_idx):
                 z[idx, i] = 1.0
                 remaining_vectors.remove(idx)
-            trace += ncp.trace((z.T @ (Op @ z)))
+            trace += ncp.trace(z.T @ (Op @ z))
             n_total += batch
         trace *= m / n_total
         return trace[0]
 
     if sampler not in _SAMPLERS:
-        raise NotImplementedError(f"sampler {sampler} not available.")
+        msg = f"sampler {sampler} not available."
+        raise NotImplementedError(msg)
 
     sampler_fun = _SAMPLERS[sampler]
     for batch in batch_range:
         z = sampler_fun(m, batch, backend_module=ncp).astype(Op.dtype)
-        trace += ncp.trace((z.T @ (Op @ z)))
+        trace += ncp.trace(z.T @ (Op @ z))
     trace /= neval
     return trace[0]
 
 
 def trace_hutchpp(
     Op,
-    neval: Optional[int] = None,
-    sampler: str = "rademacher",
-    backend: str = "numpy",
+    neval: int | None = None,
+    sampler: Tsampler2 = "rademacher",
+    backend: Tbackend = "numpy",
 ) -> float:
     r"""Trace of linear operator using the Hutch++ method.
 
@@ -229,14 +229,14 @@ def trace_hutchpp(
     neval = int(numpy.round(m * 0.1)) if neval is None else neval
 
     if sampler not in _SAMPLERS:
-        raise NotImplementedError(f"sampler {sampler} not available.")
+        msg = f"sampler {sampler} not available."
+        raise NotImplementedError(msg)
 
     sampler_fun = _SAMPLERS[sampler]
 
     batch = neval // 3
     if batch <= 0:
-        msg = f"Sampler '{sampler}' not supported with {neval} samples."
-        msg += " Try increasing it."
+        msg = f"Sampler '{sampler}' not supported with {neval} samples. Try increasing it."
         raise ValueError(msg)
 
     S = sampler_fun(m, batch, backend_module=ncp).astype(Op.dtype)
@@ -253,11 +253,11 @@ def trace_hutchpp(
 
 def trace_nahutchpp(
     Op,
-    neval: Optional[int] = None,
-    sampler: str = "rademacher",
+    neval: int | None = None,
+    sampler: Tsampler2 = "rademacher",
     c1: float = 1.0 / 6.0,
     c2: float = 1.0 / 3.0,
-    backend: str = "numpy",
+    backend: Tbackend = "numpy",
 ) -> float:
     r"""Trace of linear operator using the NA-Hutch++ method.
 
@@ -336,7 +336,8 @@ def trace_nahutchpp(
     neval = int(numpy.round(m * 0.1)) if neval is None else neval
 
     if sampler not in _SAMPLERS:
-        raise NotImplementedError(f"sampler {sampler} not available.")
+        msg = f"sampler {sampler} not available."
+        raise NotImplementedError(msg)
 
     sampler_fun = _SAMPLERS[sampler]
 

@@ -5,7 +5,8 @@ __all__ = [
     "WavefieldDecomposition",
 ]
 
-from typing import Callable, Optional, Sequence, Tuple, Union
+from collections.abc import Callable, Sequence
+from typing import Literal
 
 import numpy as np
 from scipy.signal import filtfilt
@@ -15,7 +16,13 @@ from pylops import Block, BlockDiag, Diagonal, Identity, LinearOperator
 from pylops.signalprocessing import FFT2D, FFTND
 from pylops.utils import dottest as Dottest
 from pylops.utils.backend import get_array_module, get_module, get_module_name
-from pylops.utils.typing import DTypeLike, InputDimsLike, NDArray
+from pylops.utils.typing import (
+    DTypeLike,
+    InputDimsLike,
+    NDArray,
+    Tfftengine_ncj,
+    Tfftengine_ns,
+)
 
 
 def _filter_obliquity(
@@ -74,9 +81,9 @@ def _obliquity2D(
     critical: float = 100.0,
     ntaper: int = 10,
     composition: bool = True,
-    backend: str = "numpy",
+    backend: Tfftengine_ncj = "numpy",
     dtype: DTypeLike = "complex128",
-) -> Tuple[LinearOperator, LinearOperator]:
+) -> tuple[LinearOperator, LinearOperator]:
     r"""2D Obliquity operator and FFT operator
 
     Parameters
@@ -144,19 +151,19 @@ def _obliquity2D(
 
 def _obliquity3D(
     nt: int,
-    nr: Union[int, Sequence[int]],
+    nr: int | Sequence[int],
     dt: float,
-    dr: Union[float, Sequence[float]],
+    dr: float | Sequence[float],
     rho: float,
     vel: float,
     nffts: InputDimsLike,
     critical: float = 100.0,
     ntaper: int = 10,
     composition: bool = True,
-    fftengine: str = "scipy",
-    backend: str = "numpy",
+    fftengine: Tfftengine_ns = "scipy",
+    backend: Tfftengine_ncj = "numpy",
     dtype: DTypeLike = "complex128",
-) -> Tuple[LinearOperator, LinearOperator]:
+) -> tuple[LinearOperator, LinearOperator]:
     r"""3D Obliquity operator and FFT operator
 
     Parameters
@@ -237,11 +244,11 @@ def PressureToVelocity(
     dr: float,
     rho: float,
     vel: float,
-    nffts: Union[InputDimsLike, Tuple[None, None, None]] = (None, None, None),
+    nffts: InputDimsLike | tuple[None, None, None] = (None, None, None),
     critical: float = 100.0,
     ntaper: int = 10,
     topressure: bool = False,
-    backend: str = "numpy",
+    backend: Tfftengine_ncj = "numpy",
     dtype: DTypeLike = "complex128",
     name: str = "P",
 ) -> LinearOperator:
@@ -376,11 +383,11 @@ def UpDownComposition2D(
     dr: float,
     rho: float,
     vel: float,
-    nffts: Union[InputDimsLike, Tuple[None, None]] = (None, None),
+    nffts: InputDimsLike | tuple[None, None] = (None, None),
     critical: float = 100.0,
     ntaper: int = 10,
     scaling: float = 1.0,
-    backend: str = "numpy",
+    backend: Tfftengine_ncj = "numpy",
     dtype: DTypeLike = "complex128",
     name: str = "U",
 ) -> LinearOperator:
@@ -508,7 +515,10 @@ def UpDownComposition2D(
     )
 
     # create obliquity operator
-    FFTop, OBLop, = _obliquity2D(
+    (
+        FFTop,
+        OBLop,
+    ) = _obliquity2D(
         nt,
         nr,
         dt,
@@ -548,12 +558,12 @@ def UpDownComposition3D(
     dr: float,
     rho: float,
     vel: float,
-    nffts: Union[InputDimsLike, Tuple[None, None, None]] = (None, None, None),
+    nffts: InputDimsLike | tuple[None, None, None] = (None, None, None),
     critical: float = 100.0,
     ntaper: int = 10,
     scaling: float = 1.0,
-    fftengine: str = "scipy",
-    backend: str = "numpy",
+    fftengine: Tfftengine_ns = "scipy",
+    backend: Tfftengine_ncj = "numpy",
     dtype: DTypeLike = "complex128",
     name: str = "U",
 ) -> LinearOperator:
@@ -676,23 +686,23 @@ def WavefieldDecomposition(
     p: NDArray,
     vz: NDArray,
     nt: int,
-    nr: Union[int, InputDimsLike],
+    nr: int | InputDimsLike,
     dt: float,
     dr: float,
     rho: float,
     vel: float,
-    nffts: Union[InputDimsLike, Tuple[None, None, None]] = (None, None, None),
+    nffts: InputDimsLike | tuple[None, None, None] = (None, None, None),
     critical: float = 100.0,
     ntaper: int = 10,
     scaling: float = 1.0,
-    kind: str = "inverse",
-    restriction: Optional[LinearOperator] = None,
-    sptransf: Optional[LinearOperator] = None,
+    kind: Literal["inverse", "analytical"] = "inverse",
+    restriction: LinearOperator | None = None,
+    sptransf: LinearOperator | None = None,
     solver: Callable = lsqr,
     dottest: bool = False,
     dtype: DTypeLike = "complex128",
-    **kwargs_solver
-) -> Tuple[NDArray, NDArray]:
+    **kwargs_solver,
+) -> tuple[NDArray, NDArray]:
     r"""Up-down wavefield decomposition.
 
     Apply seismic wavefield decomposition from multi-component (pressure
@@ -894,6 +904,7 @@ def WavefieldDecomposition(
         dud = dud.reshape(dims2)
         pdown, pup = dud[:nr2], dud[nr2:]
     else:
-        raise KeyError("kind must be analytical or inverse")
+        msg = f"kind must be either 'analytical' or 'inverse', got {kind}"
+        raise KeyError(msg)
 
     return pup, pdown

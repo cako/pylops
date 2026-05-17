@@ -40,6 +40,8 @@ def test_JaxOperator(par):
     # jax operator
     yjnp = Jop * xjnp
     xadjnp = Jop.rmatvecad(xjnp, yjnp)
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
 
     assert_array_equal(y, np.array(yjnp))
     assert_array_equal(xadj, np.array(xadjnp))
@@ -49,7 +51,7 @@ def test_JaxOperator(par):
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
 @pytest.mark.parametrize("par", [(par1)])
-def test_TorchOperator_batch(par):
+def test_JaxOperator_batch(par):
     """Apply forward for input with multiple samples
     (= batch) and flattened arrays"""
 
@@ -63,5 +65,7 @@ def test_TorchOperator_batch(par):
 
     y = Mop.matmat(x.T).T
     yjnp = auto_batch_matvec(xjnp)
+    assert y.dtype == par["dtype"]
+    assert yjnp.dtype == par["dtype"]
 
     assert_array_almost_equal(y, np.array(yjnp), decimal=5)

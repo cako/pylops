@@ -35,6 +35,13 @@ from pylops.utils import dottest
 
 par1 = {"ny": 11, "nx": 11, "imag": 0, "dtype": "float64"}  # square real
 par2 = {"ny": 21, "nx": 11, "imag": 0, "dtype": "float64"}  # overdetermined real
+par1s = {"ny": 11, "nx": 11, "imag": 0, "dtype": "float32"}  # square real (fp32)
+par2s = {
+    "ny": 21,
+    "nx": 11,
+    "imag": 0,
+    "dtype": "float32",
+}  # overdetermined real (fp32)
 par1j = {"ny": 11, "nx": 11, "imag": 1j, "dtype": "complex128"}  # square complex
 par2j = {
     "ny": 21,
@@ -43,20 +50,41 @@ par2j = {
     "dtype": "complex128",
 }  # overdetermined complex
 par3 = {"ny": 11, "nx": 21, "imag": 0, "dtype": "float64"}  # underdetermined real
+par3s = {
+    "ny": 11,
+    "nx": 21,
+    "imag": 0,
+    "dtype": "float64",
+}  # underdetermined real (fp32)
 
 np.random.seed(10)
 
 
-@pytest.mark.parametrize("par", [(par1), (par2)])
+@pytest.mark.parametrize("par", [(par1), (par2), (par1s), (par2s)])
 def test_Regression(par):
     """Dot-test, inversion and apply for Regression operator"""
     np.random.seed(10)
-    order = 4
-    t = np.arange(par["ny"], dtype=np.float64)
-    LRop = Regression(t, order=order, dtype=par["dtype"])
-    assert dottest(LRop, par["ny"], order + 1, backend=backend)
 
-    x = np.array([1.0, 2.0, 0.0, 3.0, -1.0], dtype=np.float64)
+    order = 4
+    t = np.arange(par["ny"], dtype=par["dtype"])
+    LRop = Regression(t, order=order, dtype=par["dtype"])
+    assert dottest(
+        LRop,
+        par["ny"],
+        order + 1,
+        rtol=1e-4 if par["dtype"] == np.float32 else 1e-6,
+        backend=backend,
+    )
+
+    x = np.array([1.0, 2.0, 0.0, 3.0, -1.0], dtype=par["dtype"])
+
+    # forward vs apply method
+    y = LRop * x
+    y1 = LRop.apply(t, x)
+    assert y.dtype == par["dtype"]
+    assert_array_almost_equal(y, y1, decimal=3)
+
+    # inversion
     xlsqr = lsqr(
         LRop,
         LRop * x,
@@ -70,20 +98,31 @@ def test_Regression(par):
     )[0]
     assert_array_almost_equal(x, xlsqr, decimal=3)
 
-    y = LRop * x
-    y1 = LRop.apply(t, x)
-    assert_array_almost_equal(y, y1, decimal=3)
 
-
-@pytest.mark.parametrize("par", [(par1), (par2)])
+@pytest.mark.parametrize("par", [(par1), (par2), (par1s), (par2s)])
 def test_LinearRegression(par):
     """Dot-test and inversion for LinearRegression operator"""
     np.random.seed(10)
-    t = np.arange(par["ny"], dtype=np.float32)
-    LRop = LinearRegression(t, dtype=par["dtype"])
-    assert dottest(LRop, par["ny"], 2, backend=backend)
 
-    x = np.array([1.0, 2.0], dtype=np.float64)
+    t = np.arange(par["ny"], dtype=par["dtype"])
+    LRop = LinearRegression(t, dtype=par["dtype"])
+    assert dottest(
+        LRop,
+        par["ny"],
+        2,
+        rtol=1e-4 if par["dtype"] == np.float32 else 1e-6,
+        backend=backend,
+    )
+
+    x = np.array([1.0, 2.0], dtype=par["dtype"])
+
+    # forward vs apply method
+    y = LRop * x
+    y1 = LRop.apply(t, x)
+    assert y.dtype == par["dtype"]
+    assert_array_almost_equal(y, y1, decimal=3)
+
+    # inversion
     xlsqr = lsqr(
         LRop,
         LRop * x,
@@ -97,31 +136,31 @@ def test_LinearRegression(par):
     )[0]
     assert_array_almost_equal(x, xlsqr, decimal=3)
 
-    y = LRop * x
-    y1 = LRop.apply(t, x)
-    assert_array_almost_equal(y, y1, decimal=3)
 
-
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j)])
+@pytest.mark.parametrize("par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j)])
 def test_MatrixMult(par):
     """Dot-test and inversion for MatrixMult operator"""
     np.random.seed(10)
-    G = np.random.normal(0, 10, (par["ny"], par["nx"])).astype("float32") + par[
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
+    G = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype) + par[
         "imag"
-    ] * np.random.normal(0, 10, (par["ny"], par["nx"])).astype("float32")
+    ] * np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype)
     Gop = MatrixMult(G, dtype=par["dtype"])
     assert dottest(
         Gop,
         par["ny"],
         par["nx"],
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
-    x = np.ones(par["nx"]) + par["imag"] * np.ones(par["nx"])
+    x = np.ones(par["nx"], dtype=dtype) + par["imag"] * np.ones(par["nx"], dtype=dtype)
+    y = Gop * x
     xlsqr = lsqr(
         Gop,
-        Gop * x,
+        y,
         x0=np.zeros_like(x),
         damp=1e-20,
         niter=300,
@@ -129,18 +168,21 @@ def test_MatrixMult(par):
         btol=1e-8,
         show=0,
     )[0]
+    assert y.dtype == par["dtype"]
     assert_array_almost_equal(x, xlsqr, decimal=4)
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j)])
+@pytest.mark.parametrize("par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j)])
 def test_MatrixMult_sparse(par):
     """Dot-test and inversion for MatrixMult operator using sparse
     matrix
     """
     np.random.seed(10)
-    G = rand(par["ny"], par["nx"], density=0.75).astype("float32") + par["imag"] * rand(
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
+    G = rand(par["ny"], par["nx"], density=0.75).astype(dtype) + par["imag"] * rand(
         par["ny"], par["nx"], density=0.75
-    ).astype("float32")
+    ).astype(dtype)
 
     Gop = MatrixMult(G, dtype=par["dtype"])
     assert dottest(
@@ -148,13 +190,15 @@ def test_MatrixMult_sparse(par):
         par["ny"],
         par["nx"],
         complexflag=0 if par["imag"] == 1 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
-    x = np.ones(par["nx"]) + par["imag"] * np.ones(par["nx"])
+    x = np.ones(par["nx"], dtype=dtype) + par["imag"] * np.ones(par["nx"], dtype=dtype)
+    y = Gop * x
     xlsqr = lsqr(
         Gop,
-        Gop * x,
+        y,
         x0=np.zeros_like(x),
         damp=1e-20,
         niter=300,
@@ -162,6 +206,7 @@ def test_MatrixMult_sparse(par):
         btol=1e-8,
         show=0,
     )[0]
+    assert y.dtype == par["dtype"]
     assert_array_almost_equal(x, xlsqr, decimal=4)
 
 
@@ -179,28 +224,35 @@ def test_MatrixMult_complexcast(par):
     assert Gop.dtype == "complex64"
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j)])
+@pytest.mark.parametrize("par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j)])
 def test_MatrixMult_repeated(par):
     """Dot-test and inversion for test_MatrixMult operator repeated
     along another dimension
     """
     np.random.seed(10)
-    G = np.random.normal(0, 10, (par["ny"], par["nx"])).astype("float32") + par[
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
+    G = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype) + par[
         "imag"
-    ] * np.random.normal(0, 10, (par["ny"], par["nx"])).astype("float32")
+    ] * np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype)
     Gop = MatrixMult(G, otherdims=5, dtype=par["dtype"])
     assert dottest(
         Gop,
         par["ny"] * 5,
         par["nx"] * 5,
         complexflag=0 if par["imag"] == 1 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
-    x = (np.ones((par["nx"], 5)) + par["imag"] * np.ones((par["nx"], 5))).ravel()
+    x = (
+        np.ones((par["nx"], 5), dtype=dtype)
+        + par["imag"] * np.ones((par["nx"], 5), dtype=dtype)
+    ).ravel()
+    y = Gop * x
     xlsqr = lsqr(
         Gop,
-        Gop * x,
+        y,
         x0=np.zeros_like(x),
         damp=1e-20,
         niter=300,
@@ -208,26 +260,34 @@ def test_MatrixMult_repeated(par):
         btol=1e-8,
         show=0,
     )[0]
+    assert y.dtype == par["dtype"]
     assert_array_almost_equal(x, xlsqr, decimal=4)
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j), (par3)])
+@pytest.mark.parametrize(
+    "par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j), (par3), (par3s)]
+)
 def test_Identity_inplace(par):
     """Dot-test, forward and adjoint for Identity operator"""
     np.random.seed(10)
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     Iop = Identity(par["ny"], par["nx"], dtype=par["dtype"], inplace=True)
     assert dottest(
         Iop,
         par["ny"],
         par["nx"],
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
-    x = np.ones(par["nx"]) + par["imag"] * np.ones(par["nx"])
+    x = np.ones(par["nx"], dtype=dtype) + par["imag"] * np.ones(par["nx"], dtype=dtype)
     y = Iop * x
     x1 = Iop.H * y
 
+    assert y.dtype == par["dtype"]
+    assert x1.dtype == par["dtype"]
     assert_array_almost_equal(
         x[: min(par["ny"], par["nx"])], y[: min(par["ny"], par["nx"])], decimal=4
     )
@@ -236,23 +296,30 @@ def test_Identity_inplace(par):
     )
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j), (par3)])
+@pytest.mark.parametrize(
+    "par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j), (par3), (par3s)]
+)
 def test_Identity_noinplace(par):
     """Dot-test, forward and adjoint for Identity operator (not in place)"""
     np.random.seed(10)
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     Iop = Identity(par["ny"], par["nx"], dtype=par["dtype"], inplace=False)
     assert dottest(
         Iop,
         par["ny"],
         par["nx"],
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
-    x = np.ones(par["nx"]) + par["imag"] * np.ones(par["nx"])
+    x = np.ones(par["nx"], dtype=dtype) + par["imag"] * np.ones(par["nx"], dtype=dtype)
     y = Iop * x
     x1 = Iop.H * y
 
+    assert y.dtype == par["dtype"]
+    assert x1.dtype == par["dtype"]
     assert_array_almost_equal(
         x[: min(par["ny"], par["nx"])], y[: min(par["ny"], par["nx"])], decimal=4
     )
@@ -265,46 +332,80 @@ def test_Identity_noinplace(par):
     assert x[0] != y[0]
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j), (par3)])
+@pytest.mark.parametrize(
+    "par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j), (par3), (par3s)]
+)
 def test_Zero(par):
     """Dot-test, forward and adjoint for Zero operator"""
     np.random.seed(10)
-    Zop = Zero(par["ny"], par["nx"], dtype=par["dtype"])
-    assert dottest(Zop, par["ny"], par["nx"], backend=backend)
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
 
-    x = np.ones(par["nx"]) + par["imag"] * np.ones(par["nx"])
+    Zop = Zero(par["ny"], par["nx"], dtype=par["dtype"])
+    assert dottest(
+        Zop,
+        par["ny"],
+        par["nx"],
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
+
+    x = np.ones(par["nx"], dtype=dtype) + par["imag"] * np.ones(par["nx"], dtype=dtype)
     y = Zop * x
     x1 = Zop.H * y
 
+    assert y.dtype == par["dtype"]
+    assert x1.dtype == par["dtype"]
     assert_array_almost_equal(y, np.zeros(par["ny"]))
     assert_array_almost_equal(x1, np.zeros(par["nx"]))
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j)])
+@pytest.mark.parametrize(
+    "par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j), (par3), (par3s)]
+)
 def test_Flip1D(par):
     """Dot-test, forward and adjoint for Flip operator on 1d signal"""
     np.random.seed(10)
-    x = np.arange(par["ny"]) + par["imag"] * np.arange(par["ny"])
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
+    x = np.arange(par["ny"], dtype=dtype) + par["imag"] * np.arange(
+        par["ny"], dtype=dtype
+    )
 
     Fop = Flip(par["ny"], dtype=par["dtype"])
-    assert dottest(Fop, par["ny"], par["ny"], backend=backend)
+    assert dottest(
+        Fop,
+        par["ny"],
+        par["ny"],
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
 
     y = Fop * x
     xadj = Fop.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
     assert_array_equal(x, xadj)
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j)])
+@pytest.mark.parametrize(
+    "par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j), (par3), (par3s)]
+)
 def test_Flip2D(par):
     """Dot-test, forward and adjoint for Flip operator on 2d signal"""
     np.random.seed(10)
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     x = {}
-    x["0"] = np.outer(np.arange(par["ny"]), np.ones(par["nx"])) + par[
-        "imag"
-    ] * np.outer(np.arange(par["ny"]), np.ones(par["nx"]))
-    x["1"] = np.outer(np.ones(par["ny"]), np.arange(par["nx"])) + par[
-        "imag"
-    ] * np.outer(np.ones(par["ny"]), np.arange(par["nx"]))
+    x["0"] = np.outer(
+        np.arange(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
+    ) + par["imag"] * np.outer(
+        np.arange(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
+    )
+    x["1"] = np.outer(
+        np.ones(par["ny"], dtype=dtype), np.arange(par["nx"], dtype=dtype)
+    ) + par["imag"] * np.outer(
+        np.ones(par["ny"], dtype=dtype), np.arange(par["nx"], dtype=dtype)
+    )
 
     for axis in [0, 1]:
         Fop = Flip(
@@ -313,48 +414,46 @@ def test_Flip2D(par):
             dtype=par["dtype"],
         )
         assert dottest(
-            Fop, par["ny"] * par["nx"], par["ny"] * par["nx"], backend=backend
+            Fop,
+            par["ny"] * par["nx"],
+            par["ny"] * par["nx"],
+            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            backend=backend,
         )
 
         y = Fop * x[str(axis)].ravel()
         xadj = Fop.H * y.ravel()
         xadj = xadj.reshape(par["ny"], par["nx"])
+        assert y.dtype == par["dtype"]
+        assert xadj.dtype == par["dtype"]
         assert_array_equal(x[str(axis)], xadj)
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j)])
+@pytest.mark.parametrize(
+    "par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j), (par3), (par3s)]
+)
 def test_Flip3D(par):
     """Dot-test, forward and adjoint for Flip operator on 3d signal"""
     np.random.seed(10)
-    x = {}
-    x["0"] = np.outer(np.arange(par["ny"]), np.ones(par["nx"]))[
-        :, :, np.newaxis
-    ] * np.ones(par["nx"]) + par["imag"] * np.outer(
-        np.arange(par["ny"]), np.ones(par["nx"])
-    )[
-        :, :, np.newaxis
-    ] * np.ones(
-        par["nx"]
-    )
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
 
-    x["1"] = np.outer(np.ones(par["ny"]), np.arange(par["nx"]))[
+    x = {}
+    x["0"] = np.outer(
+        np.arange(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
+    )[:, :, np.newaxis] * np.ones(par["nx"], dtype=dtype) + par["imag"] * np.outer(
+        np.arange(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
+    )[:, :, np.newaxis] * np.ones(par["nx"], dtype=dtype)
+
+    x["1"] = np.outer(
+        np.ones(par["ny"], dtype=dtype), np.arange(par["nx"], dtype=dtype)
+    )[:, :, np.newaxis] * np.ones(par["nx"], dtype=dtype) + par["imag"] * np.outer(
+        np.ones(par["ny"], dtype=dtype), np.arange(par["nx"], dtype=dtype)
+    )[:, :, np.newaxis] * np.ones(par["nx"], dtype=dtype)
+    x["2"] = np.outer(np.ones(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype))[
         :, :, np.newaxis
-    ] * np.ones(par["nx"]) + par["imag"] * np.outer(
-        np.ones(par["ny"]), np.arange(par["nx"])
-    )[
-        :, :, np.newaxis
-    ] * np.ones(
-        par["nx"]
-    )
-    x["2"] = np.outer(np.ones(par["ny"]), np.ones(par["nx"]))[
-        :, :, np.newaxis
-    ] * np.arange(par["nx"]) + par["imag"] * np.outer(
-        np.ones(par["ny"]), np.ones(par["nx"])
-    )[
-        :, :, np.newaxis
-    ] * np.arange(
-        par["nx"]
-    )
+    ] * np.arange(par["nx"], dtype=dtype) + par["imag"] * np.outer(
+        np.ones(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
+    )[:, :, np.newaxis] * np.arange(par["nx"], dtype=dtype)
 
     for axis in [0, 1, 2]:
         Fop = Flip(
@@ -366,40 +465,64 @@ def test_Flip3D(par):
             Fop,
             par["ny"] * par["nx"] * par["nx"],
             par["ny"] * par["nx"] * par["nx"],
+            rtol=1e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
 
         y = Fop * x[str(axis)].ravel()
         xadj = Fop.H * y.ravel()
         xadj = xadj.reshape(par["ny"], par["nx"], par["nx"])
+        assert y.dtype == par["dtype"]
+        assert xadj.dtype == par["dtype"]
         assert_array_equal(x[str(axis)], xadj)
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j), (par3)])
+@pytest.mark.parametrize(
+    "par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j), (par3), (par3s)]
+)
 def test_Symmetrize1D(par):
     """Dot-test, forward and inverse for Symmetrize operator on 1d signal"""
     np.random.seed(10)
-    x = np.arange(par["ny"]) + par["imag"] * np.arange(par["ny"])
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
+    x = np.arange(par["ny"], dtype=dtype) + par["imag"] * np.arange(
+        par["ny"], dtype=dtype
+    )
 
     Sop = Symmetrize(par["ny"], dtype=par["dtype"])
-    dottest(Sop, par["ny"] * 2 - 1, par["ny"], verb=True, backend=backend)
+    dottest(
+        Sop,
+        par["ny"] * 2 - 1,
+        par["ny"],
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
 
     y = Sop * x
     xinv = Sop / y
+    assert y.dtype == par["dtype"]
     assert_array_almost_equal(x, xinv, decimal=3)
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j), (par3)])
+@pytest.mark.parametrize(
+    "par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j), (par3), (par3s)]
+)
 def test_Symmetrize2D(par):
     """Dot-test, forward and inverse for Symmetrize operator on 2d signal"""
     np.random.seed(10)
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     x = {}
-    x["0"] = np.outer(np.arange(par["ny"]), np.ones(par["nx"])) + par[
-        "imag"
-    ] * np.outer(np.arange(par["ny"]), np.ones(par["nx"]))
-    x["1"] = np.outer(np.ones(par["ny"]), np.arange(par["nx"])) + par[
-        "imag"
-    ] * np.outer(np.ones(par["ny"]), np.arange(par["nx"]))
+    x["0"] = np.outer(
+        np.arange(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
+    ) + par["imag"] * np.outer(
+        np.arange(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
+    )
+    x["1"] = np.outer(
+        np.ones(par["ny"], dtype=dtype), np.arange(par["nx"], dtype=dtype)
+    ) + par["imag"] * np.outer(
+        np.ones(par["ny"], dtype=dtype), np.arange(par["nx"], dtype=dtype)
+    )
 
     for axis in [0, 1]:
         Sop = Symmetrize(
@@ -408,45 +531,44 @@ def test_Symmetrize2D(par):
             dtype=par["dtype"],
         )
         y = Sop * x[str(axis)].ravel()
-        assert dottest(Sop, y.size, par["ny"] * par["nx"], backend=backend)
+        assert dottest(
+            Sop,
+            y.size,
+            par["ny"] * par["nx"],
+            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            backend=backend,
+        )
 
         xinv = Sop / y
+        assert y.dtype == par["dtype"]
         assert_array_almost_equal(x[str(axis)].ravel(), xinv, decimal=3)
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j), (par3)])
+@pytest.mark.parametrize(
+    "par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j), (par3), (par3s)]
+)
 def test_Symmetrize3D(par):
     """Dot-test, forward and adjoint for Symmetrize operator on 3d signal"""
     np.random.seed(10)
-    x = {}
-    x["0"] = np.outer(np.arange(par["ny"]), np.ones(par["nx"]))[
-        :, :, np.newaxis
-    ] * np.ones(par["nx"]) + par["imag"] * np.outer(
-        np.arange(par["ny"]), np.ones(par["nx"])
-    )[
-        :, :, np.newaxis
-    ] * np.ones(
-        par["nx"]
-    )
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
 
-    x["1"] = np.outer(np.ones(par["ny"]), np.arange(par["nx"]))[
+    x = {}
+    x["0"] = np.outer(
+        np.arange(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
+    )[:, :, np.newaxis] * np.ones(par["nx"], dtype=dtype) + par["imag"] * np.outer(
+        np.arange(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
+    )[:, :, np.newaxis] * np.ones(par["nx"], dtype=dtype)
+
+    x["1"] = np.outer(
+        np.ones(par["ny"], dtype=dtype), np.arange(par["nx"], dtype=dtype)
+    )[:, :, np.newaxis] * np.ones(par["nx"], dtype=dtype) + par["imag"] * np.outer(
+        np.ones(par["ny"], dtype=dtype), np.arange(par["nx"], dtype=dtype)
+    )[:, :, np.newaxis] * np.ones(par["nx"], dtype=dtype)
+    x["2"] = np.outer(np.ones(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype))[
         :, :, np.newaxis
-    ] * np.ones(par["nx"]) + par["imag"] * np.outer(
-        np.ones(par["ny"]), np.arange(par["nx"])
-    )[
-        :, :, np.newaxis
-    ] * np.ones(
-        par["nx"]
-    )
-    x["2"] = np.outer(np.ones(par["ny"]), np.ones(par["nx"]))[
-        :, :, np.newaxis
-    ] * np.arange(par["nx"]) + par["imag"] * np.outer(
-        np.ones(par["ny"]), np.ones(par["nx"])
-    )[
-        :, :, np.newaxis
-    ] * np.arange(
-        par["nx"]
-    )
+    ] * np.arange(par["nx"], dtype=dtype) + par["imag"] * np.outer(
+        np.ones(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
+    )[:, :, np.newaxis] * np.arange(par["nx"], dtype=dtype)
 
     for axis in [0, 1, 2]:
         Sop = Symmetrize(
@@ -455,37 +577,66 @@ def test_Symmetrize3D(par):
             dtype=par["dtype"],
         )
         y = Sop * x[str(axis)].ravel()
-        assert dottest(Sop, y.size, par["ny"] * par["nx"] * par["nx"], backend=backend)
+        assert dottest(
+            Sop,
+            y.size,
+            par["ny"] * par["nx"] * par["nx"],
+            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            backend=backend,
+        )
 
         xinv = Sop / y
+        assert y.dtype == par["dtype"]
         assert_array_almost_equal(x[str(axis)].ravel(), xinv, decimal=3)
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j), (par3)])
+@pytest.mark.parametrize(
+    "par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j), (par3), (par3s)]
+)
 def test_Roll1D(par):
     """Dot-test, forward and adjoint for Roll operator on 1d signal"""
     np.random.seed(10)
-    x = np.arange(par["ny"]) + par["imag"] * np.arange(par["ny"])
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
+    x = np.arange(par["ny"], dtype=dtype) + par["imag"] * np.arange(
+        par["ny"], dtype=dtype
+    )
 
     Rop = Roll(par["ny"], shift=2, dtype=par["dtype"])
-    assert dottest(Rop, par["ny"], par["ny"], backend=backend)
+    assert dottest(
+        Rop,
+        par["ny"],
+        par["ny"],
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
 
     y = Rop * x
     xadj = Rop.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
     assert_array_almost_equal(x, xadj, decimal=3)
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j), (par3)])
+@pytest.mark.parametrize(
+    "par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j), (par3), (par3s)]
+)
 def test_Roll2D(par):
     """Dot-test, forward and inverse for Roll operator on 2d signal"""
     np.random.seed(10)
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     x = {}
-    x["0"] = np.outer(np.arange(par["ny"]), np.ones(par["nx"])) + par[
-        "imag"
-    ] * np.outer(np.arange(par["ny"]), np.ones(par["nx"]))
-    x["1"] = np.outer(np.ones(par["ny"]), np.arange(par["nx"])) + par[
-        "imag"
-    ] * np.outer(np.ones(par["ny"]), np.arange(par["nx"]))
+    x["0"] = np.outer(
+        np.arange(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
+    ) + par["imag"] * np.outer(
+        np.arange(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
+    )
+    x["1"] = np.outer(
+        np.ones(par["ny"], dtype=dtype), np.arange(par["nx"], dtype=dtype)
+    ) + par["imag"] * np.outer(
+        np.ones(par["ny"], dtype=dtype), np.arange(par["nx"], dtype=dtype)
+    )
 
     for axis in [0, 1]:
         Rop = Roll(
@@ -496,46 +647,44 @@ def test_Roll2D(par):
         )
         y = Rop * x[str(axis)].ravel()
         assert dottest(
-            Rop, par["ny"] * par["nx"], par["ny"] * par["nx"], backend=backend
+            Rop,
+            par["ny"] * par["nx"],
+            par["ny"] * par["nx"],
+            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            backend=backend,
         )
 
         xadj = Rop.H * y
+        assert y.dtype == par["dtype"]
+        assert xadj.dtype == par["dtype"]
         assert_array_almost_equal(x[str(axis)].ravel(), xadj, decimal=3)
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j), (par3)])
+@pytest.mark.parametrize(
+    "par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j), (par3), (par3s)]
+)
 def test_Roll3D(par):
     """Dot-test, forward and adjoint for Roll operator on 3d signal"""
     np.random.seed(10)
-    x = {}
-    x["0"] = np.outer(np.arange(par["ny"]), np.ones(par["nx"]))[
-        :, :, np.newaxis
-    ] * np.ones(par["nx"]) + par["imag"] * np.outer(
-        np.arange(par["ny"]), np.ones(par["nx"])
-    )[
-        :, :, np.newaxis
-    ] * np.ones(
-        par["nx"]
-    )
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
 
-    x["1"] = np.outer(np.ones(par["ny"]), np.arange(par["nx"]))[
+    x = {}
+    x["0"] = np.outer(
+        np.arange(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
+    )[:, :, np.newaxis] * np.ones(par["nx"], dtype=dtype) + par["imag"] * np.outer(
+        np.arange(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
+    )[:, :, np.newaxis] * np.ones(par["nx"], dtype=dtype)
+
+    x["1"] = np.outer(
+        np.ones(par["ny"], dtype=dtype), np.arange(par["nx"], dtype=dtype)
+    )[:, :, np.newaxis] * np.ones(par["nx"], dtype=dtype) + par["imag"] * np.outer(
+        np.ones(par["ny"], dtype=dtype), np.arange(par["nx"], dtype=dtype)
+    )[:, :, np.newaxis] * np.ones(par["nx"], dtype=dtype)
+    x["2"] = np.outer(np.ones(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype))[
         :, :, np.newaxis
-    ] * np.ones(par["nx"]) + par["imag"] * np.outer(
-        np.ones(par["ny"]), np.arange(par["nx"])
-    )[
-        :, :, np.newaxis
-    ] * np.ones(
-        par["nx"]
-    )
-    x["2"] = np.outer(np.ones(par["ny"]), np.ones(par["nx"]))[
-        :, :, np.newaxis
-    ] * np.arange(par["nx"]) + par["imag"] * np.outer(
-        np.ones(par["ny"]), np.ones(par["nx"])
-    )[
-        :, :, np.newaxis
-    ] * np.arange(
-        par["nx"]
-    )
+    ] * np.arange(par["nx"], dtype=dtype) + par["imag"] * np.outer(
+        np.ones(par["ny"], dtype=dtype), np.ones(par["nx"], dtype=dtype)
+    )[:, :, np.newaxis] * np.arange(par["nx"], dtype=dtype)
 
     for axis in [0, 1, 2]:
         Rop = Roll(
@@ -549,21 +698,40 @@ def test_Roll3D(par):
             Rop,
             par["ny"] * par["nx"] * par["nx"],
             par["ny"] * par["nx"] * par["nx"],
+            rtol=1e-4 if dtype == np.float32 else 1e-6,
             backend=backend,
         )
 
         xinv = Rop.H * y
+        assert y.dtype == par["dtype"]
         assert_array_almost_equal(x[str(axis)].ravel(), xinv, decimal=3)
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j), (par3)])
+@pytest.mark.parametrize(
+    "par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j), (par3), (par3s)]
+)
 def test_Sum2D(par):
     """Dot-test for Sum operator on 2d signal"""
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
     for axis in [0, 1]:
         dim_d = [par["ny"], par["nx"]]
         dim_d.pop(axis)
         Sop = Sum(dims=(par["ny"], par["nx"]), axis=axis, dtype=par["dtype"])
-        assert dottest(Sop, npp.prod(dim_d), par["ny"] * par["nx"], backend=backend)
+        assert dottest(
+            Sop,
+            npp.prod(dim_d),
+            par["ny"] * par["nx"],
+            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            backend=backend,
+        )
+
+        x = np.arange(par["nx"] * par["ny"], dtype=dtype) + par["imag"] * np.arange(
+            par["nx"] * par["ny"], dtype=dtype
+        )
+        y = Sop * x.ravel()
+        xadj = Sop.H * y
+        assert y.dtype == par["dtype"]
+        assert xadj.dtype == par["dtype"]
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j), (par3)])
@@ -592,7 +760,7 @@ def test_Sum2D_forceflat(par):
     assert y.shape == (par["ny"],)
     assert xadj.shape == (par["ny"], par["nx"])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Operators have conflicting forceflat"):
         Sop_True * Sop_False.H
 
     Sop = Sop_True * Sop_None.H
@@ -605,16 +773,30 @@ def test_Sum2D_forceflat(par):
     assert Sop.forceflat is None
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j), (par3)])
+@pytest.mark.parametrize(
+    "par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j), (par3), (par3s)]
+)
 def test_Sum3D(par):
     """Dot-test, forward and adjoint for Sum operator on 3d signal"""
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
     for axis in [0, 1, 2]:
         dim_d = [par["ny"], par["nx"], par["nx"]]
         dim_d.pop(axis)
         Sop = Sum(dims=(par["ny"], par["nx"], par["nx"]), axis=axis, dtype=par["dtype"])
         assert dottest(
-            Sop, npp.prod(dim_d), par["ny"] * par["nx"] * par["nx"], backend=backend
+            Sop,
+            npp.prod(dim_d),
+            par["ny"] * par["nx"] * par["nx"],
+            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            backend=backend,
         )
+        x = np.arange(par["ny"] * par["nx"] * par["nx"], dtype=dtype) + par[
+            "imag"
+        ] * np.arange(par["ny"] * par["nx"] * par["nx"], dtype=dtype)
+        y = Sop * x.ravel()
+        xadj = Sop.H * y
+        assert y.dtype == par["dtype"]
+        assert xadj.dtype == par["dtype"]
 
 
 @pytest.mark.parametrize("par", [(par1j), (par2j)])
@@ -678,9 +860,12 @@ def test_Imag(par):
         assert_array_equal(x, 0)
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j), (par3)])
+@pytest.mark.parametrize(
+    "par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j), (par3), (par3s)]
+)
 def test_Conj(par):
     """Dot-test, forward and adjoint for Conj operator"""
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
     Cop = Conj(dims=(par["ny"], par["nx"]), dtype=par["dtype"])
     if np.dtype(par["dtype"]).kind == "c":
         complexflag = 3
@@ -691,30 +876,41 @@ def test_Conj(par):
         par["ny"] * par["nx"],
         par["ny"] * par["nx"],
         complexflag=complexflag,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
     np.random.seed(10)
-    x = np.random.randn(par["nx"] * par["ny"]) + par["imag"] * np.random.randn(
-        par["nx"] * par["ny"]
-    )
+    x = np.random.randn(par["nx"] * par["ny"]).astype(dtype) + par[
+        "imag"
+    ] * np.random.randn(par["nx"] * par["ny"]).astype(dtype)
     y = Cop * x
     xadj = Cop.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
     assert_array_equal(x, xadj)
     assert_array_equal(y, np.conj(x))
     assert_array_equal(xadj, np.conj(y))
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j), (par3)])
+@pytest.mark.parametrize(
+    "par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j), (par3), (par3s)]
+)
 def test_ToCupy(par):
     """Forward and adjoint for ToCupy operator (checking that it works also
     when cupy is not available)
     """
+    np.random.seed(10)
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
     Top = ToCupy(par["nx"], dtype=par["dtype"])
 
-    np.random.seed(10)
-    x = npp.random.randn(par["nx"]) + par["imag"] * npp.random.randn(par["nx"])
+    x = np.random.randn(par["nx"]).astype(dtype) + par["imag"] * np.random.randn(
+        par["nx"]
+    ).astype(dtype)
     y = Top * x
     xadj = Top.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
     assert_array_equal(x, xadj)
     assert_array_equal(y, np.asarray(x))

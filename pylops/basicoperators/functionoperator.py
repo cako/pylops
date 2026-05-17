@@ -1,7 +1,7 @@
 __all__ = ["FunctionOperator"]
 
+from collections.abc import Callable
 from numbers import Integral
-from typing import Callable
 
 from pylops import LinearOperator
 from pylops.utils.typing import NDArray, ShapeLike
@@ -103,5 +103,6 @@ class FunctionOperator(LinearOperator):
 
     def _rmatvec(self, x: NDArray) -> NDArray:
         if self.fc is None:
-            raise NotImplementedError("Adjoint not implemented")
+            msg = "Adjoint not implemented"
+            raise NotImplementedError(msg)
         return self.fc(x)

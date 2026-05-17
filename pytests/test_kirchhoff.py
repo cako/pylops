@@ -35,12 +35,12 @@ PAR = {
 }
 
 # Check if skfmm is available and by-pass tests using it otherwise. This is
-# currently required for Travis as since we moved to Python3.8 it has
-# stopped working
+# currently used in GPU CI not to run tests that require skfmm to compute the
+# traveltime tables - should consider fixing it
 try:
     import skfmm  # noqa: F401
 
-    skfmm_enabled = True
+    skfmm_enabled = True if backend == "numpy" else False
 except ImportError:
     skfmm_enabled = False
 
@@ -198,7 +198,14 @@ def test_traveltime_table():
             _,
         ) = Kirchhoff._traveltime_table(z, x, s3d, r3d, v0, y=y, mode="analytic")
 
-        (trav_srcs_eik, trav_recs_eik, _, _, _, _,) = Kirchhoff._traveltime_table(
+        (
+            trav_srcs_eik,
+            trav_recs_eik,
+            _,
+            _,
+            _,
+            _,
+        ) = Kirchhoff._traveltime_table(
             z,
             x,
             s3d,
@@ -213,16 +220,19 @@ def test_traveltime_table():
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par1d), (par2d), (par3d)])
-def test_kirchhoff2d(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_kirchhoff2d(par, dtype):
     """Dot-test for Kirchhoff operator"""
     if backend == "cupy" and par["mode"] == "byot":
         pytest.skip("cuda engine not available for single trav table")
-    vel = v0 * np.ones((PAR["nx"], PAR["nz"]))
+    vel = v0 * np.ones((PAR["nx"], PAR["nz"]), dtype=dtype)
 
     if par["mode"] == "byot":
         trav_srcs, trav_recs, _, _, _, _ = Kirchhoff._traveltime_table(
             z, x, s2d, r2d, v0, mode="analytic"
         )
+        trav_srcs = trav_srcs.astype(dtype)
+        trav_recs = trav_recs.astype(dtype)
         trav = trav_srcs.reshape(
             PAR["nx"] * PAR["nz"], PAR["nsx"], 1
         ) + trav_recs.reshape(PAR["nx"] * PAR["nz"], 1, PAR["nrx"])
@@ -234,19 +244,20 @@ def test_kirchhoff2d(par):
 
     if skfmm_enabled or par["mode"] != "eikonal":
         Dop = Kirchhoff(
-            z,
-            x,
-            t,
-            s2d,
-            r2d,
+            z.astype(dtype),
+            x.astype(dtype),
+            t.astype(dtype),
+            s2d.astype(dtype),
+            r2d.astype(dtype),
             vel if par["mode"] == "eikonal" else v0,
-            np.asarray(wav),
+            np.asarray(wav.astype(dtype)),
             wavc,
             y=None,
             trav=trav,
             amp=amp,
             mode=par["mode"],
             engine="numpy" if backend == "numpy" else "cuda",
+            dtype=dtype,
         )
         if par["mode"] == "byot":
             Dop.trav = np.asarray(Dop.trav)
@@ -262,20 +273,30 @@ def test_kirchhoff2d(par):
             PAR["nsx"] * PAR["nrx"] * PAR["nt"],
             PAR["nz"] * PAR["nx"],
             backend=backend,
+            rtol=1e-4 if dtype == np.float32 else 1e-6,
         )
+
+        xx = np.random.normal(0, 1, PAR["nx"] * PAR["nz"]).astype(dtype)
+        yy = Dop * xx
+        xadj = Dop.H * yy
+        assert yy.dtype == dtype
+        assert xadj.dtype == dtype
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3)])
-def test_kirchhoff3d(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_kirchhoff3d(par, dtype):
     """Dot-test for Kirchhoff operator"""
     if backend == "cupy" and par["mode"] == "byot":
         pytest.skip("cuda engine not available for single trav table")
-    vel = v0 * np.ones((PAR["ny"], PAR["nx"], PAR["nz"]))
+    vel = v0 * np.ones((PAR["ny"], PAR["nx"], PAR["nz"]), dtype=dtype)
 
     if par["mode"] == "byot":
         trav_srcs, trav_recs, _, _, _, _ = Kirchhoff._traveltime_table(
             z, x, s3d, r3d, v0, y=y, mode="analytic"
         )
+        trav_srcs = trav_srcs.astype(dtype)
+        trav_recs = trav_recs.astype(dtype)
         trav = trav_srcs.reshape(
             PAR["ny"] * PAR["nx"] * PAR["nz"], PAR["nsy"] * PAR["nsx"], 1
         ) + trav_recs.reshape(
@@ -290,18 +311,19 @@ def test_kirchhoff3d(par):
 
     if skfmm_enabled or par["mode"] != "eikonal":
         Dop = Kirchhoff(
-            z,
-            x,
-            t,
-            s3d,
-            r3d,
+            z.astype(dtype),
+            x.astype(dtype),
+            t.astype(dtype),
+            s3d.astype(dtype),
+            r3d.astype(dtype),
             vel if par["mode"] == "eikonal" else v0,
-            wav,
+            np.asarray(wav.astype(dtype)),
             wavc,
-            y=y,
+            y=y.astype(dtype),
             trav=trav,
             mode=par["mode"],
             engine="numpy" if backend == "numpy" else "cuda",
+            dtype=dtype,
         )
         if par["mode"] == "byot":
             Dop.trav = np.asarray(Dop.trav)
@@ -314,7 +336,14 @@ def test_kirchhoff3d(par):
             PAR["nsx"] * PAR["nrx"] * PAR["nsy"] * PAR["nry"] * PAR["nt"],
             PAR["nz"] * PAR["nx"] * PAR["ny"],
             backend=backend,
+            rtol=1e-4 if dtype == np.float32 else 1e-6,
         )
+
+        xx = np.random.normal(0, 1, PAR["ny"] * PAR["nx"] * PAR["nz"]).astype(dtype)
+        yy = Dop * xx
+        xadj = Dop.H * yy
+        assert yy.dtype == dtype
+        assert xadj.dtype == dtype
 
 
 @pytest.mark.parametrize(

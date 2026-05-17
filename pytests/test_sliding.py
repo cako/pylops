@@ -13,6 +13,7 @@ else:
 import pytest
 
 from pylops.basicoperators import Identity, MatrixMult
+from pylops.optimization.basic import cgls
 from pylops.signalprocessing import Sliding1D, Sliding2D, Sliding3D
 from pylops.signalprocessing.sliding1d import sliding1d_design
 from pylops.signalprocessing.sliding2d import sliding2d_design
@@ -112,9 +113,10 @@ par6 = {
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
-def test_Sliding1D(par):
-    """Dot-test and inverse for Sliding1D operator"""
-    Op = MatrixMult(np.ones((par["nwiny"], par["ny"])))
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Sliding1D(par, dtype):
+    """Dot-test and forward/adjoint/inverse for Sliding1D operator"""
+    Op = MatrixMult(np.ones((par["nwiny"], par["ny"]), dtype=dtype), dtype=dtype)
 
     nwins, dim = sliding1d_design(par["npy"], par["nwiny"], par["novery"], par["ny"])[
         :2
@@ -129,27 +131,38 @@ def test_Sliding1D(par):
         tapertype=par["tapertype"],
         savetaper=par["savetaper"],
     )
-    assert dottest(Slid, par["npy"], par["ny"] * nwins, backend=backend)
-    x = np.ones(par["ny"] * nwins)
-    y = Slid * x.ravel()
+    assert dottest(
+        Slid,
+        par["npy"],
+        par["ny"] * nwins,
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
 
-    xinv = Slid / y
-    assert_array_almost_equal(x.ravel(), xinv)
+    x = np.ones((nwins, par["ny"]), dtype=dtype)
+    y = Slid * x.ravel()
+    xadj = Slid.H * y
+    xinv = cgls(Slid, y, niter=50)[0]
+
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.skipif(
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4)])
-def test_Sliding1D_simOp(par):
-    """Dot-test and inverse for Sliding1D operator with
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Sliding1D_simOp(par, dtype):
+    """Dot-test and forward/adjoint/inverse for Sliding1D operator with
     Op applied to all windows simultaneously
     """
     nwins, dim = sliding1d_design(
         par["npy"], par["nwiny"], par["novery"], par["nwiny"]
     )[:2]
 
-    Op = Identity((nwins, par["nwiny"]))
+    Op = Identity((nwins, par["nwiny"]), dtype=dtype)
 
     Slid = Sliding1D(
         Op,
@@ -160,18 +173,30 @@ def test_Sliding1D_simOp(par):
         tapertype=par["tapertype"],
         savetaper=par["savetaper"],
     )
-    assert dottest(Slid, par["npy"], par["nwiny"] * nwins)
-    x = np.ones(par["nwiny"] * nwins)
+    assert dottest(
+        Slid,
+        par["npy"],
+        par["nwiny"] * nwins,
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
+    )
+    x = np.ones((nwins, par["nwiny"]), dtype=dtype)
     y = Slid * x.ravel()
+    xadj = Slid.H * y
+    xinv = cgls(Slid, y, niter=50)[0]
 
-    xinv = Slid / y
-    assert_array_almost_equal(x.ravel(), xinv)
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
-def test_Sliding2D(par):
-    """Dot-test and inverse for Sliding2D operator"""
-    Op = MatrixMult(np.ones((par["nwiny"] * par["nt"], par["ny"] * par["nt"])))
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Sliding2D(par, dtype):
+    """Dot-test and forward/adjoint/inverse for Sliding2D operator"""
+    Op = MatrixMult(
+        np.ones((par["nwiny"] * par["nt"], par["ny"] * par["nt"]), dtype=dtype),
+        dtype=dtype,
+    )
 
     nwins, dims = sliding2d_design(
         (par["npy"], par["nt"]), par["nwiny"], par["novery"], (par["ny"], par["nt"])
@@ -186,28 +211,36 @@ def test_Sliding2D(par):
         savetaper=par["savetaper"],
     )
     assert dottest(
-        Slid, par["npy"] * par["nt"], par["ny"] * par["nt"] * nwins, backend=backend
+        Slid,
+        par["npy"] * par["nt"],
+        par["ny"] * par["nt"] * nwins,
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
-    x = np.ones((par["ny"] * nwins, par["nt"]))
+    x = np.ones((nwins, par["ny"], par["nt"]), dtype=dtype)
     y = Slid * x.ravel()
+    xadj = Slid.H * y
+    xinv = cgls(Slid, y, niter=50)[0]
 
-    xinv = Slid / y
-    assert_array_almost_equal(x.ravel(), xinv)
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.skipif(
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4)])
-def test_Sliding2D_simOp(par):
-    """Dot-test and inverse for Sliding2D operator with
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Sliding2D_simOp(par, dtype):
+    """Dot-test and forward/adjoint/inverse for Sliding2D operator with
     Op applied to all windows simultaneously
     """
     nwins, dims = sliding2d_design(
         (par["npy"], par["nt"]), par["nwiny"], par["novery"], (par["nwiny"], par["nt"])
     )[:2]
 
-    Op = Identity((nwins, par["nwiny"], par["nt"]))
+    Op = Identity((nwins, par["nwiny"], par["nt"]), dtype=dtype)
 
     Slid = Sliding2D(
         Op,
@@ -218,20 +251,37 @@ def test_Sliding2D_simOp(par):
         tapertype=par["tapertype"],
         savetaper=par["savetaper"],
     )
-    x = np.ones((nwins, par["nwiny"], par["nt"]))
-    y = Slid * x.ravel()
+    assert dottest(
+        Slid,
+        par["npy"] * par["nt"],
+        par["nwiny"] * par["nt"] * nwins,
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
 
-    xinv = Slid / y
-    assert_array_almost_equal(x.ravel(), xinv)
+    x = np.ones((nwins, par["nwiny"], par["nt"]), dtype=dtype)
+    y = Slid * x.ravel()
+    xadj = Slid.H * y
+    xinv = cgls(Slid, y, niter=50)[0]
+
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
-def test_Sliding3D(par):
-    """Dot-test and inverse for Sliding3D operator"""
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Sliding3D(par, dtype):
+    """Dot-test and forward/adjoint/inverse for Sliding3D operator"""
     Op = MatrixMult(
         np.ones(
-            (par["nwiny"] * par["nwinx"] * par["nt"], par["ny"] * par["nx"] * par["nt"])
-        )
+            (
+                par["nwiny"] * par["nwinx"] * par["nt"],
+                par["ny"] * par["nx"] * par["nt"],
+            ),
+            dtype=dtype,
+        ),
+        dtype=dtype,
     )
 
     nwins, dims = sliding3d_design(
@@ -255,21 +305,27 @@ def test_Sliding3D(par):
         Slid,
         par["npy"] * par["npx"] * par["nt"],
         par["ny"] * par["nx"] * par["nt"] * nwins[0] * nwins[1],
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
-    x = np.ones((par["ny"] * par["nx"] * nwins[0] * nwins[1], par["nt"]))
-    y = Slid * x.ravel()
 
-    xinv = Slid / y
-    assert_array_almost_equal(x.ravel(), xinv)
+    x = np.ones((nwins[0], nwins[1], par["ny"], par["nx"], par["nt"]), dtype=dtype)
+    y = Slid * x.ravel()
+    xadj = Slid.H * y
+    xinv = cgls(Slid, y, niter=50)[0]
+
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.skipif(
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4)])
-def test_Sliding3D_simOp(par):
-    """Dot-test and inverse for Sliding3D operator with
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Sliding3D_simOp(par, dtype):
+    """Dot-test and forward/adjoint/inverse for Sliding3D operator with
     Op applied to all windows simultaneously
     """
     nwins, dims = sliding3d_design(
@@ -279,7 +335,7 @@ def test_Sliding3D_simOp(par):
         (par["nwiny"], par["nwinx"], par["nt"]),
     )[:2]
 
-    Op = Identity((*nwins, par["nwiny"], par["nwinx"], par["nt"]))
+    Op = Identity((*nwins, par["nwiny"], par["nwinx"], par["nt"]), dtype=dtype)
 
     Slid = Sliding3D(
         Op,
@@ -295,9 +351,16 @@ def test_Sliding3D_simOp(par):
         Slid,
         par["npy"] * par["npx"] * par["nt"],
         par["nwiny"] * par["nwinx"] * par["nt"] * nwins[0] * nwins[1],
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
     )
-    x = np.ones((par["nwiny"] * par["nwinx"] * nwins[0] * nwins[1], par["nt"]))
-    y = Slid * x.ravel()
 
-    xinv = Slid / y
-    assert_array_almost_equal(x.ravel(), xinv)
+    x = np.ones(
+        (nwins[0], nwins[1], par["nwiny"], par["nwinx"], par["nt"]), dtype=dtype
+    )
+    y = Slid * x.ravel()
+    xadj = Slid.H * y
+    xinv = cgls(Slid, y, niter=50)[0]
+
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)

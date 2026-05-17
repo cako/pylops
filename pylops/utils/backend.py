@@ -28,8 +28,8 @@ __all__ = [
     "randn",
 ]
 
+from collections.abc import Callable
 from types import ModuleType
-from typing import Callable
 
 import numpy as np
 import scipy.fft as sp_fft
@@ -38,7 +38,7 @@ from scipy.signal import convolve, correlate, fftconvolve, oaconvolve
 from scipy.sparse import csc_matrix, eye
 
 from pylops.utils import deps
-from pylops.utils.typing import DTypeLike, NDArray, ArrayLike
+from pylops.utils.typing import ArrayLike, DTypeLike, NDArray, Tfftengine_ncj
 
 if deps.cupy_enabled:
     import cupy as cp
@@ -70,7 +70,7 @@ else:
     from numpy.core.multiarray import normalize_axis_index
 
 
-def get_module(backend: str = "numpy") -> ModuleType:
+def get_module(backend: Tfftengine_ncj = "numpy") -> ModuleType:
     """Returns correct numerical module based on backend string
 
     Parameters
@@ -92,7 +92,8 @@ def get_module(backend: str = "numpy") -> ModuleType:
     elif backend == "jax":
         ncp = jnp
     else:
-        raise ValueError("backend must be numpy, cupy, or jax")
+        msg = f"The provided backend must be numpy, cupy, or jax, got {backend}"
+        raise ValueError(msg)
     return ncp
 
 
@@ -118,7 +119,8 @@ def get_module_name(mod: ModuleType) -> str:
     elif deps.jax_enabled and mod == jnp:
         backend = "jax"
     else:
-        raise ValueError("module must be numpy, cupy, or jax")
+        msg = f"The provided module must be numpy, cupy, or jax, got {mod}"
+        raise ValueError(msg)
     return backend
 
 
@@ -226,11 +228,8 @@ def get_oaconvolve(x: ArrayLike) -> Callable:
     """
     if deps.cupy_enabled or deps.jax_enabled:
         if deps.jax_enabled and isinstance(x, jnp.ndarray):
-            raise NotImplementedError(
-                "oaconvolve not implemented in "
-                "jax. Consider using a different"
-                "option..."
-            )
+            msg = "oaconvolve not implemented in jax. Consider using a different option..."
+            raise NotImplementedError(msg)
         elif deps.cupy_enabled and cp.get_array_module(x) == cp:
             return cp_oaconvolve
         else:
@@ -680,7 +679,7 @@ def inplace_divide(x: ArrayLike, y: ArrayLike, idx: list) -> NDArray:
         return y
 
 
-def randn(*n: int, backend: str = "numpy") -> NDArray:
+def randn(*n: int, backend: Tfftengine_ncj = "numpy") -> NDArray:
     """Returns randomly generated number
 
     Parameters
@@ -704,5 +703,6 @@ def randn(*n: int, backend: str = "numpy") -> NDArray:
     elif backend == "jax":
         x = jnp.array(np.random.randn(*n))
     else:
-        raise ValueError("backend must be numpy, cupy, or jax")
+        msg = f"backend must be numpy, cupy, or jax, got {backend}"
+        raise ValueError(msg)
     return x

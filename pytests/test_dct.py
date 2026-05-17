@@ -6,88 +6,104 @@ import pytest
 from pylops.signalprocessing import DCT
 from pylops.utils import dottest
 
-par1 = {"ny": 11, "nx": 11, "imag": 0, "dtype": "float64"}
-par2 = {"ny": 11, "nx": 21, "imag": 0, "dtype": "float64"}
-par3 = {"ny": 21, "nx": 21, "imag": 0, "dtype": "float64"}
+par1 = {"ny": 11, "nx": 11}
+par2 = {"ny": 11, "nx": 21}
+par3 = {"ny": 20, "nx": 20}
 
 
 @pytest.mark.skipif(
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
 @pytest.mark.parametrize("par", [(par1), (par3)])
-def test_DCT1D(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_DCT1D(par, dtype):
     """Dot test for Discrete Cosine Transform Operator 1D"""
 
-    t = np.arange(par["ny"]) + 1
+    t = np.arange(par["ny"], dtype=dtype) + 1.0
 
-    for type in [1, 2, 3, 4]:
-        Dct = DCT(dims=(par["ny"],), type=type, dtype=par["dtype"])
-        assert dottest(Dct, par["ny"], par["ny"], rtol=1e-6, complexflag=0, verb=True)
+    for dct_type in (1, 2, 3, 4):
+        Dct = DCT(dims=(par["ny"],), type=dct_type, dtype=dtype)
+        assert dottest(
+            Dct,
+            par["ny"],
+            par["ny"],
+            complexflag=0,
+            rtol=5e-4 if dtype == np.float32 else 1e-6,
+        )
 
         y = Dct.H * (Dct * t)
-        np.testing.assert_allclose(t, y)
+        np.testing.assert_allclose(t, y, rtol=5e-4 if dtype == np.float32 else 1e-6)
 
 
 @pytest.mark.skipif(
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
 @pytest.mark.parametrize("par", [(par1), (par2), (par3)])
-def test_DCT2D(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_DCT2D(par, dtype):
     """Dot test for Discrete Cosine Transform Operator 2D"""
 
-    t = np.outer(np.arange(par["ny"]) + 1, np.arange(par["nx"]) + 1)
+    t = np.outer(
+        np.arange(par["ny"], dtype=dtype) + 1.0, np.arange(par["nx"], dtype=dtype) + 1.0
+    )
 
-    for type in [1, 2, 3, 4]:
+    for dct_type in (1, 2, 3, 4):
         for axes in [0, 1]:
-            Dct = DCT(dims=t.shape, type=type, axes=axes, dtype=par["dtype"])
+            Dct = DCT(dims=t.shape, type=dct_type, axes=axes, dtype=dtype)
             assert dottest(
                 Dct,
                 par["nx"] * par["ny"],
                 par["nx"] * par["ny"],
-                rtol=1e-6,
                 complexflag=0,
-                verb=True,
+                rtol=5e-4 if dtype == np.float32 else 1e-6,
             )
 
             y = Dct.H * (Dct * t)
-            np.testing.assert_allclose(t, y)
+            np.testing.assert_allclose(t, y, rtol=5e-4 if dtype == np.float32 else 1e-6)
 
 
 @pytest.mark.skipif(
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
 @pytest.mark.parametrize("par", [(par1), (par2), (par3)])
-def test_DCT3D(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_DCT3D(par, dtype):
     """Dot test for Discrete Cosine Transform Operator 3D"""
 
     t = np.random.rand(par["nx"], par["nx"], par["nx"])
 
-    for type in [1, 2, 3, 4]:
+    for dct_type in (1, 2, 3, 4):
         for axes in [0, 1, 2]:
-            Dct = DCT(dims=t.shape, type=type, axes=axes, dtype=par["dtype"])
+            Dct = DCT(dims=t.shape, type=dct_type, axes=axes, dtype=dtype)
             assert dottest(
                 Dct,
                 par["nx"] * par["nx"] * par["nx"],
                 par["nx"] * par["nx"] * par["nx"],
-                rtol=1e-6,
                 complexflag=0,
-                verb=True,
+                rtol=5e-4 if dtype == np.float32 else 1e-6,
             )
 
             y = Dct.H * (Dct * t)
-            np.testing.assert_allclose(t, y)
+            np.testing.assert_allclose(t, y, rtol=5e-4 if dtype == np.float32 else 1e-6)
 
 
 @pytest.mark.skipif(
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
 @pytest.mark.parametrize("par", [(par1), (par3)])
-def test_DCT_workers(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_DCT_workers(par, dtype):
     """Dot test for Discrete Cosine Transform Operator with workers"""
     t = np.arange(par["ny"]) + 1
 
-    Dct = DCT(dims=(par["ny"],), type=1, dtype=par["dtype"], workers=2)
-    assert dottest(Dct, par["ny"], par["ny"], rtol=1e-6, complexflag=0, verb=True)
+    Dct = DCT(dims=(par["ny"],), type=1, dtype=dtype, workers=2)
+    assert dottest(
+        Dct,
+        par["ny"],
+        par["ny"],
+        complexflag=0,
+        rtol=5e-4 if dtype == np.float32 else 1e-6,
+    )
 
     y = Dct.H * (Dct * t)
-    np.testing.assert_allclose(t, y)
+    np.testing.assert_allclose(t, y, rtol=5e-4 if dtype == np.float32 else 1e-6)

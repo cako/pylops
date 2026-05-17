@@ -119,9 +119,10 @@ par8 = {
 )
 def test_unknown_engine():
     """Check error is raised if unknown engine is passed"""
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError, match="`engine` must be numpy"):
         _ = Radon2D(None, None, None, engine="foo")
-    with pytest.raises(KeyError):
+
+    with pytest.raises(ValueError, match="`engine` must be numpy"):
         _ = Radon3D(None, None, None, None, None, engine="foo")
 
 
@@ -131,15 +132,16 @@ def test_unknown_engine():
 @pytest.mark.parametrize(
     "par", [(par1), (par2), (par3), (par4), (par5), (par6), (par7), (par8)]
 )
-def test_Radon2D(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Radon2D(par, dtype):
     """Dot-test, forward and adjoint consistency check
     (for onthefly parameter), and sparse inverse for Radon2D operator
     """
     dt, dh = 0.005, 1
-    t = np.arange(par["nt"]) * dt
-    h = np.arange(par["nhx"]) * dh
-    px = np.linspace(0, par["pxmax"], par["npx"])
-    x = np.zeros((par["npx"], par["nt"]))
+    t = np.arange(par["nt"], dtype=dtype) * dt
+    h = np.arange(par["nhx"], dtype=dtype) * dh
+    px = np.linspace(0, par["pxmax"], par["npx"], dtype=dtype)
+    x = np.zeros((par["npx"], par["nt"]), dtype=dtype)
     x[2, par["nt"] // 2] = 1
 
     Rop = Radon2D(
@@ -151,7 +153,7 @@ def test_Radon2D(par):
         kind=par["kind"],
         onthefly=False,
         engine=par["engine"],
-        dtype="float64",
+        dtype=dtype,
     )
     R1op = Radon2D(
         t,
@@ -162,16 +164,25 @@ def test_Radon2D(par):
         kind=par["kind"],
         onthefly=True,
         engine=par["engine"],
-        dtype="float64",
+        dtype=dtype,
     )
-    assert dottest(Rop, par["nhx"] * par["nt"], par["npx"] * par["nt"], rtol=1e-3)
+    assert dottest(
+        Rop,
+        par["nhx"] * par["nt"],
+        par["npx"] * par["nt"],
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
+    )
 
     y = Rop * x.ravel()
     y1 = R1op * x.ravel()
+    assert y.dtype == dtype
+    assert y1.dtype == dtype
     assert_array_almost_equal(y, y1, decimal=4)
 
     xadj = Rop.H * y
     xadj1 = R1op.H * y
+    assert xadj.dtype == dtype
+    assert xadj1.dtype == dtype
     assert_array_almost_equal(xadj, xadj1, decimal=4)
 
     xinv, _, _ = fista(Rop, y, niter=30, eps=1e0)
@@ -184,17 +195,18 @@ def test_Radon2D(par):
 @pytest.mark.parametrize(
     "par", [(par1), (par2), (par3), (par4), (par5), (par6), (par7), (par8)]
 )
-def test_Radon3D(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Radon3D(par, dtype):
     """Dot-test, forward and adjoint consistency check
     (for onthefly parameter), and sparse inverse for Radon3D operator
     """
     dt, dhy, dhx = 0.005, 1, 1
-    t = np.arange(par["nt"]) * dt
-    hy = np.arange(par["nhy"]) * dhy
-    hx = np.arange(par["nhx"]) * dhx
-    py = np.linspace(0, par["pymax"], par["npy"])
-    px = np.linspace(0, par["pxmax"], par["npx"])
-    x = np.zeros((par["npy"], par["npx"], par["nt"]))
+    t = np.arange(par["nt"], dtype=dtype) * dt
+    hy = np.arange(par["nhy"], dtype=dtype) * dhy
+    hx = np.arange(par["nhx"], dtype=dtype) * dhx
+    py = np.linspace(0, par["pymax"], par["npy"], dtype=dtype)
+    px = np.linspace(0, par["pxmax"], par["npx"], dtype=dtype)
+    x = np.zeros((par["npy"], par["npx"], par["nt"]), dtype=dtype)
     x[3, 2, par["nt"] // 2] = 1
 
     Rop = Radon3D(
@@ -208,7 +220,7 @@ def test_Radon3D(par):
         kind=par["kind"],
         onthefly=False,
         engine=par["engine"],
-        dtype="float64",
+        dtype=dtype,
     )
     R1op = Radon3D(
         t,
@@ -221,21 +233,25 @@ def test_Radon3D(par):
         kind=par["kind"],
         onthefly=True,
         engine=par["engine"],
-        dtype="float64",
+        dtype=dtype,
     )
-
     assert dottest(
         Rop,
         par["nhy"] * par["nhx"] * par["nt"],
         par["npy"] * par["npx"] * par["nt"],
-        rtol=1e-3,
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
     )
+
     y = Rop * x.ravel()
     y1 = R1op * x.ravel()
+    assert y.dtype == dtype
+    assert y1.dtype == dtype
     assert_array_almost_equal(y, y1, decimal=4)
 
     xadj = Rop.H * y
     xadj1 = R1op.H * y
+    assert xadj.dtype == dtype
+    assert xadj1.dtype == dtype
     assert_array_almost_equal(xadj, xadj1, decimal=4)
 
     if Rop.engine == "numba":  # as numpy is too slow here...

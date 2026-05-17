@@ -1,14 +1,14 @@
 __all__ = ["Spread"]
 
 import logging
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import numpy as np
 
 from pylops import LinearOperator
 from pylops.utils import deps
 from pylops.utils.decorators import reshaped
-from pylops.utils.typing import DTypeLike, InputDimsLike, NDArray
+from pylops.utils.typing import DTypeLike, InputDimsLike, NDArray, Tengine_nn
 
 jit_message = deps.numba_import("the spread module")
 
@@ -127,10 +127,10 @@ class Spread(LinearOperator):
 
     Raises
     ------
-    KeyError
-        If ``engine`` is neither ``numpy`` nor ``numba``
     NotImplementedError
         If both ``table`` and ``fh`` are not provided
+    ValueError
+        If ``engine`` is neither ``numpy`` nor ``numba``
     ValueError
         If ``table`` has shape different from
         :math:`[n_{x_0} \times n_{t_0} \times n_x]`
@@ -168,18 +168,19 @@ class Spread(LinearOperator):
         self,
         dims: InputDimsLike,
         dimsd: InputDimsLike,
-        table: Optional[NDArray] = None,
-        dtable: Optional[NDArray] = None,
-        fh: Optional[Callable] = None,
-        interp: Optional[bool] = None,
-        engine: str = "numpy",
+        table: NDArray | None = None,
+        dtable: NDArray | None = None,
+        fh: Callable | None = None,
+        interp: bool | None = None,
+        engine: Tengine_nn = "numpy",
         dtype: DTypeLike = "float64",
         name: str = "S",
     ) -> None:
         super().__init__(dtype=np.dtype(dtype), dims=dims, dimsd=dimsd, name=name)
 
         if engine not in ["numpy", "numba"]:
-            raise KeyError("engine must be numpy or numba")
+            msg = f"engine must be 'numpy' or 'numba', got {engine}"
+            raise ValueError(msg)
         if engine == "numba" and jit_message is None:
             self.engine = "numba"
         else:
@@ -196,15 +197,19 @@ class Spread(LinearOperator):
 
         # find out if mapping is in table of function handle
         if self.table is None and fh is None:
-            raise NotImplementedError("provide either table or fh.")
+            msg = "Provide either table or fh."
+            raise NotImplementedError(msg)
         elif self.table is not None:
             if fh is not None:
-                raise ValueError("provide only one of table or fh.")
+                msg = "Provide only one of table or fh."
+                raise ValueError(msg)
             if self.table.shape != (self.nx0, self.nt0, self.nx):
-                raise ValueError("table must have shape [nx0 x nt0 x nx]")
+                msg = "table must have shape [nx0 x nt0 x nx]"
+                raise ValueError(msg)
             self.usetable = True
             if np.any(self.table > self.nt):
-                raise ValueError("values in table must be smaller than nt")
+                msg = "Values in table must be smaller than nt"
+                raise ValueError(msg)
         else:
             self.usetable = False
 
@@ -213,7 +218,8 @@ class Spread(LinearOperator):
         if self.usetable:
             if self.dtable is not None:
                 if self.dtable.shape != (self.nx0, self.nt0, self.nx):
-                    raise ValueError("dtable must have shape [nx0 x nt x nx]")
+                    msg = "dtable must have shape [nx0 x nt x nx]"
+                    raise ValueError(msg)
                 self.interp = True
         else:
             if self.engine == "numba":

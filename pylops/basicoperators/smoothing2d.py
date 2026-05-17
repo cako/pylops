@@ -1,6 +1,5 @@
 __all__ = ["Smoothing2D"]
 
-from typing import Union
 
 import numpy as np
 
@@ -30,7 +29,7 @@ class Smoothing2D(Convolve2D):
 
     Attributes
     ----------
-    nh : :obj:`int`
+    nh : :obj:`tuple`
         Length of the filter
     convolve : :obj:`callable`
         Convolution function
@@ -71,7 +70,7 @@ class Smoothing2D(Convolve2D):
     def __init__(
         self,
         nsmooth: InputDimsLike,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         axes: InputDimsLike = (-2, -1),
         dtype: DTypeLike = "float64",
         name: str = "S",
@@ -81,7 +80,9 @@ class Smoothing2D(Convolve2D):
             nsmooth[0] += 1
         if nsmooth[1] % 2 == 0:
             nsmooth[1] += 1
-        h = np.ones((nsmooth[0], nsmooth[1])) / float(nsmooth[0] * nsmooth[1])
+        h = np.ones((nsmooth[0], nsmooth[1]), dtype=dtype) / float(
+            nsmooth[0] * nsmooth[1]
+        )
         offset = [(nsmooth[0] - 1) // 2, (nsmooth[1] - 1) // 2]
         super().__init__(
             dims=dims, h=h, offset=offset, axes=axes, dtype=dtype, name=name

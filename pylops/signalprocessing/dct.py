@@ -1,6 +1,6 @@
 __all__ = ["DCT"]
 
-from typing import List, Optional, Union
+from typing import Literal
 
 import numpy as np
 from scipy import fft
@@ -69,16 +69,16 @@ class DCT(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
-        type: int = 2,
-        axes: Union[int, List[int]] = None,
+        dims: int | InputDimsLike,
+        type: Literal[1, 2, 3, 4] = 2,
+        axes: int | list[int] = None,
         dtype: DTypeLike = "float64",
-        workers: Optional[int] = None,
+        workers: int | None = None,
         name: str = "C",
     ) -> None:
-
         if type > 4 or type < 1:
-            raise ValueError("wrong type value, it can only be 1, 2, 3 or 4")
+            msg = f"Wrong `type`, it can only be 1, 2, 3 or 4, got {type}"
+            raise ValueError(msg)
         self.type = type
         self.axes = axes
         self.workers = workers

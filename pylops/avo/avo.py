@@ -9,17 +9,15 @@ __all__ = [
     "AVOLinearModelling",
 ]
 
-from typing import List, Optional, Tuple, Union
 
 import numpy as np
-import numpy.typing as npt
 from numpy import cos, sin, tan
 
 from pylops import LinearOperator
 from pylops.utils._internal import _value_or_sized_to_tuple
 from pylops.utils.backend import get_array_module
 from pylops.utils.decorators import reshaped
-from pylops.utils.typing import DTypeLike, NDArray
+from pylops.utils.typing import DTypeLike, NDArray, Tavolinearization
 
 
 def zoeppritz_scattering(
@@ -29,7 +27,7 @@ def zoeppritz_scattering(
     vp0: float,
     vs0: float,
     rho0: float,
-    theta1: Union[float, npt.ArrayLike],
+    theta1: float | NDArray,
 ) -> NDArray:
     r"""Zoeppritz solution.
 
@@ -145,7 +143,7 @@ def zoeppritz_element(
     vp0: float,
     vs0: float,
     rho0: float,
-    theta1: Union[float, NDArray],
+    theta1: float | NDArray,
     element: str = "PdPu",
 ) -> NDArray:
     """Single element of Zoeppritz solution.
@@ -209,7 +207,7 @@ def zoeppritz_pp(
     vp0: float,
     vs0: float,
     rho0: float,
-    theta1: Union[float, NDArray],
+    theta1: float | NDArray,
 ) -> NDArray:
     """PP reflection coefficient from the Zoeppritz scattering matrix.
 
@@ -250,13 +248,13 @@ def zoeppritz_pp(
 
 
 def approx_zoeppritz_pp(
-    vp1: Union[List, Tuple, npt.ArrayLike],
-    vs1: Union[List, Tuple, npt.ArrayLike],
-    rho1: Union[List, Tuple, npt.ArrayLike],
-    vp0: Union[List, Tuple, npt.ArrayLike],
-    vs0: Union[List, Tuple, npt.ArrayLike],
-    rho0: Union[List, Tuple, npt.ArrayLike],
-    theta1: Union[float, NDArray],
+    vp1: list | tuple | NDArray,
+    vs1: list | tuple | NDArray,
+    rho1: list | tuple | NDArray,
+    vp0: list | tuple | NDArray,
+    vs0: list | tuple | NDArray,
+    rho0: list | tuple | NDArray,
+    theta1: float | NDArray,
 ) -> NDArray:
     """PP reflection coefficient from the approximate Zoeppritz equation.
 
@@ -335,10 +333,10 @@ def approx_zoeppritz_pp(
 
 
 def akirichards(
-    theta: npt.ArrayLike,
-    vsvp: Union[float, NDArray],
+    theta: NDArray,
+    vsvp: float | NDArray,
     n: int = 1,
-) -> Tuple[NDArray, NDArray, NDArray]:
+) -> tuple[NDArray, NDArray, NDArray]:
     r"""Three terms Aki-Richards approximation.
 
     Computes the coefficients of the of three terms Aki-Richards approximation
@@ -409,10 +407,10 @@ def akirichards(
 
 
 def fatti(
-    theta: npt.ArrayLike,
-    vsvp: Union[float, NDArray],
+    theta: NDArray,
+    vsvp: float | NDArray,
     n: int = 1,
-) -> Tuple[NDArray, NDArray, NDArray]:
+) -> tuple[NDArray, NDArray, NDArray]:
     r"""Three terms Fatti approximation.
 
     Computes the coefficients of the three terms Fatti approximation
@@ -485,10 +483,10 @@ def fatti(
 
 
 def ps(
-    theta: npt.ArrayLike,
-    vsvp: Union[float, NDArray],
+    theta: NDArray,
+    vsvp: float | NDArray,
     n: int = 1,
-) -> Tuple[NDArray, NDArray, NDArray]:
+) -> tuple[NDArray, NDArray, NDArray]:
     r"""PS reflection coefficient
 
     Computes the coefficients for the PS approximation
@@ -647,10 +645,10 @@ class AVOLinearModelling(LinearOperator):
     def __init__(
         self,
         theta: NDArray,
-        vsvp: Union[float, NDArray] = 0.5,
+        vsvp: float | NDArray = 0.5,
         nt0: int = 1,
-        spatdims: Optional[Union[int, Tuple[int]]] = None,
-        linearization: str = "akirich",
+        spatdims: int | tuple[int] | None = None,
+        linearization: Tavolinearization = "akirich",
         dtype: DTypeLike = "float64",
         name: str = "A",
     ) -> None:
@@ -672,14 +670,16 @@ class AVOLinearModelling(LinearOperator):
                 "%s not an available linearization..." % linearization
             )
         self.npars = len(Gs)
-        dims: Tuple[int, ...] = (self.nt0, self.npars)
-        dimsd: Tuple[int, ...] = (self.nt0, self.ntheta)
+        dims: tuple[int, ...] = (self.nt0, self.npars)
+        dimsd: tuple[int, ...] = (self.nt0, self.ntheta)
         if spatdims is not None:
             dims += self.spatdims
             dimsd += self.spatdims
         super().__init__(dtype=np.dtype(dtype), dims=dims, dimsd=dimsd, name=name)
 
-        self.G = self.ncp.concatenate([gs.T[:, self.ncp.newaxis] for gs in Gs], axis=1)
+        self.G = self.ncp.concatenate(
+            [gs.astype(dtype).T[:, self.ncp.newaxis] for gs in Gs], axis=1
+        )
         # add dimensions to G to account for horizonal axes
         for _ in range(len(self.spatdims)):
             self.G = self.G[..., np.newaxis]

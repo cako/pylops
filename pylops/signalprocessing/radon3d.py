@@ -1,12 +1,13 @@
 __all__ = ["Radon3D"]
 
-from typing import Callable, Optional, Tuple
+from collections.abc import Callable
+from typing import Literal
 
 import numpy as np
 
 from pylops.basicoperators import Spread
 from pylops.utils import deps
-from pylops.utils.typing import DTypeLike, NDArray
+from pylops.utils.typing import DTypeLike, NDArray, Tengine_nn
 
 jit_message = deps.numba_import("the radon3d module")
 
@@ -61,7 +62,7 @@ def _indices_3d(
     t: int,
     nt: int,
     interp: bool = True,
-) -> Tuple[NDArray, NDArray, Optional[NDArray]]:
+) -> tuple[NDArray, NDArray, NDArray | None]:
     """Compute time and space indices of parametric line in ``f`` function
 
     Parameters
@@ -117,7 +118,7 @@ def _indices_3d_onthefly(
     it: int,
     nt: int,
     interp: bool = True,
-) -> Tuple[NDArray, NDArray, Optional[NDArray]]:
+) -> tuple[NDArray, NDArray, NDArray | None]:
     """Wrapper around _indices_3d to allow on-the-fly computation of
     parametric curves"""
     tscan = np.full(len(y), np.nan, dtype=np.float32)
@@ -142,13 +143,13 @@ def _create_table(
     ny: int,
     nx: int,
     interp: bool,
-) -> Tuple[NDArray, Optional[NDArray]]:
+) -> tuple[NDArray, NDArray | None]:
     """Create look up table"""
     table = np.full((npx * npy, nt, ny * nx), np.nan, dtype=np.float32)
     if interp:
         dtable = np.full((npx * npy, nt, ny * nx), np.nan)
 
-    for ip, (py, px) in enumerate(zip(pyaxis, pxaxis)):
+    for ip, (py, px) in enumerate(zip(pyaxis, pxaxis, strict=True)):
         for it in range(nt):
             sscan, tscan, dtscan = _indices_3d(f, y, x, py, px, it, nt, interp=interp)
             table[ip, it, sscan] = tscan
@@ -163,11 +164,11 @@ def Radon3D(
     hxaxis: NDArray,
     pyaxis: NDArray,
     pxaxis: NDArray,
-    kind: str = "linear",
+    kind: Literal["linear", "parabolic", "hyperbolic"] = "linear",
     centeredh: bool = True,
     interp: bool = True,
     onthefly: bool = False,
-    engine: str = "numpy",
+    engine: Tengine_nn = "numpy",
     dtype: DTypeLike = "float64",
     name: str = "R",
 ):
@@ -224,10 +225,10 @@ def Radon3D(
 
     Raises
     ------
-    KeyError
-        If ``engine`` is neither ``numpy`` nor ``numba``
     NotImplementedError
         If ``kind`` is not ``linear``, ``parabolic``, or ``hyperbolic``
+    ValueError
+        If ``engine`` is neither ``numpy`` nor ``numba``
 
     See Also
     --------
@@ -267,7 +268,8 @@ def Radon3D(
     """
     # engine
     if engine not in ["numpy", "numba"]:
-        raise KeyError("engine must be numpy or numba")
+        msg = "`engine` must be numpy or numba"
+        raise ValueError(msg)
     if engine == "numba" and jit_message is not None:
         engine = "numpy"
 
@@ -281,7 +283,11 @@ def Radon3D(
     elif kind == "hyperbolic":
         f = _hyperbolic if engine == "numpy" else _hyperbolic_numba
     else:
-        raise NotImplementedError("kind must be linear, " "parabolic, or hyperbolic...")
+        msg = (
+            "Wrong kind of basis function. Expected 'linear', 'parabolic', "
+            f"or 'hyperbolic', but received '{kind}'."
+        )
+        raise NotImplementedError(msg)
     # make axes unitless
     dhy, dhx = np.abs(hyaxis[1] - hyaxis[0]), np.abs(hxaxis[1] - hxaxis[0])
     dt = np.abs(taxis[1] - taxis[0])

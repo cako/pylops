@@ -1,7 +1,6 @@
 __all__ = ["NonStationaryConvolve3D"]
 
 import os
-from typing import Tuple, Union
 
 import numpy as np
 
@@ -10,7 +9,7 @@ from pylops.utils import deps
 from pylops.utils._internal import _value_or_sized_to_tuple
 from pylops.utils.backend import get_array_module
 from pylops.utils.decorators import reshaped
-from pylops.utils.typing import DTypeLike, InputDimsLike, NDArray
+from pylops.utils.typing import DTypeLike, InputDimsLike, NDArray, Tengine_nnc
 
 jit_message = deps.numba_import("the nonstatconvolve3d module")
 
@@ -126,29 +125,32 @@ class NonStationaryConvolve3D(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         hs: NDArray,
         ihx: InputDimsLike,
         ihy: InputDimsLike,
         ihz: InputDimsLike,
-        engine: str = "numpy",
-        num_threads_per_blocks: Tuple[int, int, int] = (2, 16, 16),
+        engine: Tengine_nnc = "numpy",
+        num_threads_per_blocks: tuple[int, int, int] = (2, 16, 16),
         dtype: DTypeLike = "float64",
         name: str = "C",
     ) -> None:
         if engine not in ["numpy", "numba", "cuda"]:
-            raise NotImplementedError("engine must be numpy or numba or cuda")
+            msg = "`engine` must be numpy or numba or cuda"
+            raise ValueError(msg)
         if hs.shape[3] % 2 == 0 or hs.shape[4] % 2 == 0 or hs.shape[5] % 2 == 0:
-            raise ValueError("filters hs must have odd length")
+            msg = "The filters `hs` must have odd length"
+            raise ValueError(msg)
         if (
             len(np.unique(np.diff(ihx))) > 1
             or len(np.unique(np.diff(ihy))) > 1
             or len(np.unique(np.diff(ihz))) > 1
         ):
-            raise ValueError(
-                "the indices of filters 'ih' are must be regularly sampled"
+            msg = (
+                "The indices `ihx`, `ihy`, and `ihz` of the filters "
+                "must be regularly sampled."
             )
-
+            raise ValueError(msg)
         if (
             min(ihx) < 0
             or min(ihy) < 0
@@ -157,9 +159,12 @@ class NonStationaryConvolve3D(LinearOperator):
             or max(ihy) >= dims[1]
             or max(ihz) >= dims[2]
         ):
-            raise ValueError(
-                "the indices of filters 'ih' must be larger than 0 and smaller than `dims`"
+            msg = (
+                "The indices `ihx`, `ihy`, and `ihz` of the filters "
+                "must be larger than 0 and smaller than `dims`."
             )
+            raise ValueError(msg)
+
         self.hs = hs
         self.hshape = hs.shape[3:]
         self.ohx, self.dhx, self.nhx = ihx[0], ihx[1] - ihx[0], len(ihx)
@@ -200,8 +205,8 @@ class NonStationaryConvolve3D(LinearOperator):
         x: NDArray,
         y: NDArray,
         hs: NDArray,
-        hshape: Tuple[int, int, int],
-        xdims: Tuple[int, int, int],
+        hshape: tuple[int, int, int],
+        xdims: tuple[int, int, int],
         ohx: float,
         ohy: float,
         ohz: float,
@@ -364,7 +369,7 @@ class NonStationaryConvolve3D(LinearOperator):
             self.nhy,
             self.nhz,
             rmatvec=False,
-            **self.kwargs_cuda
+            **self.kwargs_cuda,
         )
         return y
 
@@ -388,6 +393,6 @@ class NonStationaryConvolve3D(LinearOperator):
             self.nhy,
             self.nhz,
             rmatvec=True,
-            **self.kwargs_cuda
+            **self.kwargs_cuda,
         )
         return y

@@ -5,7 +5,8 @@ __all__ = [
     "PreconditionedInversion",
 ]
 
-from typing import TYPE_CHECKING, Optional, Sequence, Tuple
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
 from scipy.sparse.linalg import cg as sp_cg
@@ -15,7 +16,7 @@ from pylops.basicoperators import Diagonal, VStack
 from pylops.optimization.basesolver import Solver, _units
 from pylops.optimization.basic import cg, cgls
 from pylops.utils.backend import get_array_module
-from pylops.utils.typing import NDArray
+from pylops.utils.typing import NDArray, Tmemunit, Tsolverengine
 
 if TYPE_CHECKING:
     from pylops.linearoperator import LinearOperator
@@ -23,15 +24,16 @@ if TYPE_CHECKING:
 
 def _check_regularization_dims(
     Regs: Sequence["LinearOperator"],
-    dataregs: Optional[Sequence[NDArray]] = None,
-    epsRs: Optional[Sequence[float]] = None,
+    dataregs: Sequence[NDArray] | None = None,
+    epsRs: Sequence[float] | None = None,
 ) -> None:
     """check Regs, dataregs, and epsRs have same dimensions"""
     nRegs = len(Regs)
     ndataregs = nRegs if dataregs is None else len(dataregs)
     nepsRs = nRegs if epsRs is None else len(epsRs)
     if not nRegs == ndataregs == nepsRs:
-        raise ValueError("Regs, dataregs, and epsRs must have the same size")
+        msg = "Regs, dataregs, and epsRs must have the same size"
+        raise ValueError(msg)
 
 
 class NormalEquationsInversion(Solver):
@@ -102,9 +104,9 @@ class NormalEquationsInversion(Solver):
 
     def memory_usage(
         self,
-        nopRegs: Optional[Tuple[int]] = None,
+        nopRegs: tuple[int] | None = None,
         show: bool = False,
-        unit: str = "B",
+        unit: Tmemunit = "B",
     ) -> float:
         """Compute memory usage of the solver
 
@@ -152,11 +154,11 @@ class NormalEquationsInversion(Solver):
         y: NDArray,
         Regs: Sequence["LinearOperator"],
         Weight: Optional["LinearOperator"] = None,
-        dataregs: Optional[Sequence[NDArray]] = None,
+        dataregs: Sequence[NDArray] | None = None,
         epsI: float = 0,
-        epsRs: Optional[Sequence[float]] = None,
-        NRegs: Optional[Sequence["LinearOperator"]] = None,
-        epsNRs: Optional[Sequence[float]] = None,
+        epsRs: Sequence[float] | None = None,
+        NRegs: Sequence["LinearOperator"] | None = None,
+        epsNRs: Sequence[float] | None = None,
         show: bool = False,
     ) -> None:
         r"""Setup solver
@@ -234,12 +236,14 @@ class NormalEquationsInversion(Solver):
             and self.Regs is not None
             and self.dataregs is not None
         ):
-            for epsR, Reg, datareg in zip(self.epsRs, self.Regs, self.dataregs):
+            for epsR, Reg, datareg in zip(
+                self.epsRs, self.Regs, self.dataregs, strict=True
+            ):
                 self.y_normal += epsR**2 * Reg.rmatvec(datareg)
                 self.Op_normal += epsR**2 * Reg.H @ Reg
 
         if epsNRs is not None and NRegs is not None:
-            for epsNR, NReg in zip(epsNRs, NRegs):
+            for epsNR, NReg in zip(epsNRs, NRegs, strict=True):
                 self.Op_normal += epsNR**2 * NReg
 
         # print setup
@@ -247,19 +251,20 @@ class NormalEquationsInversion(Solver):
             self._print_setup()
 
     def step(self) -> None:
-        raise NotImplementedError(
-            "NormalEquationsInversion uses as default the"
-            " scipy.sparse.linalg.cg solver, therefore the "
+        msg = (
+            "NormalEquationsInversion uses as default the "
+            "scipy.sparse.linalg.cg solver, therefore the "
             "step method is not implemented. Use directly run or solve."
         )
+        raise NotImplementedError(msg)
 
     def run(
         self,
         x: NDArray,
-        engine: str = "scipy",
+        engine: Tsolverengine = "scipy",
         show: bool = False,
         **kwargs_solver,
-    ) -> Tuple[NDArray, int]:
+    ) -> tuple[NDArray, int]:
         r"""Run solver
 
         Parameters
@@ -310,24 +315,25 @@ class NormalEquationsInversion(Solver):
             )[0]
             istop = None
         else:
-            raise NotImplementedError("Engine must be scipy or pylops")
+            msg = "`engine` must be scipy or pylops"
+            raise NotImplementedError(msg)
         return xinv, istop
 
     def solve(
         self,
         y: NDArray,
         Regs: Sequence["LinearOperator"],
-        x0: Optional[NDArray] = None,
+        x0: NDArray | None = None,
         Weight: Optional["LinearOperator"] = None,
-        dataregs: Optional[Sequence[NDArray]] = None,
+        dataregs: Sequence[NDArray] | None = None,
         epsI: float = 0,
-        epsRs: Optional[Sequence[float]] = None,
-        NRegs: Optional[Sequence["LinearOperator"]] = None,
-        epsNRs: Optional[Sequence[float]] = None,
-        engine: str = "scipy",
+        epsRs: Sequence[float] | None = None,
+        NRegs: Sequence["LinearOperator"] | None = None,
+        epsNRs: Sequence[float] | None = None,
+        engine: Tsolverengine = "scipy",
         show: bool = False,
         **kwargs_solver,
-    ) -> Tuple[NDArray, int]:
+    ) -> tuple[NDArray, int]:
         r"""Run entire solver
 
         Parameters
@@ -437,7 +443,8 @@ def RegularizedOperator(
 
     """
     OpReg = VStack(
-        [Op] + [epsR * Reg for epsR, Reg in zip(epsRs, Regs)], dtype=Op.dtype
+        [Op] + [epsR * Reg for epsR, Reg in zip(epsRs, Regs, strict=True)],
+        dtype=Op.dtype,
     )
     return OpReg
 
@@ -519,9 +526,9 @@ class RegularizedInversion(Solver):
 
     def memory_usage(
         self,
-        nopRegs: Optional[Tuple[int]] = None,
+        nopRegs: tuple[int] | None = None,
         show: bool = False,
-        unit: str = "B",
+        unit: Tmemunit = "B",
     ) -> float:
         """Compute memory usage of the solver
 
@@ -576,8 +583,8 @@ class RegularizedInversion(Solver):
         y: NDArray,
         Regs: Sequence["LinearOperator"],
         Weight: Optional["LinearOperator"] = None,
-        dataregs: Optional[Sequence[NDArray]] = None,
-        epsRs: Optional[Sequence[float]] = None,
+        dataregs: Sequence[NDArray] | None = None,
+        epsRs: Sequence[float] | None = None,
         show: bool = False,
     ) -> None:
         r"""Setup solver
@@ -642,7 +649,7 @@ class RegularizedInversion(Solver):
 
         # augumented operator
         if self.epsRs is not None and self.dataregs is not None:
-            for epsR, datareg in zip(self.epsRs, self.dataregs):
+            for epsR, datareg in zip(self.epsRs, self.dataregs, strict=True):
                 self.datatot = self.ncp.hstack((self.datatot, epsR * datareg))
 
         # print setup
@@ -650,19 +657,20 @@ class RegularizedInversion(Solver):
             self._print_setup()
 
     def step(self) -> None:
-        raise NotImplementedError(
-            "RegularizedInversion uses as default the"
-            " scipy.sparse.linalg.lsqr solver, therefore the "
+        msg = (
+            "RegularizedInversion uses as default the "
+            "scipy.sparse.linalg.lsqr solver, therefore the "
             "step method is not implemented. Use directly run or solve."
         )
+        raise NotImplementedError(msg)
 
     def run(
         self,
         x: NDArray,
-        engine: str = "scipy",
+        engine: Tsolverengine = "scipy",
         show: bool = False,
         **kwargs_solver,
-    ) -> Tuple[NDArray, int, int, float, float]:
+    ) -> tuple[NDArray, int, int, float, float]:
         r"""Run solver
 
         Parameters
@@ -719,21 +727,22 @@ class RegularizedInversion(Solver):
                 **kwargs_solver,
             )[0:5]
         else:
-            raise NotImplementedError("Engine must be scipy or pylops")
+            msg = "`engine` must be scipy or pylops"
+            raise NotImplementedError(msg)
         return xinv, istop, itn, r1norm, r2norm
 
     def solve(
         self,
         y: NDArray,
         Regs: Sequence["LinearOperator"],
-        x0: Optional[NDArray] = None,
+        x0: NDArray | None = None,
         Weight: Optional["LinearOperator"] = None,
-        dataregs: Optional[Sequence[NDArray]] = None,
-        epsRs: Optional[Sequence[float]] = None,
-        engine: str = "scipy",
+        dataregs: Sequence[NDArray] | None = None,
+        epsRs: Sequence[float] | None = None,
+        engine: Tsolverengine = "scipy",
         show: bool = False,
         **kwargs_solver,
-    ) -> Tuple[NDArray, int, int, float, float]:
+    ) -> tuple[NDArray, int, int, float, float]:
         r"""Run entire solver
 
         Parameters
@@ -848,7 +857,7 @@ class PreconditionedInversion(Solver):
     def memory_usage(
         self,
         show: bool = False,
-        unit: str = "B",
+        unit: Tmemunit = "B",
     ) -> float:
         """Compute memory usage of the solver
 
@@ -921,19 +930,20 @@ class PreconditionedInversion(Solver):
             self._print_setup()
 
     def step(self) -> None:
-        raise NotImplementedError(
-            "PreconditionedInversion uses as default the"
-            " scipy.sparse.linalg.lsqr solver, therefore the "
+        msg = (
+            "PreconditionedInversion uses as default the "
+            "scipy.sparse.linalg.lsqr solver, therefore the "
             "step method is not implemented. Use directly run or solve."
         )
+        raise NotImplementedError(msg)
 
     def run(
         self,
         x: NDArray,
-        engine: str = "scipy",
+        engine: Tsolverengine = "scipy",
         show: bool = False,
         **kwargs_solver,
-    ) -> Tuple[NDArray, int, int, float, float]:
+    ) -> tuple[NDArray, int, int, float, float]:
         r"""Run solver
 
         Parameters
@@ -995,7 +1005,8 @@ class PreconditionedInversion(Solver):
             # force it 1d as we decorate this method with disable_ndarray_multiplication
             pinv = pinv.ravel()
         else:
-            raise NotImplementedError("Engine must be scipy or pylops")
+            msg = "`engine` must be scipy or pylops"
+            raise NotImplementedError(msg)
         xinv = self.P.matvec(pinv)
         return xinv, istop, itn, r1norm, r2norm
 
@@ -1003,11 +1014,11 @@ class PreconditionedInversion(Solver):
         self,
         y: NDArray,
         P: "LinearOperator",
-        x0: Optional[NDArray] = None,
-        engine: str = "scipy",
+        x0: NDArray | None = None,
+        engine: Tsolverengine = "scipy",
         show: bool = False,
         **kwargs_solver,
-    ) -> Tuple[NDArray, int, int, float, float]:
+    ) -> tuple[NDArray, int, int, float, float]:
         r"""Run entire solver
 
         Parameters

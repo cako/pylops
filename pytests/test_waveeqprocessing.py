@@ -140,9 +140,12 @@ def create_data(par, nv):
 @pytest.mark.parametrize(
     "par", [(par1), (par2), (par3), (par4), (par5), (par6), (par7), (par8)]
 )
-def test_MDC_1virtualsource(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_MDC_1virtualsource(par, dtype):
     """Dot-test and inversion for MDC operator of 1 virtual source"""
+    cdtype = (np.empty(0, dtype=dtype) + 1j * np.empty(0, dtype=dtype)).dtype
     nt2, wav, mwav, Gwav, Gwav_fft = create_data(par, 1)
+    Gwav_fft = Gwav_fft.astype(cdtype)
 
     MDCop = MDC(
         np.asarray(Gwav_fft).transpose(2, 0, 1),
@@ -152,12 +155,20 @@ def test_MDC_1virtualsource(par):
         dr=parmod["dx"],
         twosided=par["twosided"],
     )
-    dottest(MDCop, nt2 * parmod["ny"], nt2 * parmod["nx"], backend=backend)
-    mwav = np.asarray(mwav).T
+    dottest(
+        MDCop,
+        nt2 * parmod["ny"],
+        nt2 * parmod["nx"],
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
+
+    mwav = np.asarray(mwav.astype(dtype)).T
     d = MDCop * mwav.ravel()
     d = d.reshape(nt2, parmod["ny"])
+    assert d.dtype == dtype
 
-    for it, amp in zip(it0_G, amp_G):
+    for it, amp in zip(it0_G, amp_G, strict=True):
         ittot = it0_m + it
         if par["twosided"]:
             ittot += par["nt"] - 1
@@ -201,9 +212,12 @@ def test_MDC_1virtualsource(par):
 @pytest.mark.parametrize(
     "par", [(par1), (par2), (par3), (par4), (par5), (par6), (par7), (par8)]
 )
-def test_MDC_Nvirtualsources(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_MDC_Nvirtualsources(par, dtype):
     """Dot-test and inversion for MDC operator of N virtual source"""
+    cdtype = (np.empty(0, dtype=dtype) + 1j * np.empty(0, dtype=dtype)).dtype
     nt2, _, mwav, Gwav, Gwav_fft = create_data(par, parmod["nx"])
+    Gwav_fft = Gwav_fft.astype(cdtype)
 
     MDCop = MDC(
         np.asarray(Gwav_fft).transpose(2, 0, 1),
@@ -217,14 +231,16 @@ def test_MDC_Nvirtualsources(par):
         MDCop,
         nt2 * parmod["ny"] * parmod["nx"],
         nt2 * parmod["nx"] * parmod["nx"],
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
-    mwav = np.asarray(mwav).transpose(2, 0, 1)
+    mwav = np.asarray(mwav.astype(dtype)).transpose(2, 0, 1)
     d = MDCop * mwav.ravel()
     d = d.reshape(nt2, parmod["ny"], parmod["nx"])
+    assert d.dtype == dtype
 
-    for it, _ in zip(it0_G, amp_G):
+    for it, _ in zip(it0_G, amp_G, strict=True):
         ittot = it0_m + it
         if par["twosided"]:
             ittot += par["nt"] - 1
@@ -272,9 +288,12 @@ def test_MDC_Nvirtualsources(par):
         (par1),
     ],
 )
-def test_MDC_1virtualsource_scipy(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_MDC_1virtualsource_scipy(par, dtype):
     """Dot-test for MDC operator of 1 virtual source with scipy engine and workers"""
-    nt2, _, _, _, Gwav_fft = create_data(par, 1)
+    cdtype = (np.empty(0, dtype=dtype) + 1j * np.empty(0, dtype=dtype)).dtype
+    nt2, _, mwav, _, Gwav_fft = create_data(par, 1)
+    Gwav_fft = Gwav_fft.astype(cdtype)
 
     MDCop = MDC(
         np.asarray(Gwav_fft).transpose(2, 0, 1),
@@ -286,4 +305,15 @@ def test_MDC_1virtualsource_scipy(par):
         engine="scipy",
         **dict(workers=4),
     )
-    dottest(MDCop, nt2 * parmod["ny"], nt2 * parmod["nx"], backend=backend)
+    dottest(
+        MDCop,
+        nt2 * parmod["ny"],
+        nt2 * parmod["nx"],
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
+
+    mwav = np.asarray(mwav.astype(dtype)).T
+    d = MDCop * mwav.ravel()
+    d = d.reshape(nt2, parmod["ny"])
+    assert d.dtype == dtype

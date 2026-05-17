@@ -1,6 +1,5 @@
 __all__ = ["Roll"]
 
-from typing import Union
 
 import numpy as np
 
@@ -56,7 +55,7 @@ class Roll(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         axis: int = -1,
         shift: int = 1,
         dtype: DTypeLike = "float64",

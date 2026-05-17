@@ -1,6 +1,7 @@
 __all__ = ["FirstDerivative"]
 
-from typing import Callable, Union
+from collections.abc import Callable
+from typing import Literal
 
 import numpy as np
 
@@ -13,7 +14,7 @@ from pylops.utils.backend import (
     inplace_set,
 )
 from pylops.utils.decorators import reshaped
-from pylops.utils.typing import DTypeLike, InputDimsLike, NDArray
+from pylops.utils.typing import DTypeLike, InputDimsLike, NDArray, Tderivkind
 
 
 class FirstDerivative(LinearOperator):
@@ -91,12 +92,12 @@ class FirstDerivative(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         axis: int = -1,
         sampling: float = 1.0,
-        kind: str = "centered",
+        kind: Tderivkind = "centered",
         edge: bool = False,
-        order: int = 3,
+        order: Literal[3, 5] = 3,
         dtype: DTypeLike = "float64",
         name: str = "F",
     ) -> None:
@@ -122,8 +123,8 @@ class FirstDerivative(LinearOperator):
 
     def _register_multiplications(
         self,
-        kind: str,
-        order: int,
+        kind: Tderivkind,
+        order: Literal[3, 5],
     ) -> None:
         # choose _matvec and _rmatvec kind
         self._hmatvec: Callable
@@ -139,14 +140,14 @@ class FirstDerivative(LinearOperator):
                 self._hmatvec = self._matvec_centered5
                 self._hrmatvec = self._rmatvec_centered5
             else:
-                raise NotImplementedError("'order' must be '3, or '5'")
+                msg = "order must be '3', or '5'"
+                raise NotImplementedError(msg)
         elif kind == "backward":
             self._hmatvec = self._matvec_backward
             self._hrmatvec = self._rmatvec_backward
         else:
-            raise NotImplementedError(
-                "'kind' must be 'forward', 'centered', or 'backward'"
-            )
+            msg = "kind must be 'forward', 'centered', or 'backward'"
+            raise NotImplementedError(msg)
 
     def _matvec(self, x: NDArray) -> NDArray:
         return self._hmatvec(x)

@@ -1,6 +1,6 @@
 __all__ = ["DTCWT"]
 
-from typing import Any, NewType, Union
+from typing import Any, NewType
 
 import numpy as np
 
@@ -97,7 +97,7 @@ class DTCWT(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         biort: str = "near_sym_a",
         qshift: str = "qshift_a",
         level: int = 3,
@@ -152,7 +152,7 @@ class DTCWT(LinearOperator):
 
     def _interpret_coeffs(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         axis: int,
     ) -> None:
         x = np.ones(dims[axis])

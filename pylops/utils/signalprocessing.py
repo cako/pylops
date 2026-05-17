@@ -7,16 +7,21 @@ __all__ = [
 ]
 
 import warnings
-from typing import Tuple
+from collections.abc import Sequence
 
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
-from pylops.basicoperators import Diagonal, Smoothing2D
+from pylops.basicoperators import Diagonal, Smoothing2D, SmoothingND
 from pylops.optimization.leastsquares import preconditioned_inversion
+from pylops.utils._internal import _value_or_sized_to_tuple
 from pylops.utils._pwd2d import _conv_allpass, _triangular_smoothing_from_boxcars
-from pylops.utils.backend import get_array_module, get_toeplitz
-from pylops.utils.typing import NDArray
+from pylops.utils.backend import (
+    get_array_module,
+    get_normalize_axis_index,
+    get_toeplitz,
+)
+from pylops.utils.typing import NDArray, Tpwdsmoothing
 
 
 def convmtx(h: NDArray, n: int, offset: int = 0) -> NDArray:
@@ -53,6 +58,7 @@ def convmtx(h: NDArray, n: int, offset: int = 0) -> NDArray:
         "with the documentation. Users are highly encouraged "
         "to modify their codes accordingly.",
         FutureWarning,
+        stacklevel=2,
     )
 
     ncp = get_array_module(h)
@@ -69,7 +75,7 @@ def nonstationary_convmtx(
     H: NDArray,
     n: int,
     hc: int = 0,
-    pad: Tuple[int] = (0, 0),
+    pad: tuple[int] = (0, 0),
 ) -> NDArray:
     r"""Convolution matrix from a bank of filters
 
@@ -113,7 +119,7 @@ def slope_estimate(
     smooth: float = 5.0,
     eps: float = 0.0,
     dips: bool = False,
-) -> Tuple[NDArray, NDArray]:
+) -> tuple[NDArray, NDArray]:
     r"""Local slope estimation
 
     Local slopes are estimated using the *Structure Tensor* algorithm [1]_.
@@ -264,7 +270,7 @@ def dip_estimate(
     dx: float = 1.0,
     smooth: int = 5,
     eps: float = 0.0,
-) -> Tuple[NDArray, NDArray]:
+) -> tuple[NDArray, NDArray]:
     r"""Local dip estimation
 
     Local dips are estimated using the *Structure Tensor* algorithm [1]_.
@@ -316,9 +322,10 @@ def pwd_slope_estimate(
     niter: int = 5,
     liter: int = 20,
     order: int = 2,
-    smoothing: str = "triangle",
-    nsmooth: Tuple[int, int] = (10, 10),
+    smoothing: Tpwdsmoothing = "triangle",
+    nsmooth: int | Sequence[int] = 10,
     damp: float = 0.0,
+    axis: int = -1,
 ) -> NDArray:
     r"""Plane-Wave Destruction (PWD) local slope estimation.
 
@@ -334,34 +341,39 @@ def pwd_slope_estimate(
     Parameters
     ----------
     d : :obj:`numpy.ndarray`
-        Input 2D array of shape ``(nz, nx)``.
+        Input array of shape of size
+        :math:`[n_z \times n_x\,(\times n_y)]`
     niter : :obj:`int`, optional
         Number of outer PWD iterations. Default is ``5``.
     liter : :obj:`int`, optional
         Maximum number of inner least-squares iterations. Default is ``20``.
     order : :obj:`int`, optional
-        Accuracy order of the all-pass filters. Use ``1`` (3-tap) or ``2`` (5-tap).
+        Order of the all-pass filters: ``1`` (3-tap) or ``2`` (5-tap).
         Default is ``2``.
     smoothing : :obj:`str`, optional
         Preconditioning choice: ``"triangle"`` (default) that applies a triangular
         smoother (two boxcar passes), or ``"boxcar"`` that applies a single-pass boxcar.
-    nsmooth : :obj:`tuple` of :obj:`int`, optional
-        Smoothing lengths ``(ny, nx)`` for the preconditioner. Default ``(10, 10)``.
+    nsmooth : :obj:`tuple` or :obj:`list` or :obj:`int`
+        Smoothing lengths for the preconditioner. If a single scalar is provided,
+        the same value is used across all axes. Default ``10``.
     damp : :obj:`float`, optional
         Damping factor for the least-squares solve. Default ``0.0``.
+    axis : :obj:`int`, optional
+        Spatial axis over which slopes are computed (only for 3D case)
 
     Returns
     -------
     sigma : :obj:`numpy.ndarray`
-        Estimated slope field of shape ``(nz, nx)`` in samples per trace
-        (:math:`\Delta z / \Delta x`).
+        Estimated slope field of size
+        :math:`[n_z \times n_x\,(\times n_y)]` in samples per trace
+        (:math:`\Delta z / \Delta x/y`).
 
     Raises
     ------
     ValueError
         If ``order`` is not ``1`` or ``2``.
     ValueError
-        If input array ``d`` is not 2-D.
+        If input array ``d`` is not 2D or 3D.
 
     .. [1] Claerbout, J., and Brown, M., "Two-dimensional textures and prediction-error
        filters", EAGE Annual Meeting, Expanded Abstracts. 1999.
@@ -370,26 +382,41 @@ def pwd_slope_estimate(
 
     """
     if order not in (1, 2):
-        raise ValueError("order must be 1 (B3) or 2 (B5)")
-    if d.ndim != 2:
-        raise ValueError("input data must be 2-D")
+        msg = f"order must be 1 (B3) or 2 (B5), got {order}"
+        raise ValueError(msg)
+    if d.ndim not in (2, 3):
+        msg = f"input array must be 2D or 3D, got {d.ndim}D"
+        raise ValueError(msg)
 
+    # Re-arrange dimensions to work on first two axes
+    nsmooth = _value_or_sized_to_tuple(nsmooth, d.ndim)
+    axis = get_normalize_axis_index()(axis, d.ndim)
+    if axis == 2:
+        d = d.swapaxes(1, 2)
+        nsmooth = (nsmooth[0], nsmooth[2], nsmooth[1])
+    dims = d.shape
+    smoothcls = Smoothing2D if dims == 2 else SmoothingND
+    smoothaxes = (-2, -1) if dims == 2 else (-3, -2, -1)
     dtype = d.dtype
-    nz, nx = d.shape
+
+    # Initialize array
     sigma = np.zeros_like(d)
     delta_sigma = np.zeros_like(sigma)
     u1 = np.zeros_like(sigma)
     u2 = np.zeros_like(sigma)
 
+    # Define smoother
     if smoothing == "triangle":
         Sop = _triangular_smoothing_from_boxcars(
-            nsmooth=nsmooth, dims=(nz, nx), dtype=dtype
+            nsmooth=nsmooth, dims=dims, dtype=dtype
         )
     elif smoothing == "boxcar":
-        Sop = Smoothing2D(nsmooth=nsmooth, dims=(nz, nx), dtype=dtype)
+        Sop = smoothcls(nsmooth=nsmooth, dims=dims, axes=smoothaxes, dtype=dtype)
     else:
-        raise ValueError("smoothing must be either 'triangle' or 'boxcar'")
+        msg = f"smoothing must be either 'triangle' or 'boxcar', got {smoothing}"
+        raise ValueError(msg)
 
+    # Estimate slopes
     for _ in range(niter):
         _conv_allpass(d, sigma, order, u1, u2)
 
@@ -401,8 +428,12 @@ def pwd_slope_estimate(
             damp=damp,
             iter_lim=liter,
             show=False,
-        )[0].reshape(nz, nx)
+        )[0].reshape(dims)
 
         sigma += delta_sigma
+
+    # Re-arrange back dimensions
+    if axis == 2:
+        sigma = sigma.swapaxes(1, 2)
 
     return sigma

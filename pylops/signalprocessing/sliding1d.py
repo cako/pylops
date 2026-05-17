@@ -4,7 +4,6 @@ __all__ = [
 ]
 
 import logging
-from typing import Tuple, Union
 
 import numpy as np
 
@@ -18,7 +17,7 @@ from pylops.utils.backend import (
 )
 from pylops.utils.decorators import reshaped
 from pylops.utils.tapers import taper
-from pylops.utils.typing import InputDimsLike, NDArray
+from pylops.utils.typing import InputDimsLike, NDArray, Ttaper
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +28,7 @@ def sliding1d_design(
     nover: int,
     nop: int,
     verb: bool = True,
-) -> Tuple[int, int, Tuple[NDArray, NDArray], Tuple[NDArray, NDArray]]:
+) -> tuple[int, int, tuple[NDArray, NDArray], tuple[NDArray, NDArray]]:
     """Design Sliding1D operator
 
     This routine can be used prior to creating the :class:`pylops.signalprocessing.Sliding1D`
@@ -143,7 +142,7 @@ class Sliding1D(LinearOperator):
 
     Attributes
     ----------
-    taps: :obj:`numpy.ndarray`
+    taps : :obj:`numpy.ndarray`
         Set of tapers applied to each window (only if ``tapertype`` is not ``None``)
     simOp : :obj:`bool`
         Operator ``Op`` is applied to all windows simultaneously (``True``)
@@ -170,17 +169,16 @@ class Sliding1D(LinearOperator):
     def __init__(
         self,
         Op: LinearOperator,
-        dim: Union[int, InputDimsLike],
-        dimd: Union[int, InputDimsLike],
+        dim: int | InputDimsLike,
+        dimd: int | InputDimsLike,
         nwin: int,
         nover: int,
-        tapertype: str = "hanning",
+        tapertype: Ttaper | None = "hanning",
         savetaper: bool = True,
         name: str = "S",
     ) -> None:
-
-        dim: Tuple[int, ...] = _value_or_sized_to_tuple(dim)
-        dimd: Tuple[int, ...] = _value_or_sized_to_tuple(dimd)
+        dim: tuple[int, ...] = _value_or_sized_to_tuple(dim)
+        dimd: tuple[int, ...] = _value_or_sized_to_tuple(dimd)
 
         # data windows
         dwin_ins, dwin_ends = _slidingsteps(dimd[0], nwin, nover)
@@ -191,18 +189,17 @@ class Sliding1D(LinearOperator):
 
         # check windows
         if nwins * Op.shape[1] != dim[0] and Op.shape[1] != dim[0]:
-            raise ValueError(
-                f"Model shape (dim={dim}) is not consistent with chosen "
-                f"number of windows. Run sliding1d_design to identify the "
-                f"correct number of windows for the current "
-                "model size..."
+            msg = (
+                f"Model shape (dim={dim}) is not consistent with chosen number of windows. "
+                "Run sliding1d_design to identify the correct number of windows for the current model size..."
             )
+            raise ValueError(msg)
 
         # create tapers
         self.tapertype = tapertype
         self.savetaper = savetaper
         if self.tapertype is not None:
-            tap = taper(nwin, nover, tapertype=self.tapertype)
+            tap = taper(nwin, nover, tapertype=self.tapertype).astype(Op.dtype)
             tapin = tap.copy()
             tapin[:nover] = 1
             tapend = tap.copy()
@@ -250,7 +247,7 @@ class Sliding1D(LinearOperator):
             self.taps = to_cupy_conditional(x, self.taps)
         y = ncp.zeros(self.dimsd, dtype=self.dtype)
         if self.simOp:
-            x = self.Op @ x
+            x = self.Op.matvec(x.ravel()).reshape(self.Op.dimsd)
             if self.tapertype is not None:
                 x = self.taps * x
         for iwin0 in range(self.dims[0]):
@@ -273,7 +270,7 @@ class Sliding1D(LinearOperator):
         if self.tapertype is not None:
             ywins = ywins * self.taps
         if self.simOp:
-            y = self.Op.H @ ywins
+            y = self.Op.rmatvec(ywins.ravel()).reshape(self.dims)
         else:
             y = ncp.zeros(self.dims, dtype=self.dtype)
             for iwin0 in range(self.dims[0]):
@@ -287,7 +284,7 @@ class Sliding1D(LinearOperator):
             self.taps = to_cupy_conditional(x, self.taps)
         y = ncp.zeros(self.dimsd, dtype=self.dtype)
         if self.simOp:
-            x = self.Op @ x
+            x = self.Op.matvec(x.ravel()).reshape(self.Op.dimsd)
         for iwin0 in range(self.dims[0]):
             if self.simOp:
                 xxwin = x[iwin0]
@@ -314,7 +311,7 @@ class Sliding1D(LinearOperator):
             if self.tapertype is not None:
                 for iwin0 in range(self.dims[0]):
                     ywins = self._apply_taper(ywins, iwin0)
-            y = self.Op.H @ ywins
+            y = self.Op.rmatvec(ywins.ravel())
         else:
             y = ncp.zeros(self.dims, dtype=self.dtype)
             for iwin0 in range(self.dims[0]):

@@ -1,6 +1,7 @@
 __all__ = ["SeismicInterpolation"]
 
-from typing import List, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Literal
 
 import numpy as np
 
@@ -19,30 +20,39 @@ from pylops.signalprocessing import (
     Sliding3D,
 )
 from pylops.utils.dottest import dottest as Dottest
-from pylops.utils.typing import InputDimsLike, NDArray
+from pylops.utils.typing import InputDimsLike, NDArray, Tengine_nn
 
 
 def SeismicInterpolation(
     data: NDArray,
-    nrec: Union[int, Tuple[int, int]],
-    iava: Union[List[Union[int, float]], NDArray],
-    iava1: Optional[Union[List[Union[int, float]], NDArray]] = None,
-    kind: str = "fk",
-    nffts: Optional[Union[int, InputDimsLike]] = None,
-    sampling: Optional[Sequence[float]] = None,
-    spataxis: Optional[NDArray] = None,
-    spat1axis: Optional[NDArray] = None,
-    taxis: Optional[NDArray] = None,
-    paxis: Optional[NDArray] = None,
-    p1axis: Optional[NDArray] = None,
+    nrec: int | tuple[int, int],
+    iava: list[int | float] | NDArray,
+    iava1: list[int | float] | NDArray | None = None,
+    kind: Literal[
+        "fk",
+        "spatial",
+        "radon-linear",
+        "radon-parabolic",
+        "radon-hyperbolic",
+        "chirpradon-linear",
+        "sliding",
+        "chirp-sliding",
+    ] = "fk",
+    nffts: int | InputDimsLike | None = None,
+    sampling: Sequence[float] | None = None,
+    spataxis: NDArray | None = None,
+    spat1axis: NDArray | None = None,
+    taxis: NDArray | None = None,
+    paxis: NDArray | None = None,
+    p1axis: NDArray | None = None,
     centeredh: bool = True,
     nwins: InputDimsLike = None,
     nwin: InputDimsLike = None,
     nover: InputDimsLike = None,
-    engine: str = "numba",
+    engine: Tengine_nn | Literal["fftw"] = "numba",
     dottest: bool = False,
     **kwargs_solver,
-) -> Tuple[NDArray, NDArray, NDArray]:
+) -> tuple[NDArray, NDArray, NDArray]:
     r"""Seismic interpolation (or regularization).
 
     Interpolate seismic data from irregular to regular spatial grid.
@@ -202,7 +212,8 @@ def SeismicInterpolation(
     dtype = data.dtype
     ndims = data.ndim
     if ndims == 1 or ndims > 3:
-        raise ValueError("data must have 2 or 3 dimensions")
+        msg = f"data must have 2 or 3 dimensions, got {ndims}"
+        raise ValueError(msg)
     if ndims == 2:
         dimsd = data.shape
         dims = (nrec, dimsd[1])
@@ -248,10 +259,8 @@ def SeismicInterpolation(
         if ndims == 3:
             if sampling is None:
                 if spataxis is None or spat1axis is None or taxis is None:
-                    raise ValueError(
-                        "Provide either sampling or spataxis, "
-                        f"spat1axis and taxis for kind=%{kind}"
-                    )
+                    msg = f"Provide either sampling or spataxis, spat1axis and taxis for kind={kind}"
+                    raise ValueError(msg)
                 else:
                     sampling = (dspat, dspat1, dt)
             Pop = FFTND(dims=dims, nffts=nffts, sampling=sampling)
@@ -259,10 +268,10 @@ def SeismicInterpolation(
         else:
             if sampling is None:
                 if spataxis is None or taxis is None:
-                    raise ValueError(
-                        "Provide either sampling or spataxis, "
-                        f"and taxis for kind={kind}"
+                    msg = (
+                        f"Provide either sampling or spataxis and taxis for kind={kind}"
                     )
+                    raise ValueError(msg)
                 else:
                     sampling = (dspat, dt)
             Pop = FFT2D(dims=dims, nffts=nffts, sampling=sampling)
@@ -372,10 +381,11 @@ def SeismicInterpolation(
             Pop = Sliding2D(Op, dimsp, dimsslid, nwin, nover, tapertype="cosine")
         SIop = Rop * Pop
     else:
-        raise KeyError(
-            "kind must be spatial, fk, radon-linear, "
-            "radon-parabolic, radon-hyperbolic, sliding or chirp-sliding"
+        msg = (
+            "kind must be either 'spatial', 'fk', 'radon-linear', 'chirpradon-linear', "
+            "radon-parabolic', 'radon-hyperbolic', 'sliding', or 'chirp-sliding', got {kind}"
         )
+        raise KeyError(msg)
 
     # dot-test
     if dottest:

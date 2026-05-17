@@ -5,13 +5,13 @@ __all__ = [
     "psnr",
 ]
 
-from typing import Optional
 
 import numpy as np
-import numpy.typing as npt
+
+from pylops.utils.typing import ArrayLike
 
 
-def mae(xref: npt.ArrayLike, xcmp: npt.ArrayLike) -> float:
+def mae(xref: ArrayLike, xcmp: ArrayLike) -> float:
     """Mean Absolute Error (MAE)
 
     Compute Mean Absolute Error between two vectors
@@ -33,7 +33,7 @@ def mae(xref: npt.ArrayLike, xcmp: npt.ArrayLike) -> float:
     return mae
 
 
-def mse(xref: npt.ArrayLike, xcmp: npt.ArrayLike) -> float:
+def mse(xref: ArrayLike, xcmp: ArrayLike) -> float:
     """Mean Square Error (MSE)
 
     Compute Mean Square Error between two vectors
@@ -55,7 +55,7 @@ def mse(xref: npt.ArrayLike, xcmp: npt.ArrayLike) -> float:
     return mse
 
 
-def snr(xref: npt.ArrayLike, xcmp: npt.ArrayLike) -> float:
+def snr(xref: ArrayLike, xcmp: ArrayLike) -> float:
     """Signal to Noise Ratio (SNR)
 
     Compute Signal to Noise Ratio between two vectors
@@ -79,10 +79,10 @@ def snr(xref: npt.ArrayLike, xcmp: npt.ArrayLike) -> float:
 
 
 def psnr(
-    xref: npt.ArrayLike,
-    xcmp: npt.ArrayLike,
-    xmax: Optional[float] = None,
-    xmin: Optional[float] = 0.0,
+    xref: ArrayLike,
+    xcmp: ArrayLike,
+    xmax: float | None = None,
+    xmin: float | None = 0.0,
 ) -> float:
     """Peak Signal to Noise Ratio (PSNR)
 

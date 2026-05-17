@@ -1,7 +1,7 @@
 .. _installation:
 
-Installation
-############
+|:desktop_computer:| Installation
+#################################
 
 Dependencies
 ************
@@ -13,52 +13,70 @@ Required dependencies are limited to:
 * `NumPy <http://www.numpy.org>`_
 * `SciPy <http://www.scipy.org/scipylib/index.html>`_
 
-We highly encourage using the `Anaconda Python distribution <https://www.anaconda.com/download>`_
+We encourage using the `Anaconda Python distribution <https://www.anaconda.com/download>`_
 or its standalone package manager `Conda <https://docs.conda.io/en/latest/index.html>`_.
-Especially for Intel processors, this ensures a higher performance with no configuration.
+Especially for Intel processors, this ensures a higher performance with no configuration (e.g., 
+the linking to ``Intel MKL`` library, a highly optimized BLAS library created by Intel).
 If you are interested in getting the best code performance, read carefully :ref:`Performance`.
-For learning, however, the standard installation is often good enough.
 
-Some operators have additional, optional "engines" to improve their performance.
-These often rely on third-party libraries which are added to the
-list of our optional dependencies.
-Optional dependencies therefore refer to those dependencies that are not strictly
-needed nor installed directly as part of a standard installation.
-For details more details, see :ref:`Optional`.
+For learning, however, the standard installation is often good enough; in that case, we
+recommend using `uv <https://docs.astral.sh/uv/>`_, a modern Python package manager that
+is easy to use and has a very fast dependency resolver.
+
+Some operators have additional, optional *engines* that are usually meant to provide improved
+performance on CPU or enable GPU acceleration.  These rely on third-party libraries, which are 
+added to the list of our optional  dependencies and must be installed to be able to use the 
+associated engine. Similarly, some operators are implemented on top of third-party libraries, 
+which are also added to the list of our optional dependencies and must be installed to be
+able to use the associated operator. In both cases, if the dependency is not installed, the
+rest of the library will still work. For details more details, see :ref:`Optional`.
 
 
 Step-by-step installation for users
 ***********************************
 
-Conda (recommended)
-===================
-If using ``conda``, install our ``conda-forge`` distribution via:
+From Package Manager
+====================
+First install `pylops` with your package manager of choice.
 
-.. code-block:: bash
+.. tab-set::
 
-   >> conda install --channel conda-forge pylops
+   .. tab-item:: :iconify:`devicon:anaconda` conda
 
-Using the ``conda-forge`` distribution is recommended as all the dependencies (both required
-and optional) will be automatically installed for you.
+        .. code-block:: bash
 
-Pip
-===
-If you are using ``pip``, and simply type the following command in your terminal
-to install the PyPI distribution:
+            >> conda install --channel conda-forge pylops
 
-.. code-block:: bash
+        which installs also the *required* dependencies, if not already present
+        in your environment.
 
-   >> pip install pylops
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
 
-Note that when installing via ``pip``, only *required* dependencies are installed.
+        .. code-block:: bash
+
+            >> uv add pylops
+        
+        which installs also the *required* dependencies, if not already present
+        in your environment. Refer to :ref:`Optional` for alternative `uv`
+        commands that install some of the optional dependencies as well.
 
 From Source
 ===========
-To access the latest source from github:
+To access the latest source from GitHub:
 
-.. code-block:: bash
+.. tab-set::
 
-   >> pip install https://github.com/PyLops/pylops.git@dev
+   .. tab-item:: :iconify:`devicon:pypi` pip
+
+        .. code-block:: bash
+
+            >> pip install https://github.com/PyLops/pylops.git@dev
+
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> uv add git+https://github.com/PyLops/pylops.git --branch dev
 
 Docker
 ======
@@ -82,6 +100,7 @@ A larger image with ``conda`` a distribution is also available:
 
    >> docker run -it -v /path/to/local/folder:/home/jupyter/notebook -p 8888:8888 mrava87/pylops:conda_notebook
 
+
 .. _DevInstall:
 
 Step-by-step installation for developers
@@ -97,39 +116,47 @@ Fork the `PyLops repository <https://github.com/PyLops/pylops>`_ and clone it by
 
 Install dependencies
 ====================
-
 We recommend installing dependencies into a separate environment.
 For that end, we provide a `Makefile` with useful commands for setting up the environment.
 
-Conda (recommended)
--------------------
-For a ``conda`` environment, run
+.. tab-set::
 
-.. code-block:: bash
+   .. tab-item::  conda
 
-   >> make dev-install_conda # for x86 (Intel or AMD CPUs)
-   >> make dev-install_conda_arm # for arm (M-series Mac)
+        .. code-block:: bash
 
-This will create and activate an environment called ``pylops``, with all required and optional dependencies.
+            >> make dev-install_conda # for x86 (Intel or AMD CPUs)
+            >> make dev-install_conda_arm # for arm (M-series Mac)
+        
+        This creates and activate an environment called ``pylops``, with 
+        all required and optional dependencies.
 
-Pip
----
-If you prefer a ``pip`` installation, we provide the following command
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
 
-.. code-block:: bash
+        .. code-block:: bash
 
-   >> make dev-install
-
-Note that, differently from the  ``conda`` command, the above **will not** create a virtual environment.
-Make sure you create and activate your environment previously.
+            >> make dev-install_uv
+        
+        This creates a virtual environment `.venv` that can be activated at 
+        any time with `source .venv/bin/activate` (Linux/macOS).
 
 Run tests
 =========
 To ensure that everything has been setup correctly, run tests:
 
-.. code-block:: bash
+.. tab-set::
 
-   >> make tests
+   .. tab-item:: :iconify:`devicon:anaconda` conda
+
+        .. code-block:: bash
+
+            >> make tests
+   
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> make tests_uv
 
 Make sure no tests fail, this guarantees that the installation has been successful.
 
@@ -149,7 +176,6 @@ From then on, you can pull changes (for example, in the dev branch) with:
 
    >> git pull upstream dev
 
-
 Install pre-commit hooks
 ========================
 To ensure consistency in the coding style of our developers we rely on
@@ -159,35 +185,75 @@ that have been configured in the ``.pre-commit-config.yaml`` file.
 
 In order to setup such hooks in your local repository, run:
 
-.. code-block:: bash
+.. tab-set::
 
-   >> pre-commit install
+   .. tab-item:: :iconify:`devicon:anaconda` conda
+
+        .. code-block:: bash
+
+            >> pre-commit install
+   
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> uv run pre-commit install
 
 Once this is set up, when committing changes, ``pre-commit`` will reject and "fix" your code by running the proper hooks.
 At this point, the user must check the changes and then stage them before trying to commit again.
 
 Final steps
 ===========
-PyLops does not enforce the use of a linter as a pre-commit hook, but we do highly encourage using one before submitting a Pull Request.
-A properly configured linter (``flake8``) can be run with:
+PyLops does enforce the use of a linter (``ruff``), which is run both as a pre-commit hook and as a GitHub Action.
+The linter can also be run locally with:
 
-.. code-block:: bash
+.. tab-set::
 
-   >> make lint
+   .. tab-item:: :iconify:`devicon:anaconda` conda
+
+        .. code-block:: bash
+
+            >> make lint
+   
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> make lint_uv
 
 In addition, it is highly encouraged to build the docs prior to submitting a Pull Request.
 Apart from ensuring that docstrings are properly formatted, they can aid in catching bugs during development.
 Build (or update) the docs with:
 
-.. code-block:: bash
+.. tab-set::
 
-   >> make doc
+   .. tab-item:: :iconify:`devicon:anaconda` conda
+
+        .. code-block:: bash
+
+            >> make doc
+   
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> make doc_uv
 
 or
 
-.. code-block:: bash
+.. tab-set::
 
-   >> make docupdate
+   .. tab-item:: :iconify:`devicon:anaconda` conda
+
+        .. code-block:: bash
+
+            >> make docupdate
+   
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> make docupdate_uv
 
 
 .. _Performance:
@@ -231,7 +297,6 @@ These are an option for an environment without ``conda`` that needs Intel MKL wi
 
    ``intel-numpy`` and ``intel-scipy`` not only link against Intel MKL, but also substitute NumPy and
    SciPy FFTs with `Intel MKL FFT <https://pypi.org/project/mkl-fft/>`_.
-
 
 Multithreading
 ==============
@@ -295,66 +360,179 @@ other libraries that you have in your system, we have decided to build some of t
 of PyLops in such a way that if an *optional* dependency is not present in your Python environment,
 a safe fallback to one of the required dependencies will be enforced.
 
-When available in your system, we recommend using the Conda package manager and install all the
-required and some of the optional dependencies of PyLops at once using the command:
-
-.. code-block:: bash
-
-   >> conda install --channel conda-forge pylops
-
-in this case all dependencies will be installed from their Conda distributions.
-
-Alternatively, from version ``1.4.0`` some of the optional dependencies can also be 
-installed as part of the pip installation via:
-
-.. code-block:: bash
-
-   >> pip install pylops[advanced]
-
-Dependencies are however installed from their PyPI wheels.
-
-Finally, note that CuPy and JAX are not **not** installed
-automatically. Users interested to accelerate their computations with the aid
-of GPUs should install either or both of them prior to installing PyLops as 
-described in :ref:`OptionalGPU`.
-
 .. note::
 
    If you are a developer, all the optional dependencies below (except GPU) can
    be installed automatically by cloning the repository and installing
-   PyLops via ``make dev-install_conda`` (``conda``) or ``make dev-install`` (``pip``).
+   PyLops via ``make dev-install_conda`` (``conda``) or 
+   ``make dev-install_uv`` (``uv``). GPU-enabled equivalents are 
+   ``make dev-install_conda_gpu`` (``conda``) and
+   ``make dev-install_uvcu126 / dev-install_uvcu128 / dev-install_uvcu13`` (``uv``)
 
+When using the Conda package manager, only the required dependencies will be installed
+when installing PyLops. It is recommended to install the optional dependencies manually 
+before installing PyLops or as part of the creation of the environment via an 
+`environment.yml` file.
+
+Alternatively, from version ``v1.4.0`` some of the optional dependencies can be 
+installed as part of the pip installation via (see summary table below for details):
+
+.. tab-set::
+
+   .. tab-item:: :iconify:`devicon:pypi` pip
+
+        .. code-block:: bash
+
+            >> pip install pylops[advanced]
+
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> uv add "pylops[advanced]"
+
+Finally, from version ``2.7.0``, all of the optional dependencies can be installed as part of 
+the pip installation via (see summary table below for details):
+
+
+.. tab-set::
+
+   .. tab-item:: :iconify:`devicon:pypi` pip
+
+        .. code-block:: bash
+
+            >> pip install pylops[advanced, stat, deep]  # CPU
+            >> pip install pylops[advanced, stat, gpu-cu12, deep-cu126]  # GPU with CUDA 12.6
+            >> pip install pylops[advanced, stat, gpu-cu12, deep-cu128]  # GPU with CUDA 12.6
+            >> pip install pylops[advanced, stat, gpu-cu13, deep-cu13]  # GPU with CUDA 13.0
+
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> uv add "pylops[advanced, stat, deep]"  # CPU
+            >> uv add "pylops[advanced, stat, gpu-cu12, deep-cu126]"  # GPU with CUDA 12.6
+            >> uv add "pylops[advanced, stat, gpu-cu12, deep-cu128]"  # GPU with CUDA 12.6
+            >> uv add "pylops[advanced, stat, gpu-cu13, deep-cu13]"  # GPU with CUDA 13.0
+
+In all cases, dependencies are installed from their PyPI wheels.
+
+A summary table of all optional dependencies, the operators that rely on them (and
+whether they are required to be able to use the operator(s)), and how to install
+them as part of the installation process of PyLops provided in the table below.
+
+.. list-table::
+   :widths: 15 40 5 40
+   :header-rows: 1
+
+   * - Dependency
+     - Operator(s) affected
+     - Required
+     - Install with
+   * - ASTRA
+     - :py:class:`pylops.medical.CT2D`
+     - |:white_check_mark:|
+     - `pip install pylops[advanced]` / `uv add "pylops[advanced]"`
+   * - dtcwt
+     - :py:class:`pylops.signalprocessing.DTCWT`
+     - |:white_check_mark:|
+     - `pip install pylops[advanced]` / `uv add "pylops[advanced]"`
+   * - Devito
+     - :py:class:`pylops.waveeqprocessing.AcousticWave2D`
+     - |:white_check_mark:|
+     - `pip install pylops[advanced]` / `uv add "pylops[advanced]"`
+   * - FFTW
+     - :py:class:`pylops.signalprocessing.FFT`, :py:class:`pylops.signalprocessing.FFT2D`, 
+       :py:class:`pylops.signalprocessing.FFTND`
+     - |:red_circle:|
+     - `pip install pylops[advanced]` / `uv add "pylops[advanced]"`
+   * - MKL-FFT
+     - :py:class:`pylops.signalprocessing.FFT`, :py:class:`pylops.signalprocessing.FFT2D`, 
+       :py:class:`pylops.signalprocessing.FFTND`
+     - |:red_circle:|
+     - N/A (see below for installation instructions)
+   * - Numba
+     - :py:class:`pylops.basicoperators.Spread`, :py:class:`pylops.signalprocessing.FourierRadon2D`, 
+       :py:class:`pylops.signalprocessing.FourierRadon3D`, :py:class:`pylops.signalprocessing.Radon2D`, 
+       :py:class:`pylops.signalprocessing.Radon3D`, :py:class:`pylops.signalprocessing.NonStationaryConvolve2D`,
+       :py:class:`pylops.signalprocessing.NonStationaryFilters2D`, :py:class:`pylops.signalprocessing.NonStationaryConvolve3D`,
+       :py:class:`pylops.signalprocessing.PWSprayer2D`, :py:class:`pylops.signalprocessing.PWSmoother2D`,
+       :py:class:`pylops.waveeqprocessing.Kirchhoff`
+     - |:red_circle:|
+     - `pip install pylops[advanced]` / `uv add "pylops[advanced]"`
+   * - PyMC and PyTensor
+     - :py:class:`pylops.PyTensorOperator`
+     - |:white_check_mark:|
+     - `pip install pylops[stat]` / `uv add "pylops[stat]"`
+   * - PyWavelets
+     - :py:class:`pylops.signalprocessing.DWT`, :py:class:`pylops.signalprocessing.DWT2D`, 
+       :py:class:`pylops.signalprocessing.DWTND`
+     - |:red_circle:|
+     - `pip install pylops[advanced]` / `uv add "pylops[advanced]"`
+   * - scikit-fmm
+     - :py:class:`pylops.waveeqprocessing.Kirchhoff`
+     - |:white_check_mark:|
+     - `pip install pylops[advanced]` / `uv add "pylops[advanced]"`
+   * - SPGL1
+     - :py:class:`pylops.optimization.sparsity.spgl1`
+     - |:white_check_mark:|
+     - `pip install pylops[advanced]` / `uv add "pylops[advanced]"`
+   * - Sympy
+     - :py:class:`pylops.waveeqprocessing.AcousticWave2D` and :py:func:`pylops.utils.describe.describe`
+     - |:white_check_mark:|
+     - `pip install pylops[advanced]` / `uv add "pylops[advanced]"`
+   * - Torch
+     - :py:class:`pylops.TorchOperator`
+     - |:white_check_mark:|
+     - `pip install pylops[deep]` / `uv add "pylops[deep]"` (or GPU equivalents)
+   * - CuPy
+     - Almost all operators (see :ref:`gpu` for details)
+     - |:red_circle:|
+     - `pip install pylops[gpu-cu12]` / `uv add "pylops[gpu-cu12]"`
+   * - JAX
+     - :py:class:`pylops.JAXOperator`
+     - |:red_circle:|
+     - `pip install pylops[deep]` / `uv add "pylops[deep]"` (or GPU equivalents)
 
 More details about the installation process for the different optional dependencies are described 
-in the following (an asterisc is used to indicate those dependencies that are automatically installed
-when installing PyLops from conda-forge or via ``pip install pylops[advanced]``):
+in the following:
 
 ASTRA
 -----
 `ASTRA <https://www.astra-toolbox.com>`_ is library used to perform computerized
 tomography. It is used in PyLops in the operator :py:class:`pylops.medical.CT2D`
 
-To use this library, install it manually either via ``conda``:
+To use this library, install it via:
 
-.. code-block:: bash
-   >> conda install --channel astra-toolbox astra-toolbox
+.. tab-set::
 
-or via pip:
+   .. tab-item:: :iconify:`devicon:anaconda` conda
 
-.. code-block:: bash
-   >> pip install astra-toolbox
+        .. code-block:: bash
+
+            >> conda install --channel astra-toolbox astra-toolbox
+
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> uv add astra-toolbox
 
 
-dtcwt*
-------
+dtcwt
+-----
 
 `dtcwt <https://dtcwt.readthedocs.io/en/0.12.0/>`_ is a library used to implement the DT-CWT operators.
 
-Install it via ``pip`` with:
+Install it via:
 
-.. code-block:: bash
+.. tab-set::
 
-   >> pip install dtcwt
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> uv add dtcwt
 
 .. warning::
    ``dtcwt`` does not support NumPy 2 yet, so make sure you use NumPy 1.x 
@@ -367,15 +545,19 @@ Devito
 the finite-difference method. It is used in PyLops to compute wavefields
 :py:class:`pylops.waveeqprocessing.AcousticWave2D`
 
-Install it via ``pip`` with
+Install it via:
 
-.. code-block:: bash
+.. tab-set::
 
-   >> pip install devito
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> uv add devito
 
 
-FFTW* and MKL-FFT
------------------
+FFTW and MKL-FFT
+----------------
 Four different "engines" are provided by the :py:class:`pylops.signalprocessing.FFT` operator:
 ``engine="numpy"`` (default), ``engine="scipy"``, ``engine="fftw"`` and ``engine="mkl_fft"``.
 Similarly, the :py:class:`pylops.signalprocessing.FFT2D` and 
@@ -386,33 +568,41 @@ The first two engines are part of the required PyLops dependencies.
 The third implements the well-known `FFTW <http://www.fftw.org>`_
 via the Python wrapper :py:class:`pyfftw.FFTW`. While this optimized FFT tends to
 outperform the other two in many cases, it is not included by default.
-To use this library, install it manually either via ``conda``:
+To use this library, install it via:
 
-.. code-block:: bash
+.. tab-set::
 
-   >> conda install --channel conda-forge pyfftw
+   .. tab-item:: :iconify:`devicon:anaconda` conda
 
-or via pip:
+        .. code-block:: bash
 
-.. code-block:: bash
+            >> conda install --channel conda-forge pyfftw
 
-   >> pip install pyfftw
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> uv add pyfftw
 
 The fourth implements **Intel MKL FFT** via the Python interface `mkl_fft <https://github.com/IntelPython/mkl_fft>`_.
 This provides access to Intel’s oneMKL Fourier Transform routines, enabling efficient FFT computations with performance
 close to native C/Intel® oneMKL
 
-To use this library, you can install it using ``conda``:
+To use this library, you can install it via:
 
-.. code-block:: bash
+.. tab-set::
 
-   >> conda install --channel https://software.repos.intel.com/python/conda --channel conda-forge mkl_fft
+   .. tab-item:: :iconify:`devicon:anaconda` conda
 
-or via pip:
+        .. code-block:: bash
 
-.. code-block:: bash
+            >> conda install --channel https://software.repos.intel.com/python/conda --channel conda-forge mkl_fft
 
-   >> pip install --index-url https://software.repos.intel.com/python/pypi --extra-index-url https://pypi.org/simple mkl_fft
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> uv add mkl_fft --index-url https://software.repos.intel.com/python/pypi --extra-index-url https://pypi.org/simple
 
 Installing ``mkl-fft`` triggers the installation of Intel-optimized versions of `NumPy <https://pypi.org/project/intel-numpy/>`__ and
 `SciPy <https://pypi.org/project/intel-scipy/>`__, which redirects ``numpy.fft`` and ``scipy.fft`` to use MKL FFT routines.
@@ -422,7 +612,7 @@ Although the library can run without Intel-optimized NumPy and SciPy, maximum pe
 SciPy built with Intel’s Math Kernel Library (MKL) alongside Intel Python.
 
 .. note::
-   `mkl_fft` is not supported on macOS
+   `mkl_fft` is not supported on macOS.
 
 .. warning::
 
@@ -442,8 +632,9 @@ SciPy built with Intel’s Math Kernel Library (MKL) alongside Intel Python.
    Alternatively, you can install ``pyFFTW`` directly with ``conda``, since the updated recipe is already available
    and works without any manual adjustments.
 
-Numba*
-------
+
+Numba
+-----
 Although we always strive to write code for forward and adjoint operators that takes advantage of
 the perks of NumPy and SciPy (e.g., broadcasting, ufunc), in some case we may end up using for loops
 that may lead to poor performance. In those cases we may decide to implement alternative (optional)
@@ -455,26 +646,27 @@ always available implementation to the Numba implementation by simply providing 
 additional input parameter to the operator ``engine="numba"``. This is for example the case in the
 :py:class:`pylops.signalprocessing.Radon2D`.
 
-If interested to use Numba backend from ``conda``, you will need to manually install it:
+If interested to use Numba backend, install it via:
 
-.. code-block:: bash
+.. tab-set::
 
-   >> conda install numba
+   .. tab-item:: :iconify:`devicon:anaconda` conda
 
-It is also advised to install the additional package
+        .. code-block:: bash
+
+            >> conda install numba
+            >> conda install --channel numba icc_rt # optional
+
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> uv add numba
+            >> uv add icc_rt # optional
+
+Note that it is also advised to install the additional package
 `icc_rt <https://numba.pydata.org/numba-doc/latest/user/performance-tips.html#intel-svml>`_ to use
 optimised transcendental functions as compiler intrinsics.
-
-.. code-block:: bash
-
-   >> conda install --channel numba icc_rt
-
-Through ``pip`` the equivalent would be:
-
-.. code-block:: bash
-
-   >> pip install numba
-   >> pip install icc_rt
 
 However, it is important to note that ``icc_rt`` will only be identified by Numba if
 ``LD_LIBRARY_PATH`` is properly set.
@@ -504,68 +696,85 @@ PyMC and PyTensor
 -----------------
 `PyTensor <https://pytensor.readthedocs.io/en/latest/>`_ is used to allow seamless integration between PyLops and 
 `PyMC <https://www.pymc.io/welcome.html>`_ operators.
-Install both of them via ``conda`` with:
+Install both of them with:
 
-.. code-block:: bash
+.. tab-set::
 
-   conda install -c conda-forge pytensor pymc
+   .. tab-item:: :iconify:`devicon:anaconda` conda
 
-or via ``pip`` with
+        .. code-block:: bash
 
-.. code-block:: bash
+            >> conda install -c conda-forge pytensor pymc
 
-   >> pip install pytensor pymc
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> uv add pytensor pymc
 
 .. warning::
    OSX users may experience a ``CompileError`` error when using PyTensor. This can be solved by adding 
    ``pytensor.config.gcc__cxxflags = "-Wno-c++11-narrowing"`` after ``import pytensor``.
 
-PyWavelets*
------------
+
+PyWavelets
+----------
 `PyWavelets <https://pywavelets.readthedocs.io/en/latest/>`_ is used to implement the wavelet operators.
-Install it via ``conda`` with:
+Install it via:
 
-.. code-block:: bash
+.. tab-set::
 
-   >> conda install pywavelets
+   .. tab-item:: :iconify:`devicon:anaconda` conda
 
-or via ``pip`` with
+        .. code-block:: bash
 
-.. code-block:: bash
+            >> conda install pywavelets
 
-   >> pip install PyWavelets
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> uv add PyWavelets
 
 
-scikit-fmm*
------------
+scikit-fmm
+----------
 `scikit-fmm <https://github.com/scikit-fmm/scikit-fmm>`_ is a library which implements the
 fast marching method. It is used in PyLops to compute traveltime tables in the
 initialization of :py:class:`pylops.waveeqprocessing.Kirchhoff`
 when choosing ``mode="eikonal"``. As this may not be of interest for many users, this library has not been added
-to the mandatory requirements of PyLops. With ``conda``, install it via
+to the mandatory requirements of PyLops. Install it via
 
-.. code-block:: bash
+.. tab-set::
 
-   >> conda install --channel conda-forge scikit-fmm
+   .. tab-item:: :iconify:`devicon:anaconda` conda
 
-or with ``pip`` via
+        .. code-block:: bash
 
-.. code-block:: bash
+            >> conda install --channel conda-forge scikit-fmm
 
-   >> pip install scikit-fmm
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> uv add scikit-fmm
 
 
-SPGL1*
-------
+SPGL1
+-----
 `SPGL1 <https://spgl1.readthedocs.io/en/latest/>`_ is used to solve sparsity-promoting
 basis pursuit, basis pursuit denoise, and Lasso problems
 in :py:func:`pylops.optimization.sparsity.SPGL1` solver.
 
-Install it via ``pip`` with:
+Install it via:
 
-.. code-block:: bash
+.. tab-set::
 
-   >> pip install spgl1
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> uv add spgl1
 
 
 Sympy
@@ -573,37 +782,46 @@ Sympy
 This library is used to implement the ``describe`` method, which transforms
 PyLops operators into their mathematical expression.
 
-Install it via ``conda`` with:
+Install it via:
 
-.. code-block:: bash
+.. tab-set::
 
-   >> conda install sympy
+   .. tab-item:: :iconify:`devicon:anaconda` conda
 
-or via ``pip`` with
+        .. code-block:: bash
 
-.. code-block:: bash
+            >> conda install sympy
 
-   >> pip install sympy
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> uv add sympy
 
 
 Torch
 -----
 `Torch <http://pytorch.org>`_ is used to allow seamless integration between PyLops and PyTorch operators.
 
-Install it via ``conda`` with:
+Install it via:
 
-.. code-block:: bash
+.. tab-set::
 
-   >> conda install -c pytorch pytorch
+   .. tab-item:: :iconify:`devicon:anaconda` conda
 
-or via ``pip`` with
+        .. code-block:: bash
 
-.. code-block:: bash
+            >> conda install -c pytorch pytorch
 
-   >> pip install torch
+   .. tab-item:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            >> uv add torch
 
 
 .. _OptionalGPU:
+
 
 Optional Dependencies for GPU
 =============================

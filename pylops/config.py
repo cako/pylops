@@ -15,9 +15,10 @@ or use context managers (with blocks):
     disabled_ndarray_multiplication         Disable ndarray multiplication within context.
 
 """
+
+from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Generator
 
 __all__ = [
     "get_ndarray_multiplication",

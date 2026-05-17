@@ -1,7 +1,7 @@
 __all__ = ["Marchenko"]
 
 import logging
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Literal
 
 import numpy as np
 from scipy.signal import filtfilt
@@ -12,7 +12,7 @@ from pylops import Block, BlockDiag, Diagonal, Identity, Roll
 from pylops.optimization.basic import cgls
 from pylops.utils import dottest as Dottest
 from pylops.utils.backend import get_array_module, get_module_name, to_cupy_conditional
-from pylops.utils.typing import DTypeLike, NDArray
+from pylops.utils.typing import DTypeLike, NDArray, Tfftengine_nsf
 from pylops.waveeqprocessing.mdd import MDC
 
 logger = logging.getLogger(__name__)
@@ -23,9 +23,9 @@ def directwave(
     trav: NDArray,
     nt: int,
     dt: float,
-    nfft: Optional[int] = None,
-    dist: Optional[NDArray] = None,
-    kind: str = "2d",
+    nfft: int | None = None,
+    dist: NDArray | None = None,
+    kind: Literal["2d", "3d"] = "2d",
     derivative: bool = True,
 ) -> NDArray:
     r"""Analytical direct wave in acoustic media
@@ -90,9 +90,9 @@ def directwave(
     nr = len(trav)
     nfft = nt if nfft is None or nfft < nt else nfft
     W = np.abs(np.fft.rfft(wav, nfft)) * dt
-    F: NDArray = 2 * np.pi * ncp.arange(nfft) / (dt * nfft)
+    F: NDArray = 2 * np.pi * ncp.arange(nfft // 2 + 1) / (dt * nfft)
     direct = ncp.zeros((nfft // 2 + 1, nr), dtype=np.complex128)
-    for iw, (w, f) in enumerate(zip(W, F)):
+    for iw, (w, f) in enumerate(zip(W, F, strict=True)):
         if kind == "2d":
             # direct[iw] = (
             #     w
@@ -254,17 +254,17 @@ class Marchenko:
         self,
         R: NDArray,
         dt: float = 0.004,
-        nt: Optional[int] = None,
+        nt: int | None = None,
         dr: float = 1.0,
-        nfmax: Optional[int] = None,
-        wav: Optional[NDArray] = None,
+        nfmax: int | None = None,
+        wav: NDArray | None = None,
         toff: float = 0.0,
         nsmooth: int = 10,
         saveRt: bool = True,
         prescaled: bool = False,
-        fftengine: str = "numpy",
+        fftengine: Tfftengine_nsf = "numpy",
         dtype: DTypeLike = "float64",
-        kwargs_fft: Optional[Dict[str, Any]] = None,
+        kwargs_fft: dict[str, Any] | None = None,
     ) -> None:
         # Save inputs into class
         self.dt = dt
@@ -286,7 +286,8 @@ class Marchenko:
             self.nfmax = nfmax
         else:
             if nt is None:
-                raise ValueError("nt must be provided as R is in frequency")
+                msg = "nt must be provided as R is in frequency"
+                raise ValueError(msg)
             self.ns, self.nr, self.nfmax = R.shape
             self.nt = nt
 
@@ -306,7 +307,7 @@ class Marchenko:
             )
             Rtwosided_fft = np.fft.rfft(Rtwosided, self.nt2, axis=-1) / np.sqrt(
                 self.nt2
-            )
+            ).astype(dtype)
             self.Rtwosided_fft = Rtwosided_fft[..., :nfmax]
         else:
             self.Rtwosided_fft = R
@@ -316,19 +317,19 @@ class Marchenko:
     def apply_onepoint(
         self,
         trav: NDArray,
-        G0: Optional[NDArray] = None,
-        nfft: Optional[int] = None,
+        G0: NDArray | None = None,
+        nfft: int | None = None,
         rtm: bool = False,
         greens: bool = False,
         dottest: bool = False,
         usematmul: bool = False,
         **kwargs_solver,
-    ) -> Union[
-        Tuple[NDArray, NDArray, NDArray, NDArray, NDArray],
-        Tuple[NDArray, NDArray, NDArray, NDArray],
-        Tuple[NDArray, NDArray, NDArray],
-        Tuple[NDArray, NDArray],
-    ]:
+    ) -> (
+        tuple[NDArray, NDArray, NDArray, NDArray, NDArray]
+        | tuple[NDArray, NDArray, NDArray, NDArray]
+        | tuple[NDArray, NDArray, NDArray]
+        | tuple[NDArray, NDArray]
+    ):
         r"""Marchenko redatuming for one point
 
         Solve the Marchenko redatuming inverse problem for a single point
@@ -426,13 +427,12 @@ class Marchenko:
             shift=-1,
             dtype=self.dtype,
         )
-        Wop = Diagonal(w.T.ravel())
-        Iop = Identity(self.nr * self.nt2)
+        Wop = Diagonal(w.T.ravel(), dtype=self.dtype)
+        Iop = Identity(self.nr * self.nt2, dtype=self.dtype)
         Mop = Block(
-            [[Iop, -1 * Wop * Rop], [-1 * Wop * Rollop * R1op, Iop]]
-        ) * BlockDiag([Wop, Wop])
-        Gop = Block([[Iop, -1 * Rop], [-1 * Rollop * R1op, Iop]])
-
+            [[Iop, -1 * Wop * Rop], [-1 * Wop * Rollop * R1op, Iop]], dtype=self.dtype
+        ) * BlockDiag([Wop, Wop], dtype=self.dtype)
+        Gop = Block([[Iop, -1 * Rop], [-1 * Rollop * R1op, Iop]], dtype=self.dtype)
         if dottest:
             Dottest(
                 Gop,
@@ -442,7 +442,6 @@ class Marchenko:
                 verb=True,
                 backend=get_module_name(self.ncp),
             )
-        if dottest:
             Dottest(
                 Mop,
                 2 * self.ns * self.nt2,
@@ -456,16 +455,18 @@ class Marchenko:
         if G0 is None:
             if self.wav is not None and nfft is not None:
                 G0 = (
-                    directwave(
-                        self.wav, trav, self.nt, self.dt, nfft=nfft, derivative=True
+                    (
+                        directwave(
+                            self.wav, trav, self.nt, self.dt, nfft=nfft, derivative=True
+                        )
                     )
-                ).T
+                    .astype(self.dtype)
+                    .T
+                )
                 G0 = to_cupy_conditional(self.Rtwosided_fft, G0)
             else:
-                raise ValueError(
-                    "wav and/or nfft are not provided. "
-                    "Provide either G0 or wav and nfft..."
-                )
+                msg = "wav and/or nfft are not provided. Provide either G0 or wav and nfft..."
+                raise ValueError(msg)
         fd_plus = np.concatenate(
             (np.fliplr(G0).T, self.ncp.zeros((self.nt - 1, self.nr), dtype=self.dtype))
         )
@@ -521,19 +522,19 @@ class Marchenko:
     def apply_multiplepoints(
         self,
         trav: NDArray,
-        G0: Optional[NDArray] = None,
-        nfft: Optional[int] = None,
+        G0: NDArray | None = None,
+        nfft: int | None = None,
         rtm: bool = False,
         greens: bool = False,
         dottest: bool = False,
         usematmul: bool = False,
         **kwargs_solver,
-    ) -> Union[
-        Tuple[NDArray, NDArray, NDArray, NDArray, NDArray],
-        Tuple[NDArray, NDArray, NDArray, NDArray],
-        Tuple[NDArray, NDArray, NDArray],
-        Tuple[NDArray, NDArray],
-    ]:
+    ) -> (
+        tuple[NDArray, NDArray, NDArray, NDArray, NDArray]
+        | tuple[NDArray, NDArray, NDArray, NDArray]
+        | tuple[NDArray, NDArray, NDArray]
+        | tuple[NDArray, NDArray]
+    ):
         r"""Marchenko redatuming for multiple points
 
         Solve the Marchenko redatuming inverse problem for multiple
@@ -635,12 +636,12 @@ class Marchenko:
             shift=-1,
             dtype=self.dtype,
         )
-        Wop = Diagonal(w.transpose(2, 0, 1).ravel())
+        Wop = Diagonal(w.transpose(2, 0, 1).ravel(), dtype=self.dtype)
         Iop = Identity(self.nr * nvs * self.nt2)
         Mop = Block(
-            [[Iop, -1 * Wop * Rop], [-1 * Wop * Rollop * R1op, Iop]]
-        ) * BlockDiag([Wop, Wop])
-        Gop = Block([[Iop, -1 * Rop], [-1 * Rollop * R1op, Iop]])
+            [[Iop, -1 * Wop * Rop], [-1 * Wop * Rollop * R1op, Iop]], dtype=self.dtype
+        ) * BlockDiag([Wop, Wop], dtype=self.dtype)
+        Gop = Block([[Iop, -1 * Rop], [-1 * Rollop * R1op, Iop]], dtype=self.dtype)
 
         if dottest:
             Dottest(
@@ -651,7 +652,6 @@ class Marchenko:
                 verb=True,
                 backend=get_module_name(self.ncp),
             )
-        if dottest:
             Dottest(
                 Mop,
                 2 * self.ns * nvs * self.nt2,
@@ -667,21 +667,23 @@ class Marchenko:
                 G0 = np.zeros((self.nr, nvs, self.nt), dtype=self.dtype)
                 for ivs in range(nvs):
                     G0[:, ivs] = (
-                        directwave(
-                            self.wav,
-                            trav[:, ivs],
-                            self.nt,
-                            self.dt,
-                            nfft=nfft,
-                            derivative=True,
+                        (
+                            directwave(
+                                self.wav,
+                                trav[:, ivs],
+                                self.nt,
+                                self.dt,
+                                nfft=nfft,
+                                derivative=True,
+                            )
                         )
-                    ).T
+                        .astype(self.dtype)
+                        .T
+                    )
                 G0 = to_cupy_conditional(self.Rtwosided_fft, G0)
             else:
-                raise ValueError(
-                    "wav and/or nfft are not provided. "
-                    "Provide either G0 or wav and nfft..."
-                )
+                msg = "wav and/or nfft are not provided. Provide either G0 or wav and nfft..."
+                raise ValueError(msg)
         fd_plus = np.concatenate(
             (
                 np.flip(G0, axis=-1).transpose(2, 0, 1),

@@ -1,6 +1,5 @@
 __all__ = ["Imag"]
 
-from typing import Union
 
 import numpy as np
 
@@ -59,7 +58,7 @@ class Imag(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         dtype: DTypeLike = "complex128",
         name: str = "I",
     ) -> None:

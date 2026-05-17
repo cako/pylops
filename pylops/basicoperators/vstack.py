@@ -19,12 +19,12 @@ else:
     )
     from scipy.sparse.linalg._interface import _get_dtype
 
-from typing import Callable, Optional, Sequence
+from collections.abc import Callable, Sequence
 
 from pylops import LinearOperator
 from pylops.basicoperators import MatrixMult, Zero
 from pylops.utils.backend import get_array_module, get_module, inplace_add, inplace_set
-from pylops.utils.typing import DTypeLike, NDArray
+from pylops.utils.typing import DTypeLike, NDArray, Tinoutengine, Tparallel_kind
 
 
 def _matvec_rmatvec_map(op: Callable, x: NDArray) -> NDArray:
@@ -151,13 +151,14 @@ class VStack(LinearOperator):
         self,
         ops: Sequence[LinearOperator],
         nproc: int = 1,
-        forceflat: bool = None,
-        inoutengine: Optional[tuple] = None,
-        parallel_kind: str = "multiproc",
-        dtype: Optional[DTypeLike] = None,
+        forceflat: bool | None = None,
+        inoutengine: Tinoutengine | None = None,
+        parallel_kind: Tparallel_kind = "multiproc",
+        dtype: DTypeLike | None = None,
     ) -> None:
         if parallel_kind not in ["multiproc", "multithread"]:
-            raise ValueError("parallel_kind must be 'multiproc' or 'multithread'")
+            msg = "parallel_kind must be 'multiproc' or 'multithread'"
+            raise ValueError(msg)
         # identify dimensions
         self.ops = ops
         nops = np.zeros(len(self.ops), dtype=int)
@@ -168,7 +169,8 @@ class VStack(LinearOperator):
         self.nops = int(nops.sum())
         mops = [oper.shape[1] for oper in self.ops]
         if len(set(mops)) > 1:
-            raise ValueError("operators have different number of columns")
+            msg = f"Operators have different number of columns - {mops}"
+            raise ValueError(msg)
         self.mops = int(mops[0])
         self.nnops = np.insert(np.cumsum(nops), 0, 0)
         # define dims (check if all operators have the same,

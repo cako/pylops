@@ -6,7 +6,8 @@ __all__ = [
     "MetricsCallback",
 ]
 
-from typing import TYPE_CHECKING, Dict, List, Optional, Sequence
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
 
@@ -248,7 +249,7 @@ class MetricsCallback(Callbacks):
         self.xtrue = xtrue
         self.Op = Op
         self.which = which
-        self.metrics: Dict[str, List] = {}
+        self.metrics: dict[str, list] = {}
         if "mae" in self.which:
             self.metrics["mae"] = []
         if "mse" in self.which:

@@ -1,6 +1,6 @@
 __all__ = ["Convolve2D"]
 
-from typing import Union
+from typing import Literal
 
 from pylops.signalprocessing import ConvolveND
 from pylops.utils.typing import DTypeLike, InputDimsLike, NDArray
@@ -26,7 +26,8 @@ class Convolve2D(ConvolveND):
 
         Axes along which convolution is applied
     method : :obj:`str`, optional
-        Method used to calculate the convolution (``direct`` or ``fft``).
+        Method used to calculate the convolution (``auto``, ``direct`` or ``fft``)
+        - see :func:`scipy.signal.convolve` for details.
     dtype : :obj:`str`, optional
         Type of elements in input array.
     name : :obj:`str`, optional
@@ -36,7 +37,7 @@ class Convolve2D(ConvolveND):
 
     Attributes
     ----------
-    nh : :obj:`int`
+    nh : :obj:`tuple`
         Length of the filter
     convolve : :obj:`callable`
         Convolution function
@@ -95,16 +96,17 @@ class Convolve2D(ConvolveND):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         h: NDArray,
         offset: InputDimsLike = (0, 0),
         axes: InputDimsLike = (-2, -1),
-        method: str = "fft",
+        method: Literal["auto", "direct", "fft"] | None = "fft",
         dtype: DTypeLike = "float64",
         name: str = "C",
     ):
         if h.ndim != 2:
-            raise ValueError("h must be 2-dimensional")
+            msg = "`h` must be 2-dimensional"
+            raise ValueError(msg)
         super().__init__(
             dims=dims,
             h=h,

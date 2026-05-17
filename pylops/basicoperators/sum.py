@@ -76,7 +76,7 @@ class Sum(LinearOperator):
         self,
         dims: InputDimsLike,
         axis: int = -1,
-        forceflat: bool = None,
+        forceflat: bool | None = None,
         dtype: DTypeLike = "float64",
         name: str = "S",
     ) -> None:

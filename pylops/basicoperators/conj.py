@@ -1,8 +1,6 @@
 __all__ = ["Conj"]
 
 
-from typing import Union
-
 import numpy as np
 
 from pylops import LinearOperator
@@ -56,7 +54,7 @@ class Conj(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         dtype: DTypeLike = "complex128",
         name: str = "C",
     ) -> None:

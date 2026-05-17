@@ -1,5 +1,3 @@
-from typing import Tuple
-
 from pylops.utils.typing import NDArray
 
 # Remap numba njit to no-ops and prange to range
@@ -19,7 +17,7 @@ except ImportError:  # pragma: no cover - executed only without numba
 
 
 @njit(fastmath=True, cache=True)
-def _B3(sigma: float) -> Tuple[float, float, float]:
+def _B3(sigma: float) -> tuple[float, float, float]:
     """Quadratic B-spline coefficients (3 taps)."""
     b0 = (1.0 - sigma) * (2.0 - sigma) / 12.0
     b1 = (2.0 + sigma) * (2.0 - sigma) / 6.0
@@ -28,7 +26,7 @@ def _B3(sigma: float) -> Tuple[float, float, float]:
 
 
 @njit(fastmath=True, cache=True)
-def _B3d(sigma: float) -> Tuple[float, float, float]:
+def _B3d(sigma: float) -> tuple[float, float, float]:
     """Derivatives of quadratic B-spline coefficients."""
     b0 = -(2.0 - sigma) / 12.0 - (1.0 - sigma) / 12.0
     b1 = (2.0 - sigma) / 6.0 - (2.0 + sigma) / 6.0
@@ -37,7 +35,7 @@ def _B3d(sigma: float) -> Tuple[float, float, float]:
 
 
 @njit(fastmath=True, cache=True)
-def _B5(sigma: float) -> Tuple[float, float, float, float, float]:
+def _B5(sigma: float) -> tuple[float, float, float, float, float]:
     """Quartic B-spline coefficients (5 taps)."""
     s = sigma
     b0 = (1 - s) * (2 - s) * (3 - s) * (4 - s) / 1680.0
@@ -49,7 +47,7 @@ def _B5(sigma: float) -> Tuple[float, float, float, float, float]:
 
 
 @njit(fastmath=True, cache=True)
-def _B5d(sigma: float) -> Tuple[float, float, float, float, float]:
+def _B5d(sigma: float) -> tuple[float, float, float, float, float]:
     """Derivatives of quartic B-spline coefficients."""
     s = sigma
     b0 = (
@@ -100,13 +98,12 @@ def _conv_allpass_numba(
 ) -> None:
     """Numba kernel for PWD all-pass filtering used in
     :func:`pylops.utils.signalprocessing.pwd_slope_estimate`."""
-    n1, n2 = din.shape
+    n1, n2 = din.shape[:2]
     nw = 1 if order == 1 else 2
 
-    for j in prange(n1):
-        for i in range(n2):
-            u1[j, i] = 0.0
-            u2[j, i] = 0.0
+    # Clear derivative arrays
+    u1[:] = 0.0
+    u2[:] = 0.0
 
     for i1 in prange(nw, n1 - nw):
         for i2 in range(0, n2 - 1):

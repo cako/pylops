@@ -1,8 +1,29 @@
 .. _changlog:
 
-Changelog
-=========
+|:newspaper_roll:| Changelog
+############################
 
+
+Version 2.7.0
+-------------
+
+*Released on: 17/05/2026*
+
+* Added cubic spline interpolation operator via
+  :py:class:`pylops.signalprocessing.InterpCubicSpline` (also interfaceable via
+  :py:class:`pylops.signalprocessing.Interp` with `kind="cubic_spline"`)
+* Added :py:class:`pylops.medical.MRI2D` operator
+* Added :py:class:`pylops.SmoothingND` operator
+* Added 3d extension to :py:func:`pylops.utils.signalprocessing.pwd_slope_estimate`
+* Fixed unwanted upcasting in :py:class:`pylops.avo.avo.AVOLinearModelling`,
+  :py:class:`pylops.Laplacian`, :py:class:`pylops.signalprocessing.Bilinear`,
+  :py:class:`pylops.signalprocessing.Interp`, :py:class:`pylops.signalprocessing.NonStationaryFilters2D`,
+  :py:class:`pylops.signalprocessing.Seislet`, :py:class:`pylops.signalprocessing.Sliding1D`,
+  :py:class:`pylops.signalprocessing.Sliding2D`, :py:class:`pylops.signalprocessing.Sliding3D`,
+  :py:class:`pylops.Smoothing1D`, :py:class:`pylops.Smoothing2D`,
+  and :py:class:`pylops.waveeqprocessing.Marchenko`
+* Improved typing annotations across all operators (and enforced use of 
+  Literal for parameters with multiple options)
 
 Version 2.6.0
 -------------

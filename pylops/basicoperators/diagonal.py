@@ -1,6 +1,5 @@
 __all__ = ["Diagonal"]
 
-from typing import Optional, Union
 
 import numpy as np
 
@@ -78,7 +77,7 @@ class Diagonal(LinearOperator):
     def __init__(
         self,
         diag: NDArray,
-        dims: Optional[Union[int, InputDimsLike]] = None,
+        dims: int | InputDimsLike | None = None,
         axis: int = -1,
         dtype: DTypeLike = "float64",
         name: str = "D",

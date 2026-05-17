@@ -7,6 +7,9 @@ normal moveout (NMO) correction to a seismic record.
 We will perform classic NMO using an operator created from scratch,
 as well as using the :py:class:`pylops.Spread` operator.
 """
+
+# flake8: noqa: B905
+
 from math import floor
 from time import time
 
@@ -199,7 +202,7 @@ start = time()
 nmo_forward(data, t, x, vel_t)
 end = time()
 
-print(f"Ran in {1e6*(end-start):.0f} μs")
+print(f"Ran in {1e6 * (end - start):.0f} μs")
 
 ###############################################################################
 
@@ -379,7 +382,7 @@ start = time()
 SpreadNMO @ data
 end = time()
 
-print(f"Ran in {1e6*(end-start):.0f} μs")
+print(f"Ran in {1e6 * (end - start):.0f} μs")
 ###############################################################################
 # Note that since v2.0, we do not need to pass a flattened array. Consequently,
 # the output will not be flattened, but will have ``SpreadNMO.dimsd`` as shape.

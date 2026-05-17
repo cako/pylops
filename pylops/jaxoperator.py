@@ -96,9 +96,8 @@ class JaxOperator(LinearOperator):
         M, N = self.shape
 
         if x.shape != (M,) and x.shape != (M, 1):
-            raise ValueError(
-                f"Dimension mismatch. Got {x.shape}, but expected  ({M},) or ({M}, 1)."
-            )
+            msg = f"Dimension mismatch. Got {x.shape}, but expected ({M},) or ({M}, 1)."
+            raise ValueError(msg)
 
         y = self._rmatvecad(x, y)
 
@@ -107,8 +106,9 @@ class JaxOperator(LinearOperator):
         elif x.ndim == 2:
             y = y.reshape(N, 1)
         else:
-            raise ValueError(
-                f"Invalid shape returned by user-defined rmatvecad(). "
+            msg = (
+                "Invalid shape returned by user-defined rmatvecad(). "
                 f"Expected 2-d ndarray or matrix, not {x.ndim}-d ndarray"
             )
+            raise ValueError(msg)
         return y

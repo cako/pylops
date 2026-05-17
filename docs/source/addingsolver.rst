@@ -1,11 +1,12 @@
 .. _addingsolver:
 
-Implementing new solvers
-========================
+|:fire:| Implementing new solvers
+#################################
+
 Users are welcome to create new solvers and add them to the PyLops library.
 
 In this tutorial, we will go through the key steps in the definition of a solver, using a
-sligthly simplified version of :py:class:`pylops.optimization.basic.CG` as an example.
+sligthly simplified version of :py:class:`pylops.optimization.cls_basic.CG` as an example.
 
 .. note::
     In case the solver that you are planning to create falls within the category of proximal solvers,

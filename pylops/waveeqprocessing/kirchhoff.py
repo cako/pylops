@@ -4,7 +4,7 @@ __all__ = ["Kirchhoff"]
 import logging
 import os
 import warnings
-from typing import Optional, Tuple, Union
+from typing import Literal
 
 import numpy as np
 
@@ -15,7 +15,7 @@ from pylops.utils._internal import _value_or_sized_to_array
 from pylops.utils.backend import get_array_module
 from pylops.utils.decorators import reshaped
 from pylops.utils.tapers import taper
-from pylops.utils.typing import DTypeLike, NDArray
+from pylops.utils.typing import DTypeLike, NDArray, Tengine_nnc
 
 skfmm_message = deps.skfmm_import("the kirchhoff module")
 jit_message = deps.numba_import("the kirchhoff module")
@@ -203,10 +203,9 @@ class Kirchhoff(LinearOperator):
     Raises
     ------
     NotImplementedError
-        If ``mode`` is neither ``analytic``, ``eikonal``, or ``byot``.
-
-    NotImplementedError
         If ``engine="cuda"`` and ``trav`` is provided as a single table
+    ValueError
+        If ``mode`` is neither ``analytic``, ``eikonal``, or ``byot``.
 
     Notes
     -----
@@ -314,16 +313,16 @@ class Kirchhoff(LinearOperator):
         vel: NDArray,
         wav: NDArray,
         wavcenter: int,
-        y: Optional[NDArray] = None,
-        mode: str = "eikonal",
+        y: NDArray | None = None,
+        mode: Literal["analytic", "eikonal", "byot"] = "eikonal",
         wavfilter: bool = False,
         dynamic: bool = False,
-        trav: Optional[Union[NDArray, Tuple[NDArray, NDArray]]] = None,
-        amp: Optional[Union[NDArray, Tuple[NDArray, NDArray]]] = None,
-        aperture: Optional[Tuple[float, float]] = None,
-        angleaperture: Union[float, Tuple[float, float]] = 90.0,
-        snell: Optional[Tuple[float, float]] = None,
-        engine: str = "numpy",
+        trav: NDArray | tuple[NDArray, NDArray] | None = None,
+        amp: NDArray | tuple[NDArray, NDArray] | None = None,
+        aperture: tuple[float, float] | None = None,
+        angleaperture: float | tuple[float, float] = 90.0,
+        snell: tuple[float, float] | None = None,
+        engine: Tengine_nnc = "numpy",
         dtype: DTypeLike = "float64",
         name: str = "K",
     ) -> None:
@@ -331,12 +330,13 @@ class Kirchhoff(LinearOperator):
             "A new implementation of Kirchhoff is provided in v2.1.0. "
             "This currently affects only the inner working of the "
             "operator, end-users can continue using the operator in "
-            "the same way. Nevertheless, it is now recommended to provide"
+            "the same way. Nevertheless, it is now recommended to provide "
             "the variables trav (and amp) as a tuples containing the "
             "traveltime (and amplitude) tables for sources and receivers "
             "separately. This behaviour will eventually become default in "
             "version v3.0.0.",
             FutureWarning,
+            stacklevel=2,
         )
         # identify geometry
         (
@@ -394,13 +394,15 @@ class Kirchhoff(LinearOperator):
                     epsdist = 1e-2
                     self.maxdist = epsdist * (np.max(dist_srcs) + np.max(dist_recs))
                     if self.ndims == 2:
-                        self.amp_srcs, self.amp_recs = 1.0 / np.sqrt(
-                            dist_srcs + self.maxdist
-                        ), 1.0 / np.sqrt(dist_recs + self.maxdist)
+                        self.amp_srcs, self.amp_recs = (
+                            1.0 / np.sqrt(dist_srcs + self.maxdist),
+                            1.0 / np.sqrt(dist_recs + self.maxdist),
+                        )
                     else:
-                        self.amp_srcs, self.amp_recs = 1.0 / (
-                            dist_srcs + self.maxdist
-                        ), 1.0 / (dist_recs + self.maxdist)
+                        self.amp_srcs, self.amp_recs = (
+                            1.0 / (dist_srcs + self.maxdist),
+                            1.0 / (dist_recs + self.maxdist),
+                        )
             else:
                 if isinstance(trav, tuple):
                     self.trav_srcs, self.trav_recs = trav
@@ -409,17 +411,14 @@ class Kirchhoff(LinearOperator):
                     self.trav = trav
 
                 if self.dynamic and not self.travsrcrec:
-                    raise NotImplementedError(
-                        "separate traveltime tables must be provided "
-                        "when selecting mode=dynamic"
-                    )
+                    msg = "separate traveltime tables for sources and receivers must be provided when selecting mode='dynamic'"
+                    raise NotImplementedError(msg)
                 if self.dynamic:
                     if isinstance(amp, tuple):
                         self.amp_srcs, self.amp_recs = amp
                     else:
-                        raise NotImplementedError(
-                            "separate amplitude tables must be provided "
-                        )
+                        msg = "amp must be provided as a tuple of source and receiver amplitude tables when selecting mode='dynamic'"
+                        raise NotImplementedError(msg)
 
                     if self.travsrcrec:
                         # compute traveltime gradients at image points
@@ -432,7 +431,8 @@ class Kirchhoff(LinearOperator):
                             axis=np.arange(self.ndims),
                         )
         else:
-            raise NotImplementedError("method must be analytic, eikonal or byot")
+            msg = f"mode must be either 'analytic', 'eikonal' or 'byot', got {mode}"
+            raise ValueError(msg)
 
         # compute angles with vertical
         if self.dynamic:
@@ -453,15 +453,13 @@ class Kirchhoff(LinearOperator):
                 self.angle_srcs = (
                     np.sign(trav_srcs_grad[1])
                     * np.arccos(
-                        trav_srcs_grad[-1]
-                        / np.sqrt(np.sum(trav_srcs_grad**2, axis=0))
+                        trav_srcs_grad[-1] / np.sqrt(np.sum(trav_srcs_grad**2, axis=0))
                     )
                 ).reshape(np.prod(dims), ns)
                 self.angle_recs = (
                     np.sign(trav_recs_grad[1])
                     * np.arccos(
-                        trav_recs_grad[-1]
-                        / np.sqrt(np.sum(trav_recs_grad**2, axis=0))
+                        trav_recs_grad[-1] / np.sqrt(np.sum(trav_recs_grad**2, axis=0))
                     )
                 ).reshape(np.prod(dims), nr)
 
@@ -490,12 +488,14 @@ class Kirchhoff(LinearOperator):
         if aperture is not None and self.ndims == 3:
             aperture = None
             warnings.warn(
-                "Aperture is forced to None as currently not implemented in 3D"
+                "Aperture is forced to None as currently not implemented in 3D",
+                stacklevel=2,
             )
         if aperture is not None:
             warnings.warn(
                 "Aperture is currently defined as ratio of offset over depth, "
-                "and may be not ideal for highly heterogeneous media"
+                "and may be not ideal for highly heterogeneous media",
+                stacklevel=2,
             )
         self.aperture = (
             (self.nx + 1,) if aperture is None else _value_or_sized_to_array(aperture)
@@ -533,8 +533,8 @@ class Kirchhoff(LinearOperator):
         x: NDArray,
         srcs: NDArray,
         recs: NDArray,
-        y: Optional[NDArray] = None,
-    ) -> Tuple[
+        y: NDArray | None = None,
+    ) -> tuple[
         int,
         int,
         NDArray,
@@ -578,10 +578,10 @@ class Kirchhoff(LinearOperator):
         x: NDArray,
         srcs: NDArray,
         recs: NDArray,
-        vel: Union[float, NDArray],
-        y: Optional[NDArray] = None,
-        mode: str = "eikonal",
-    ) -> Tuple[NDArray, NDArray, NDArray, NDArray, NDArray, NDArray]:
+        vel: float | NDArray,
+        y: NDArray | None = None,
+        mode: Literal["analytic", "eikonal"] = "eikonal",
+    ) -> tuple[NDArray, NDArray, NDArray, NDArray, NDArray, NDArray]:
         r"""Traveltime table
 
         Compute traveltimes along the source-subsurface-receivers triplet
@@ -648,7 +648,8 @@ class Kirchhoff(LinearOperator):
         # compute traveltimes
         if mode == "analytic":
             if not isinstance(vel, (float, int)):
-                raise ValueError("vel must be scalar for mode=analytical")
+                msg = "vel must be scalar for mode='analytic'"
+                raise ValueError(msg)
 
             # compute grid
             if ndims == 2:
@@ -710,7 +711,8 @@ class Kirchhoff(LinearOperator):
             else:
                 raise NotImplementedError(skfmm_message)
         else:
-            raise NotImplementedError("method must be analytic or eikonal")
+            msg = f"mode must be either 'analytic' or 'eikonal', got {mode}"
+            raise ValueError(msg)
 
         # compute traveltime gradients at image points
         trav_srcs_grad = np.gradient(
@@ -746,7 +748,8 @@ class Kirchhoff(LinearOperator):
             Wfilt = W * np.sqrt(1j * 2 * np.pi * f)
         elif (dimsrc == 2 or dimrec == 2) and dimv == 3:
             # 2.5D
-            raise NotImplementedError("2.D wavelet currently not available")
+            msg = "2.5D wavelet reshaping currently not implemented"
+            raise NotImplementedError(msg)
         elif dimsrc == 3 and dimrec == 3 and dimv == 3:
             # 3D
             Wfilt = W * (-1j * 2 * np.pi * f)
@@ -1073,9 +1076,10 @@ class Kirchhoff(LinearOperator):
                                 )
         return y
 
-    def _register_multiplications(self, engine: str) -> None:
+    def _register_multiplications(self, engine: Tengine_nnc) -> None:
         if engine not in ["numpy", "numba", "cuda"]:
-            raise KeyError("engine must be numpy or numba or cuda")
+            msg = f"engine must be numpy or numba or cuda, got {engine}"
+            raise ValueError(msg)
         if engine == "numba" and jit_message is None:
             numba_opts = dict(
                 nopython=True, nogil=True, parallel=parallel
@@ -1099,10 +1103,8 @@ class Kirchhoff(LinearOperator):
                     self.ns, self.nr, self.nt, self.ni, False
                 )
             elif not self.travsrcrec:
-                raise NotImplementedError(
-                    "engine='cuda' not implemented for traveltimes "
-                    "provided in one table"
-                )
+                msg = "`engine=cuda` not implemented for traveltimes provided in one table"
+                raise NotImplementedError(msg)
             self._kirch_matvec = self.cuda_helper._matvec_cuda
             self._kirch_rmatvec = self.cuda_helper._rmatvec_cuda
         else:

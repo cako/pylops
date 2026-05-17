@@ -1,7 +1,6 @@
 __all__ = ["Regression"]
 
 import numpy as np
-import numpy.typing as npt
 
 from pylops import LinearOperator
 from pylops.utils.backend import get_array_module
@@ -78,14 +77,15 @@ class Regression(LinearOperator):
 
     def __init__(
         self,
-        taxis: npt.ArrayLike,
+        taxis: NDArray,
         order: int,
         dtype: DTypeLike = "float64",
         name: str = "R",
     ) -> None:
         ncp = get_array_module(taxis)
         if not isinstance(taxis, ncp.ndarray):
-            raise TypeError("t must be ndarray...")
+            msg = "t must be ndarray..."
+            raise TypeError(msg)
         else:
             self.taxis = taxis
         self.order = order
@@ -104,7 +104,7 @@ class Regression(LinearOperator):
 
         return ncp.vstack([ncp.dot(self.taxis**i, x) for i in range(self.order + 1)])
 
-    def apply(self, t: npt.ArrayLike, x: NDArray) -> NDArray:
+    def apply(self, t: NDArray, x: NDArray) -> NDArray:
         """Return values along y-axis given certain ``t`` location(s) along
         t-axis and regression coefficients ``x``
 

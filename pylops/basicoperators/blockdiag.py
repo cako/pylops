@@ -14,16 +14,18 @@ if int(sp_version[0]) <= 1 and int(sp_version[1]) < 8:
     from scipy.sparse.linalg.interface import _get_dtype
 else:
     from scipy.sparse.linalg._interface import (
-        _get_dtype,
         LinearOperator as spLinearOperator,
     )
+    from scipy.sparse.linalg._interface import (
+        _get_dtype,
+    )
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from pylops import LinearOperator
 from pylops.basicoperators import MatrixMult
 from pylops.utils.backend import get_array_module, get_module, inplace_set
-from pylops.utils.typing import DTypeLike, NDArray
+from pylops.utils.typing import DTypeLike, NDArray, Tinoutengine, Tparallel_kind
 
 
 def _matvec_rmatvec_map(op, x: NDArray) -> NDArray:
@@ -142,13 +144,14 @@ class BlockDiag(LinearOperator):
         self,
         ops: Sequence[LinearOperator],
         nproc: int = 1,
-        forceflat: bool = None,
-        inoutengine: Optional[tuple] = None,
-        parallel_kind: str = "multiproc",
-        dtype: Optional[DTypeLike] = None,
+        forceflat: bool | None = None,
+        inoutengine: Tinoutengine | None = None,
+        parallel_kind: Tparallel_kind = "multiproc",
+        dtype: DTypeLike | None = None,
     ) -> None:
         if parallel_kind not in ["multiproc", "multithread"]:
-            raise ValueError("parallel_kind must be 'multiproc' or 'multithread'")
+            msg = "parallel_kind must be 'multiproc' or 'multithread'"
+            raise ValueError(msg)
         # identify dimensions
         self.ops = ops
         mops = np.zeros(len(ops), dtype=int)
@@ -181,7 +184,7 @@ class BlockDiag(LinearOperator):
         # create pool for multithreading / multiprocessing
         self.parallel_kind = parallel_kind
         self._nproc = nproc
-        self.pool: Optional[mp.pool.Pool] = None
+        self.pool: mp.pool.Pool | None = None
         if self.nproc > 1:
             if self.parallel_kind == "multiproc":
                 self.pool = mp.Pool(processes=nproc)

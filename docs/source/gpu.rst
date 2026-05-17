@@ -1,10 +1,11 @@
 .. _gpu:
 
-GPU / TPU Support
-=================
+|:video_game:| GPU / TPU Support
+################################
 
 Overview
---------
+********
+
 From ``v1.12.0``, PyLops supports computations on GPUs powered by
 `CuPy <https://cupy.dev/>`_ (``cupy-cudaXX>=13.0.0``).
 This library must be installed *before* PyLops is installed.
@@ -32,8 +33,10 @@ be also wrapped into a :class:`pylops.JaxOperator`.
 See below for a comphrensive list of supported operators and additional functionalities for both the
 ``cupy`` and ``jax`` backends.
 
+
 Install dependencies
---------------------
+********************
+
 GPU-enabled development environments can created using ``conda`` 
 
 .. code-block:: bash
@@ -48,12 +51,12 @@ or ``pip``
 
 
 Examples
---------
+********
 
 Let's now briefly look at some use cases.
 
 End-to-end GPU powered inverse problems
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=======================================
 
 First we consider the most common scenario when both the model and data
 vectors fit onto the GPU memory. We can therefore simply replace all our
@@ -122,7 +125,7 @@ Again, the code is almost unchanged apart from the fact that we now use ``jax`` 
 
 
 Mixed CPU-GPU powered inverse problems
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+======================================
 
 Let us now consider a more intricate scenario where we have access to
 a GPU-powered operator, however the model and/or data vectors are too large
@@ -208,7 +211,7 @@ These features are currently not available for ``jax`` arrays.
 
 
 Supported Operators
--------------------
+*******************
 
 In the following, we provide a list of methods in :class:`pylops.LinearOperator` with their current status (available on CPU,
 GPU with CuPy, and GPU with JAX):
@@ -601,6 +604,10 @@ Medical:
    * - :class:`pylops.medical.ct.CT2D`
      - |:white_check_mark:|
      - |:white_check_mark:|
+     - |:white_check_mark:|
+   * - :class:`pylops.medical.mri.MRI2D`
+     - |:white_check_mark:|
+     - |:red_circle:|
      - |:white_check_mark:|
 
 .. warning::

@@ -7,12 +7,11 @@ __all__ = [
     "tapernd",
 ]
 
-from typing import Optional, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
 
-from pylops.utils.typing import InputDimsLike, NDArray
+from pylops.utils.typing import InputDimsLike, NDArray, Ttaper
 
 
 def hanningtaper(
@@ -40,11 +39,10 @@ def hanningtaper(
     if ntap > 0:
         if (nmask // ntap) < 2:
             ntap_min = nmask // 2 if nmask % 2 == 0 else (nmask - 1) // 2
-            raise ValueError(f"ntap={ntap} must be smaller or equal than {ntap_min}")
+            msg = f"ntap={ntap} must be smaller or equal than {ntap_min}"
+            raise ValueError(msg)
     han_win = np.hanning(ntap * 2 - 1)
-    st_tpr = han_win[
-        :ntap,
-    ]
+    st_tpr = han_win[:ntap,]
     mid_tpr = np.ones(
         [
             nmask - (2 * ntap),
@@ -59,7 +57,7 @@ def cosinetaper(
     nmask: int,
     ntap: int,
     square: bool = False,
-    exponent: Optional[float] = None,
+    exponent: float | None = None,
 ) -> npt.ArrayLike:
     r"""1D Cosine or Cosine square taper
 
@@ -99,9 +97,7 @@ def cosinetaper(
             + 1.0
         )
     ) ** exponent
-    st_tpr = cos_win[
-        :ntap,
-    ]
+    st_tpr = cos_win[:ntap,]
     mid_tpr = np.ones(
         [
             nmask - (2 * ntap),
@@ -115,7 +111,7 @@ def cosinetaper(
 def taper(
     nmask: int,
     ntap: int,
-    tapertype: str,
+    tapertype: Ttaper | None,
 ) -> NDArray:
     r"""1D taper
 
@@ -154,8 +150,8 @@ def taper(
 def taper2d(
     nt: int,
     nmask: int,
-    ntap: Union[int, Tuple[int, int]],
-    tapertype: str = "hanning",
+    ntap: int | tuple[int, int],
+    tapertype: Ttaper | None = "hanning",
 ) -> NDArray:
     r"""2D taper
 
@@ -204,9 +200,9 @@ def taper2d(
 
 def taper3d(
     nt: int,
-    nmask: Tuple[int, int],
-    ntap: Tuple[int, int],
-    tapertype: str = "hanning",
+    nmask: tuple[int, int],
+    ntap: tuple[int, int],
+    tapertype: Ttaper | None = "hanning",
 ) -> NDArray:
     r"""3D taper
 
@@ -263,7 +259,7 @@ def taper3d(
 def tapernd(
     nmask: InputDimsLike,
     ntap: InputDimsLike,
-    tapertype: str = "hanning",
+    tapertype: Ttaper | None = "hanning",
 ) -> NDArray:
     r"""ND taper
 
@@ -289,13 +285,15 @@ def tapernd(
     """
     # create 1d window
     if tapertype == "hanning":
-        tpr = [hanningtaper(nm, nt) for nm, nt in zip(nmask, ntap)]
+        tpr = [hanningtaper(nm, nt) for nm, nt in zip(nmask, ntap, strict=True)]
     elif tapertype == "cosine":
-        tpr = [cosinetaper(nm, nt, False) for nm, nt in zip(nmask, ntap)]
+        tpr = [cosinetaper(nm, nt, False) for nm, nt in zip(nmask, ntap, strict=True)]
     elif tapertype == "cosinesquare":
-        tpr = [cosinetaper(nm, nt, True) for nm, nt in zip(nmask, ntap)]
+        tpr = [cosinetaper(nm, nt, True) for nm, nt in zip(nmask, ntap, strict=True)]
     elif tapertype == "cosinesqrt":
-        tpr = [cosinetaper(nm, nt, False, 0.5) for nm, nt in zip(nmask, ntap)]
+        tpr = [
+            cosinetaper(nm, nt, False, 0.5) for nm, nt in zip(nmask, ntap, strict=True)
+        ]
     else:
         tpr = [np.ones(nm) for nm in nmask]
 

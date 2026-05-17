@@ -12,7 +12,6 @@ else:
     from scipy.signal.windows import triang
 
     backend = "numpy"
-import itertools
 
 import pytest
 
@@ -136,16 +135,33 @@ par2_3d = {
 @pytest.mark.parametrize(
     "par", [(par1_1d), (par2_1d), (par3_1d), (par4_1d), (par5_1d), (par6_1d)]
 )
-def test_Convolve1D(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Convolve1D(par, dtype):
     """Dot-test and inversion for Convolve1D operator"""
     np.random.seed(10)
     # 1D
     if par["axis"] == 0:
-        Cop = Convolve1D(par["nx"], h=h1, offset=par["offset"], dtype="float64")
-        assert dottest(Cop, par["nx"], par["nx"], backend=backend)
+        Cop = Convolve1D(
+            par["nx"], h=h1.astype(dtype), offset=par["offset"], dtype=dtype
+        )
+        assert dottest(
+            Cop,
+            par["nx"],
+            par["nx"],
+            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            backend=backend,
+        )
 
-        x = np.zeros((par["nx"]))
+        x = np.zeros(par["nx"], dtype=dtype)
         x[par["nx"] // 2] = 1.0
+
+        # Forward and adjoint dtype check
+        y = Cop * x
+        xadj = Cop.H * y
+        assert y.dtype == dtype
+        assert xadj.dtype == dtype
+
+        # Inverse
         xlsqr = lsqr(
             Cop,
             Cop * x,
@@ -162,20 +178,32 @@ def test_Convolve1D(par):
     if par["axis"] < 2:
         Cop = Convolve1D(
             (par["ny"], par["nx"]),
-            h=h1,
+            h=h1.astype(dtype),
             offset=par["offset"],
             axis=par["axis"],
-            dtype="float64",
+            dtype=dtype,
         )
         assert dottest(
-            Cop, par["ny"] * par["nx"], par["ny"] * par["nx"], backend=backend
+            Cop,
+            par["ny"] * par["nx"],
+            par["ny"] * par["nx"],
+            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            backend=backend,
         )
 
-        x = np.zeros((par["ny"], par["nx"]))
+        x = np.zeros((par["ny"], par["nx"]), dtype=dtype)
         x[
             int(par["ny"] / 2 - 3) : int(par["ny"] / 2 + 3),
             int(par["nx"] / 2 - 3) : int(par["nx"] / 2 + 3),
         ] = 1.0
+
+        # Forward and adjoint dtype check
+        y = Cop * x
+        xadj = Cop.H * y
+        assert y.dtype == dtype
+        assert xadj.dtype == dtype
+
+        # Inverse
         xlsqr = lsqr(
             Cop,
             Cop * x.ravel(),
@@ -191,24 +219,33 @@ def test_Convolve1D(par):
     # 1D on 3D
     Cop = Convolve1D(
         (par["nz"], par["ny"], par["nx"]),
-        h=h1,
+        h=h1.astype(dtype),
         offset=par["offset"],
         axis=par["axis"],
-        dtype="float64",
+        dtype=dtype,
     )
     assert dottest(
         Cop,
         par["nz"] * par["ny"] * par["nx"],
         par["nz"] * par["ny"] * par["nx"],
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
-    x = np.zeros((par["nz"], par["ny"], par["nx"]))
+    x = np.zeros((par["nz"], par["ny"], par["nx"]), dtype=dtype)
     x[
         int(par["nz"] / 2 - 3) : int(par["nz"] / 2 + 3),
         int(par["ny"] / 2 - 3) : int(par["ny"] / 2 + 3),
         int(par["nx"] / 2 - 3) : int(par["nx"] / 2 + 3),
     ] = 1.0
+
+    # Forward and adjoint dtype check
+    y = Cop * x
+    xadj = Cop.H * y
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+
+    # Inverse
     xlsqr = lsqr(
         Cop,
         Cop * x.ravel(),
@@ -225,16 +262,30 @@ def test_Convolve1D(par):
 @pytest.mark.parametrize(
     "par", [(par1_1d), (par2_1d), (par3_1d), (par4_1d), (par5_1d), (par6_1d)]
 )
-def test_Convolve1D_long(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Convolve1D_long(par, dtype):
     """Dot-test and inversion for Convolve1D operator with long filter"""
     np.random.seed(10)
     # 1D
     if par["axis"] == 0:
-        x = np.zeros((par["nx"]))
+        x = np.zeros(par["nx"], dtype=dtype)
         x[par["nx"] // 2] = 1.0
-        Xop = Convolve1D(nfilt[0], h=x, offset=nfilt[0] // 2, dtype="float64")
-        assert dottest(Xop, par["nx"], nfilt[0], backend=backend)
+        Xop = Convolve1D(nfilt[0], h=x, offset=nfilt[0] // 2, dtype=dtype)
+        assert dottest(
+            Xop,
+            par["nx"],
+            nfilt[0],
+            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            backend=backend,
+        )
 
+        # Forward and adjoint dtype check
+        y = Xop * h1.astype(dtype)
+        h1adj = Xop.H * y
+        assert y.dtype == dtype
+        assert h1adj.dtype == dtype
+
+        # Inverse
         h1lsqr = lsqr(
             Xop, Xop * h1, damp=1e-20, niter=200, atol=1e-8, btol=1e-8, show=0
         )[0]
@@ -244,25 +295,38 @@ def test_Convolve1D_long(par):
 @pytest.mark.parametrize(
     "par", [(par1_2d), (par2_2d), (par3_2d), (par4_2d), (par5_2d), (par6_2d)]
 )
-def test_Convolve2D(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Convolve2D(par, dtype):
     """Dot-test and inversion for Convolve2D operator"""
     # 2D on 2D
     if par["axis"] == 2:
         Cop = Convolve2D(
             (par["ny"], par["nx"]),
-            h=h2,
+            h=h2.astype(dtype),
             offset=par["offset"],
-            dtype="float64",
+            dtype=dtype,
         )
         assert dottest(
-            Cop, par["ny"] * par["nx"], par["ny"] * par["nx"], backend=backend
+            Cop,
+            par["ny"] * par["nx"],
+            par["ny"] * par["nx"],
+            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            backend=backend,
         )
 
-        x = np.zeros((par["ny"], par["nx"]))
+        x = np.zeros((par["ny"], par["nx"]), dtype=dtype)
         x[
             int(par["ny"] / 2 - 3) : int(par["ny"] / 2 + 3),
             int(par["nx"] / 2 - 3) : int(par["nx"] / 2 + 3),
         ] = 1.0
+
+        # Forward and adjoint dtype check
+        y = Cop * x
+        xadj = Cop.H * y
+        assert y.dtype == dtype
+        assert xadj.dtype == dtype
+
+        # Inverse
         xlsqr = lsqr(
             Cop,
             Cop * x.ravel(),
@@ -280,7 +344,7 @@ def test_Convolve2D(par):
     axes.remove(par["axis"])
     Cop = Convolve2D(
         (par["nz"], par["ny"], par["nx"]),
-        h=h2,
+        h=h2.astype(dtype),
         offset=par["offset"],
         axes=axes,
         dtype="float64",
@@ -289,15 +353,24 @@ def test_Convolve2D(par):
         Cop,
         par["nz"] * par["ny"] * par["nx"],
         par["nz"] * par["ny"] * par["nx"],
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
-    x = np.zeros((par["nz"], par["ny"], par["nx"]))
+    x = np.zeros((par["nz"], par["ny"], par["nx"]), dtype=dtype)
     x[
         int(par["nz"] / 2 - 3) : int(par["nz"] / 2 + 3),
         int(par["ny"] / 2 - 3) : int(par["ny"] / 2 + 3),
         int(par["nx"] / 2 - 3) : int(par["nx"] / 2 + 3),
     ] = 1.0
+
+    # Forward and adjoint dtype check
+    y = Cop * x
+    xadj = Cop.H * y
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+
+    # Inverse
     xlsqr = lsqr(
         Cop,
         Cop * x.ravel(),
@@ -313,29 +386,38 @@ def test_Convolve2D(par):
 
 
 @pytest.mark.parametrize("par", [(par1_3d), (par2_3d)])
-def test_Convolve3D(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Convolve3D(par, dtype):
     """Dot-test and inversion for ConvolveND operator"""
     # 3D on 3D
     Cop = ConvolveND(
         (par["nz"], par["ny"], par["nx"]),
-        h=h3,
+        h=h3.astype(dtype),
         offset=par["offset"],
-        dtype="float64",
+        dtype=dtype,
     )
     assert dottest(
         Cop,
         par["nz"] * par["ny"] * par["nx"],
         par["nz"] * par["ny"] * par["nx"],
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
-    x = np.zeros((par["nz"], par["ny"], par["nx"]))
+    x = np.zeros((par["nz"], par["ny"], par["nx"]), dtype=dtype)
     x[
         int(par["nz"] / 2 - 3) : int(par["nz"] / 2 + 3),
         int(par["ny"] / 2 - 3) : int(par["ny"] / 2 + 3),
         int(par["nx"] / 2 - 3) : int(par["nx"] / 2 + 3),
     ] = 1.0
+
+    # Forward and adjoint dtype check
     y = Cop * x
+    xadj = Cop.H * y
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+
+    # Inverse
     xlsqr = lsqr(
         Cop, y, x0=np.zeros_like(x), damp=1e-20, niter=400, atol=1e-8, btol=1e-8, show=0
     )[0]
@@ -345,14 +427,29 @@ def test_Convolve3D(par):
     # 3D on 4D (only modelling)
     Cop = ConvolveND(
         (par["nz"], par["ny"], par["nx"], par["nt"]),
-        h=h3,
+        h=h3.astype(dtype),
         offset=par["offset"],
         axes=[0, 1, 2],
-        dtype="float64",
+        dtype=dtype,
     )
     assert dottest(
         Cop,
         par["nz"] * par["ny"] * par["nx"] * par["nt"],
         par["nz"] * par["ny"] * par["nx"] * par["nt"],
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
+
+    # Forward and adjoint dtype check
+    x = np.zeros((par["nz"], par["ny"], par["nx"], par["nt"]), dtype=dtype)
+    x[
+        int(par["nz"] / 2 - 3) : int(par["nz"] / 2 + 3),
+        int(par["ny"] / 2 - 3) : int(par["ny"] / 2 + 3),
+        int(par["nx"] / 2 - 3) : int(par["nx"] / 2 + 3),
+        int(par["nt"] / 2 - 3) : int(par["nt"] / 2 + 3),
+    ] = 1.0
+
+    y = Cop * x
+    xadj = Cop.H * y
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype

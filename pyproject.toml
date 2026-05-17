@@ -1,10 +1,9 @@
 [build-system]
 requires = [
-    "setuptools >= 65",
-    "setuptools_scm[toml]",
-    "wheel",
+    "hatchling",
+    "hatch-vcs"
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "hatchling.build"
 
 [project]
 name = "pylops"
@@ -29,6 +28,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Mathematics",
 ]
+requires-python = ">=3.10"
 dependencies = [
     "numpy >= 1.21.0",
     "scipy >= 1.11.0",
@@ -44,11 +44,169 @@ advanced = [
     "scikit-fmm",
     "spgl1",
     "dtcwt",
-    "astra-toolbox",
+    "astra-toolbox; sys_platform == 'linux'",
+    "devito"
+]
+gpu-cu12 = ["cupy-cuda12x"]
+gpu-cu13 = ["cupy-cuda13x"]
+stat = ["pytensor", "pymc"]
+deep = ["torch", "jax"]
+deep-cu126 = ["torch<2.11.0", "jax[cuda12]"]
+deep-cu128 = ["torch<2.11.0", "jax[cuda12]"]
+deep-cu13 = ["torch>=2.11.0", "jax[cuda13]"]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pre-commit",
+    "autopep8",
+    "ruff",
+    "mypy",
+    "coverage"
+]
+doc = [
+    "matplotlib",
+    "pooch",
+    "sphinx",
+    "sphinx-design",
+    "sphinx-gallery",
+    "sphinx-iconify",
+    "shibuya",
+    "sphinxemoji",
+    "numpydoc",
+    "nbsphinx",
+    "image",
 ]
 
-[tool.setuptools.packages.find]
-exclude = ["pytests"]
+[project.urls]
+Homepage = "https://github.com/PyLops/pylops"
+Documentation = "https://pylops.readthedocs.io/en/stable"
+Discussions = "https://github.com/PyLops/pylops/discussions"
+Issues = "https://github.com/PyLops/pylops/issues"
 
-[tool.setuptools_scm]
-version_file = "pylops/version.py"
+[tool.hatch]
+version.source = "vcs"
+
+[tool.hatch.build]
+exclude = [
+  ".*",
+  "docs",
+  "examples",
+  "pytests",
+  "testdata",
+  "tutorials",
+]
+
+[tool.hatch.build.hooks.vcs]
+version-file = "pylops/version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pylops"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [".github"]
+
+[tool.uv]
+conflicts = [
+  [
+    { extra = "gpu-cu12" },
+    { extra = "gpu-cu13" },
+  ],
+  [
+    { extra = "deep" },
+    { extra = "deep-cu126" },
+    { extra = "deep-cu128" },
+    { extra = "deep-cu13" },
+  ],
+]
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu", extra = "deep" },
+  { index = "pytorch-cu126", extra = "deep-cu126" },
+  { index = "pytorch-cu128", extra = "deep-cu128" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.pytest.ini_options]
+addopts = "--verbose"
+python_files = ["pytests/*.py"]
+
+[tool.ruff]
+src = ["pylops"]
+exclude = ["pylops/version.py", ]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle errors
+  "F",   # pyflakes
+  "W",   # pycodestyle warnings
+  "B",   # flake8-bugbear
+  "EM",  # flake8-errmsg
+  "UP",  # pyupgrade
+  "I"    # isort
+]
+ignore = [
+  "E501",  # line too long (for comments and strings)
+  "UP031", # use of old '%' formatting instead of f-strings
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = [
+  "F401",  # imported but unused (re-exports)
+  "F403",  # star import used for public API
+  "F405",  # name may be undefined from star import
+  "I001",  # allow usorted imports
+]
+"tutorials/*.py" = [
+  "E731",  # do not assign a lambda expression, use def
+]
+"pylops/linearoperator.py" = [
+  "E402",  # allow module level import not at top of file
+]
+"pylops/basicoperators/blockdiag.py" = [
+  "E402",  # allow module level import not at top of file
+]
+"pylops/basicoperators/hstack.py" = [
+  "E402",  # allow module level import not at top of file
+]
+"pylops/basicoperators/vstack.py" = [
+  "E402",  # allow module level import not at top of file
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["pylops"]
+
+[tool.mypy]
+files = ["pylops", ]
+python_version = "3.11"
+mypy_path = "pylops"
+strict = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+disable_error_code = ["untyped-decorator"]
+allow_redefinition = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+warn_unreachable = false
+
+[[tool.mypy.overrides]]
+module = ["cupy.*", "devito.*", "examples.*", # devito-examples
+          "numpy.*", "numba.*", "pyfftw.*",  "pywt.*", "scipy.*",
+          "scooby.*", "skfmm.*", "spgl1.*", "IPython.*"]
+ignore_missing_imports = true

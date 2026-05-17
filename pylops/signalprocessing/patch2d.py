@@ -4,7 +4,7 @@ __all__ = [
 ]
 
 import logging
-from typing import Optional, Sequence, Tuple
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -18,22 +18,22 @@ from pylops.utils.backend import (
 )
 from pylops.utils.decorators import reshaped
 from pylops.utils.tapers import taper2d
-from pylops.utils.typing import InputDimsLike, NDArray
+from pylops.utils.typing import InputDimsLike, NDArray, Ttaper
 
 logger = logging.getLogger(__name__)
 
 
 def patch2d_design(
     dimsd: InputDimsLike,
-    nwin: Tuple[int, int],
-    nover: Tuple[int, int],
-    nop: Tuple[int, int],
+    nwin: tuple[int, int],
+    nover: tuple[int, int],
+    nop: tuple[int, int],
     verb: bool = True,
-) -> Tuple[
-    Tuple[int, int],
-    Tuple[int, int],
-    Tuple[Tuple[NDArray, NDArray], Tuple[NDArray, NDArray]],
-    Tuple[Tuple[NDArray, NDArray], Tuple[NDArray, NDArray]],
+) -> tuple[
+    tuple[int, int],
+    tuple[int, int],
+    tuple[tuple[NDArray, NDArray], tuple[NDArray, NDArray]],
+    tuple[tuple[NDArray, NDArray], tuple[NDArray, NDArray]],
 ]:
     """Design Patch2D operator
 
@@ -196,17 +196,16 @@ class Patch2D(LinearOperator):
         Op: LinearOperator,
         dims: InputDimsLike,
         dimsd: InputDimsLike,
-        nwin: Tuple[int, int],
-        nover: Tuple[int, int],
-        nop: Tuple[int, int],
-        tapertype: str = "hanning",
+        nwin: tuple[int, int],
+        nover: tuple[int, int],
+        nop: tuple[int, int],
+        tapertype: Ttaper | None = "hanning",
         savetaper: bool = True,
-        scalings: Optional[Sequence[float]] = None,
+        scalings: Sequence[float] | None = None,
         name: str = "P",
     ) -> None:
-
-        dims: Tuple[int, ...] = _value_or_sized_to_tuple(dims)
-        dimsd: Tuple[int, ...] = _value_or_sized_to_tuple(dimsd)
+        dims: tuple[int, ...] = _value_or_sized_to_tuple(dims)
+        dimsd: tuple[int, ...] = _value_or_sized_to_tuple(dimsd)
 
         # data windows
         dwin0_ins, dwin0_ends = _slidingsteps(dimsd[0], nwin[0], nover[0])
@@ -220,12 +219,12 @@ class Patch2D(LinearOperator):
 
         # check patching
         if nwins0 * nop[0] != dims[0] or nwins1 * nop[1] != dims[1]:
-            raise ValueError(
+            msg = (
                 f"Model shape (dims={dims}) is not consistent with chosen "
-                f"number of windows. Run patch2d_design to identify the "
-                f"correct number of windows for the current "
-                "model size..."
+                "number of windows. Run patch2d_design to identify the correct "
+                "number of windows for the current model size..."
             )
+            raise ValueError(msg)
 
         # create tapers
         self.tapertype = tapertype

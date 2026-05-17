@@ -1,6 +1,5 @@
 __all__ = ["Zero"]
 
-from typing import Optional, Union
 
 import numpy as np
 
@@ -69,9 +68,9 @@ class Zero(LinearOperator):
 
     def __init__(
         self,
-        N: Union[int, InputDimsLike],
-        M: Optional[Union[int, InputDimsLike]] = None,
-        forceflat: bool = None,
+        N: int | InputDimsLike,
+        M: int | InputDimsLike | None = None,
+        forceflat: bool | None = None,
         dtype: DTypeLike = "float64",
         name: str = "Z",
     ) -> None:
@@ -83,11 +82,12 @@ class Zero(LinearOperator):
             # N and M are tuples (nd-arrays)
             dims, dimsd = M, N
         else:
-            raise NotImplementedError(
-                f"N and M must have same type and equal to "
-                f"int, tuple, or list, instead their types"
+            msg = (
+                "N and M must have same type and equal to "
+                "int, tuple, or list, instead their types"
                 f" are type(N)={type(N)} and type(M)={type(M)}"
             )
+            raise NotImplementedError(msg)
         super().__init__(
             dtype=np.dtype(dtype),
             dims=dims,

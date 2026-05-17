@@ -3,21 +3,14 @@ __all__ = ["Bilinear"]
 import logging
 
 import numpy as np
-import numpy.typing as npt
 
 from pylops import LinearOperator
+from pylops.signalprocessing._interp_utils import _ensure_iava_is_unique
 from pylops.utils.backend import get_add_at, get_array_module, to_numpy
 from pylops.utils.decorators import reshaped
-from pylops.utils.typing import DTypeLike, InputDimsLike, IntNDArray, NDArray
+from pylops.utils.typing import DTypeLike, InputDimsLike, NDArray, SamplingLike
 
 logger = logging.getLogger(__name__)
-
-
-def _checkunique(iava: npt.ArrayLike) -> None:
-    """Check that vector as only unique values"""
-    _, count = np.unique(iava, axis=1, return_counts=True)
-    if np.any(count > 1):
-        raise ValueError("Repeated values in iava array")
 
 
 class Bilinear(LinearOperator):
@@ -111,9 +104,9 @@ class Bilinear(LinearOperator):
 
     def __init__(
         self,
-        iava: IntNDArray,
+        iava: SamplingLike,
         dims: InputDimsLike,
-        forceflat: bool = None,
+        forceflat: bool | None = None,
         dtype: DTypeLike = "float64",
         name: str = "B",
     ) -> None:
@@ -139,16 +132,20 @@ class Bilinear(LinearOperator):
         )
 
         ncp = get_array_module(iava)
+
         # check non-unique pairs (works only with numpy arrays)
-        _checkunique(to_numpy(iava))
+        _ensure_iava_is_unique(
+            iava=to_numpy(iava),
+            axis=1,
+        )
 
         # find indices and weights
         self.iava_t = ncp.floor(iava[0]).astype(int)
         self.iava_b = self.iava_t + 1
-        self.weights_tb = iava[0] - self.iava_t
+        self.weights_tb = (iava[0] - self.iava_t).astype(self.dtype)
         self.iava_l = ncp.floor(iava[1]).astype(int)
         self.iava_r = self.iava_l + 1
-        self.weights_lr = iava[1] - self.iava_l
+        self.weights_lr = (iava[1] - self.iava_l).astype(self.dtype)
 
         # expand dims to weights for nd-arrays
         if ndims > 2:

@@ -4,7 +4,6 @@ __all__ = [
     "BlendingHalf",
 ]
 
-from typing import Optional
 
 import numpy as np
 
@@ -95,7 +94,7 @@ class BlendingContinuous(LinearOperator):
         dt: float,
         times: NDArray,
         shiftall: bool = False,
-        nttot: Optional[int] = None,
+        nttot: int | None = None,
         dtype: DTypeLike = "float64",
         name: str = "B",
         **kwargs_fft,
@@ -326,7 +325,8 @@ def BlendingGroup(
 
     """
     if times.shape[0] != group_size:
-        raise ValueError("The first dimension of times must equal group_size")
+        msg = f"The first dimension of times must equal group_size, got {times.shape[0]} / {group_size}"
+        raise ValueError(msg)
     Bop = []
     for i in range(n_groups):
         Hop = []
@@ -428,7 +428,8 @@ def BlendingHalf(
 
     """
     if times.shape[0] != group_size:
-        raise ValueError("The first dimension of times must equal group_size")
+        msg = f"The first dimension of times must equal group_size, got {times.shape[0]} / {group_size}"
+        raise ValueError(msg)
 
     Bop = []
     for j in range(group_size):

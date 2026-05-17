@@ -14,13 +14,17 @@ import pytest
 from pylops.utils import dottest
 from pylops.waveeqprocessing import BlendingContinuous, BlendingGroup, BlendingHalf
 
-par = {"nt": 101, "ns": 50, "nr": 20, "dtype": "float64"}
+par = {"nt": 101, "ns": 50, "nr": 20}
+
+par1, par2 = par.copy(), par.copy()
+par1["dtype"] = np.float64
+par2["dtype"] = np.float32
 
 d = np.random.normal(0, 1, (par["ns"], par["nr"], par["nt"]))
 dt = 0.004
 
 
-@pytest.mark.parametrize("par", [(par)])
+@pytest.mark.parametrize("par", [(par1), (par2)])
 def test_Blending_continuous(par):
     """Dot-test for continuous Blending operator"""
     npp.random.seed(0)
@@ -44,11 +48,18 @@ def test_Blending_continuous(par):
         Bop,
         Bop.nttot * par["nr"],
         par["nt"] * par["ns"] * par["nr"],
+        rtol=1e-4 if par["dtype"] == np.float32 else 1e-6,
         backend=backend,
     )
 
+    # Forward and adjoint
+    db = Bop * d.astype(par["dtype"])
+    dadj = Bop.H * db
+    assert db.dtype == par["dtype"]
+    assert dadj.dtype == par["dtype"]
 
-@pytest.mark.parametrize("par", [(par)])
+
+@pytest.mark.parametrize("par", [(par1), (par2)])
 def test_Blending_group(par):
     """Dot-test for group Blending operator"""
     npp.random.seed(0)
@@ -70,11 +81,18 @@ def test_Blending_group(par):
         Bop,
         par["nt"] * n_groups * par["nr"],
         par["nt"] * par["ns"] * par["nr"],
+        rtol=1e-4 if par["dtype"] == np.float32 else 1e-6,
         backend=backend,
     )
 
+    # Forward and adjoint
+    db = Bop * d.astype(par["dtype"])
+    dadj = Bop.H * db
+    assert db.dtype == par["dtype"]
+    assert dadj.dtype == par["dtype"]
 
-@pytest.mark.parametrize("par", [(par)])
+
+@pytest.mark.parametrize("par", [(par1), (par2)])
 def test_Blending_half(par):
     """Dot-test for half Blending operator"""
     npp.random.seed(0)
@@ -96,5 +114,12 @@ def test_Blending_half(par):
         Bop,
         par["nt"] * n_groups * par["nr"],
         par["nt"] * par["ns"] * par["nr"],
+        rtol=1e-4 if par["dtype"] == np.float32 else 1e-6,
         backend=backend,
     )
+
+    # Forward and adjoint
+    db = Bop * d.astype(par["dtype"])
+    dadj = Bop.H * db
+    assert db.dtype == par["dtype"]
+    assert dadj.dtype == par["dtype"]

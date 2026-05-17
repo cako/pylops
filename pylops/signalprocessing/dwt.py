@@ -1,7 +1,6 @@
 __all__ = ["DWT"]
 
 from math import ceil, log
-from typing import Union
 
 import numpy as np
 
@@ -21,7 +20,8 @@ def _checkwavelet(wavelet: str) -> None:
     """Check that wavelet belongs to pywt.wavelist"""
     wavelist = pywt.wavelist(kind="discrete")
     if wavelet not in wavelist:
-        raise ValueError(f"'{wavelet}' not in family set = {wavelist}")
+        msg = f"'{wavelet}' not in family set = {wavelist}"
+        raise ValueError(msg)
 
 
 def _adjointwavelet(wavelet: str) -> str:
@@ -55,8 +55,7 @@ class DWT(LinearOperator):
         Axis along which DWT is applied
     wavelet : :obj:`str`, optional
         Name of wavelet type. Use :func:`pywt.wavelist(kind='discrete')` for
-        a list of
-        available wavelets.
+        a list of available wavelets.
     level : :obj:`int`, optional
         Number of scaling levels (must be >=0).
     dtype : :obj:`str`, optional
@@ -109,7 +108,7 @@ class DWT(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         axis: int = -1,
         wavelet: str = "haar",
         level: int = 1,

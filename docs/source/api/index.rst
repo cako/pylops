@@ -1,7 +1,7 @@
 .. _api:
 
-PyLops API
-==========
+|:wrench:| PyLops API
+=====================
 
 The Application Programming Interface (API) of PyLops can be loosely seen
 as composed of a stack of three main layers:
@@ -64,7 +64,7 @@ Basic operators
     Imag
     Conj
     ToCupy
-    
+
 
 Smoothing and derivatives
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -74,6 +74,7 @@ Smoothing and derivatives
 
    Smoothing1D
    Smoothing2D
+   SmoothingND
    FirstDerivative
    SecondDerivative
    Laplacian
@@ -99,6 +100,7 @@ Signal processing
     NonStationaryFilters1D
     NonStationaryFilters2D
     Interp
+    InterpCubicSpline
     Bilinear
     FFT
     FFT2D
@@ -169,6 +171,7 @@ Medical imaging
    :toctree: generated/
 
     CT2D
+    MRI2D
 
 
 Solvers

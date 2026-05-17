@@ -1,10 +1,10 @@
 __all__ = ["Convolve1D"]
 
+from collections.abc import Callable
 from functools import partial
-from typing import Callable, Tuple, Union
+from typing import Literal
 
 import numpy as np
-import numpy.typing as npt
 
 from pylops import LinearOperator
 from pylops.utils._internal import _value_or_sized_to_tuple
@@ -20,11 +20,11 @@ from pylops.utils.typing import DTypeLike, InputDimsLike, NDArray
 
 
 def _choose_convfunc(
-    x: npt.ArrayLike,
-    method: Union[None, str],
-    dims: Union[int, InputDimsLike],
+    x: NDArray,
+    method: Literal["direct", "fft", "overlapadd"] | None,
+    dims: int | InputDimsLike,
     axis: int = -1,
-) -> Tuple[Callable, str]:
+) -> tuple[Callable, str]:
     """Choose convolution function
 
     Choose and return the function handle to be used for convolution
@@ -33,7 +33,8 @@ def _choose_convfunc(
         if method is None:
             method = "direct"
         if method not in ("direct", "fft"):
-            raise NotImplementedError("method must be direct or fft")
+            msg = "`method` must be direct or fft"
+            raise ValueError(msg)
         convfunc = get_convolve(x)
     else:
         if method is None:
@@ -43,7 +44,8 @@ def _choose_convfunc(
         elif method == "overlapadd":
             convfunc = partial(get_oaconvolve(x), axes=axis)(x)
         else:
-            raise NotImplementedError("method must be fft or overlapadd")
+            msg = "`method` must be fft or overlapadd"
+            raise ValueError(msg)
     return convfunc, method
 
 
@@ -59,11 +61,11 @@ class _Convolve1Dshort(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         h: NDArray,
         offset: int = 0,
         axis: int = -1,
-        method: str = None,
+        method: Literal["direct", "fft", "overlapadd"] | None = None,
         dtype: DTypeLike = "float64",
         name: str = "C",
     ) -> None:
@@ -73,7 +75,8 @@ class _Convolve1Dshort(LinearOperator):
         self.axis = axis
         self.nh = h.size if h.ndim == 1 else h.shape[axis]
         if offset > self.nh - 1:
-            raise ValueError("offset must be smaller than h.shape[axis] - 1")
+            msg = "`offset` must be smaller than h.shape[axis] - 1"
+            raise ValueError(msg)
         self.h = h
         self.offset = 2 * (self.nh // 2 - int(offset))
         if self.nh % 2 == 0:
@@ -120,11 +123,11 @@ class _Convolve1Dlong(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         h: NDArray,
         offset: int = 0,
         axis: int = -1,
-        method: str = None,
+        method: Literal["direct", "fft", "overlapadd"] | None = None,
         dtype: DTypeLike = "float64",
         name: str = "C",
     ) -> None:
@@ -136,7 +139,8 @@ class _Convolve1Dlong(LinearOperator):
         # create filter
         self.axis = axis
         if offset > self.dims[self.axis] - 1:
-            raise ValueError("offset must be smaller than self.dims[self.axis] - 1")
+            msg = "`offset` must be smaller than dims[axis] - 1"
+            raise ValueError(msg)
         self.nh = h.size if h.ndim == 1 else h.shape[axis]
         self.h = h
         self.offset = 2 * (self.dims[self.axis] // 2 - int(offset))
@@ -228,7 +232,9 @@ class Convolve1D(LinearOperator):
         Method used to calculate the convolution (``direct``, ``fft``,
         or ``overlapadd``). Note that only ``direct`` and ``fft`` are allowed
         when ``dims=None``, whilst ``fft`` and ``overlapadd`` are allowed
-        when ``dims`` is provided.
+        when ``dims`` is provided. If ``None``, the method is chosen
+        automatically (``direct`` for 1-dimensional inputs and ``fft``
+        for N-dimensional inputs)
     dtype : :obj:`str`, optional
         Type of elements in input array.
     name : :obj:`str`, optional
@@ -258,7 +264,7 @@ class Convolve1D(LinearOperator):
     ------
     ValueError
         If ``offset`` is bigger than ``len(h) - 1``
-    NotImplementedError
+    ValueError
         If ``method`` provided is not allowed
 
     Notes
@@ -303,11 +309,11 @@ class Convolve1D(LinearOperator):
 
     def __init__(
         self,
-        dims: Union[int, InputDimsLike],
+        dims: int | InputDimsLike,
         h: NDArray,
         offset: int = 0,
         axis: int = -1,
-        method: str = None,
+        method: Literal["direct", "fft", "overlapadd"] | None = None,
         dtype: DTypeLike = "float64",
         name: str = "C",
     ) -> None:

@@ -1,7 +1,8 @@
 __all__ = ["FFT2D"]
 
 import warnings
-from typing import Dict, Optional, Sequence, Union
+from collections.abc import Sequence
+from typing import Literal
 
 import numpy as np
 import scipy.fft
@@ -11,7 +12,7 @@ from pylops.signalprocessing._baseffts import _BaseFFTND, _FFTNorms
 from pylops.utils import deps
 from pylops.utils.backend import get_array_module
 from pylops.utils.decorators import reshaped
-from pylops.utils.typing import DTypeLike, InputDimsLike
+from pylops.utils.typing import DTypeLike, InputDimsLike, NDArray, Tfftnorm
 
 mkl_fft_message = deps.mkl_fft_import("the mkl fft module")
 
@@ -27,9 +28,9 @@ class _FFT2D_numpy(_BaseFFTND):
         self,
         dims: InputDimsLike,
         axes: InputDimsLike = (-2, -1),
-        nffts: Optional[Union[int, InputDimsLike]] = None,
-        sampling: Union[float, Sequence[float]] = 1.0,
-        norm: str = "ortho",
+        nffts: int | InputDimsLike | None = None,
+        sampling: float | Sequence[float] = 1.0,
+        norm: Tfftnorm = "ortho",
         real: bool = False,
         ifftshift_before: bool = False,
         fftshift_after: bool = False,
@@ -49,20 +50,24 @@ class _FFT2D_numpy(_BaseFFTND):
         )
         if self.cdtype != np.complex128:
             warnings.warn(
-                f"numpy backend always returns complex128 dtype. To respect the passed dtype, data will be casted to {self.cdtype}."
+                "numpy backend always returns complex128 dtype. To respect the "
+                f"passed dtype, data will be casted to {self.cdtype}.",
+                stacklevel=2,
             )
 
         # checks
         if self.ndim < 2:
-            raise ValueError("FFT2D requires at least two input dimensions")
+            msg = "FFT2D requires at least two input dimensions"
+            raise ValueError(msg)
         if self.naxes != 2:
-            raise ValueError("FFT2D must be applied along exactly two dimensions")
+            msg = "FFT2D must be applied along exactly two dimensions"
+            raise ValueError(msg)
 
         self.f1, self.f2 = self.fs
         del self.fs
 
         self._kwargs_fft = kwargs_fft
-        self._norm_kwargs: Dict[str, Union[None, str]] = {
+        self._norm_kwargs: dict[str, None | str] = {
             "norm": None
         }  # equivalent to "backward" in Numpy/Scipy
         if self.norm is _FFTNorms.ORTHO:
@@ -131,7 +136,7 @@ class _FFT2D_numpy(_BaseFFTND):
             y = ncp.fft.fftshift(y, axes=self.axes[self.ifftshift_before])
         return y
 
-    def __truediv__(self, y):
+    def __truediv__(self, y: NDArray) -> NDArray:
         if self.norm is not _FFTNorms.ORTHO:
             return self._rmatvec(y) / self._scale
         return self._rmatvec(y)
@@ -144,9 +149,9 @@ class _FFT2D_scipy(_BaseFFTND):
         self,
         dims: InputDimsLike,
         axes: InputDimsLike = (-2, -1),
-        nffts: Optional[Union[int, InputDimsLike]] = None,
-        sampling: Union[float, Sequence[float]] = 1.0,
-        norm: str = "ortho",
+        nffts: int | InputDimsLike | None = None,
+        sampling: float | Sequence[float] = 1.0,
+        norm: Tfftnorm = "ortho",
         real: bool = False,
         ifftshift_before: bool = False,
         fftshift_after: bool = False,
@@ -167,15 +172,17 @@ class _FFT2D_scipy(_BaseFFTND):
 
         # checks
         if self.ndim < 2:
-            raise ValueError("FFT2D requires at least two input dimensions")
+            msg = "FFT2D requires at least two input dimensions"
+            raise ValueError(msg)
         if self.naxes != 2:
-            raise ValueError("FFT2D must be applied along exactly two dimensions")
+            msg = "FFT2D must be applied along exactly two dimensions"
+            raise ValueError(msg)
 
         self.f1, self.f2 = self.fs
         del self.fs
 
         self._kwargs_fft = kwargs_fft
-        self._norm_kwargs: Dict[str, Union[None, str]] = {
+        self._norm_kwargs: dict[str, None | str] = {
             "norm": None
         }  # equivalent to "backward" in Numpy/Scipy
         if self.norm is _FFTNorms.ORTHO:
@@ -236,7 +243,7 @@ class _FFT2D_scipy(_BaseFFTND):
             y = scipy.fft.fftshift(y, axes=self.axes[self.ifftshift_before])
         return y
 
-    def __truediv__(self, y):
+    def __truediv__(self, y: NDArray) -> NDArray:
         if self.norm is not _FFTNorms.ORTHO:
             return self._rmatvec(y) / self._scale / self._scale
         return self._rmatvec(y)
@@ -249,9 +256,9 @@ class _FFT2D_mklfft(_BaseFFTND):
         self,
         dims: InputDimsLike,
         axes: InputDimsLike = (-2, -1),
-        nffts: Optional[Union[int, InputDimsLike]] = None,
-        sampling: Union[float, Sequence[float]] = 1.0,
-        norm: str = "ortho",
+        nffts: int | InputDimsLike | None = None,
+        sampling: float | Sequence[float] = 1.0,
+        norm: Tfftnorm = "ortho",
         real: bool = False,
         ifftshift_before: bool = False,
         fftshift_after: bool = False,
@@ -272,15 +279,17 @@ class _FFT2D_mklfft(_BaseFFTND):
 
         # checks
         if self.ndim < 2:
-            raise ValueError("FFT2D requires at least two input dimensions")
+            msg = "FFT2D requires at least two input dimensions"
+            raise ValueError(msg)
         if self.naxes != 2:
-            raise ValueError("FFT2D must be applied along exactly two dimensions")
+            msg = "FFT2D must be applied along exactly two dimensions"
+            raise ValueError(msg)
 
         self.f1, self.f2 = self.fs
         del self.fs
 
         self._kwargs_fft = kwargs_fft
-        self._norm_kwargs: Dict[str, Union[None, str]] = {"norm": None}
+        self._norm_kwargs: dict[str, None | str] = {"norm": None}
         if self.norm is _FFTNorms.ORTHO:
             self._norm_kwargs["norm"] = "ortho"
             self._scale = np.sqrt(1 / np.prod(np.sqrt(self.nffts)))
@@ -348,7 +357,7 @@ class _FFT2D_mklfft(_BaseFFTND):
             y = scipy.fft.fftshift(y, axes=self.axes[self.ifftshift_before])
         return y
 
-    def __truediv__(self, y):
+    def __truediv__(self, y: NDArray) -> NDArray:
         if self.norm is not _FFTNorms.ORTHO:
             return self._rmatvec(y) / self._scale / self._scale
         return self._rmatvec(y)
@@ -357,13 +366,13 @@ class _FFT2D_mklfft(_BaseFFTND):
 def FFT2D(
     dims: InputDimsLike,
     axes: InputDimsLike = (-2, -1),
-    nffts: Optional[Union[int, InputDimsLike]] = None,
-    sampling: Union[float, Sequence[float]] = 1.0,
-    norm: str = "ortho",
+    nffts: int | InputDimsLike | None = None,
+    sampling: float | Sequence[float] = 1.0,
+    norm: Tfftnorm = "ortho",
     real: bool = False,
     ifftshift_before: bool = False,
     fftshift_after: bool = False,
-    engine: str = "numpy",
+    engine: Literal["numpy", "scipy", "mkl_fft"] = "numpy",
     dtype: DTypeLike = "complex128",
     name: str = "F",
     **kwargs_fft,
@@ -502,7 +511,7 @@ def FFT2D(
         - If ``nffts`` or ``sampling`` are not either a single value or a tuple with
           two elements.
         - If ``norm`` is not one of "ortho", "none", or "1/n".
-    NotImplementedError
+    ValueError
         If ``engine`` is neither ``numpy``, ``scipy`` nor ``mkl_fft``.
 
     See Also
@@ -575,6 +584,7 @@ def FFT2D(
             **kwargs_fft,
         )
     else:
-        raise NotImplementedError("engine must be numpy, scipy or mkl_fft")
+        msg = "`engine` must be numpy, scipy or mkl_fft"
+        raise ValueError(msg)
     f.name = name
     return f

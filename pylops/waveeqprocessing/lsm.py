@@ -1,6 +1,7 @@
 __all__ = ["LSM"]
 
-from typing import Callable, Optional
+from collections.abc import Callable
+from typing import Literal
 
 from scipy.sparse.linalg import lsqr
 
@@ -103,8 +104,8 @@ class LSM:
         vel: NDArray,
         wav: NDArray,
         wavcenter: int,
-        y: Optional[NDArray] = None,
-        kind: str = "kirchhoff",
+        y: NDArray | None = None,
+        kind: Literal["kirchhoff", "twowayac"] = "kirchhoff",
         dottest: bool = False,
         **kwargs_mod,
     ) -> None:
@@ -133,7 +134,8 @@ class LSM:
             )
 
         else:
-            raise NotImplementedError("kind must be kirchhoff or twowayac")
+            msg = f"kind must be either 'kirchhoff' or 'twowayac', got {kind}"
+            raise ValueError(msg)
 
         if dottest:
             Dottest(

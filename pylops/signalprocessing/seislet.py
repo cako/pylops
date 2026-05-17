@@ -1,7 +1,8 @@
 __all__ = ["Seislet"]
 
+from collections.abc import Sequence
 from math import ceil, log
-from typing import Optional, Sequence
+from typing import Literal
 
 import numpy as np
 
@@ -424,14 +425,15 @@ class Seislet(LinearOperator):
         self,
         slopes: NDArray,
         sampling: Sequence[float] = (1.0, 1.0),
-        level: Optional[int] = None,
-        kind: str = "haar",
+        level: int | None = None,
+        kind: Literal["haar", "linear"] = "haar",
         inv: bool = False,
         dtype: DTypeLike = "float64",
         name: str = "S",
     ) -> None:
         if len(sampling) != 2:
-            raise ValueError("provide two sampling steps")
+            msg = f"Wrong number of sampling steps. Expected 2, but received {len(sampling)}."
+            raise ValueError(msg)
 
         # define predict and update steps
         if kind == "haar":
@@ -439,7 +441,8 @@ class Seislet(LinearOperator):
         elif kind == "linear":
             self.predict = _predict_lin
         else:
-            raise NotImplementedError("kind should be haar or linear")
+            msg = f"Wrong kind of basis function. Expected 'haar' or 'linear', but received '{kind}'."
+            raise NotImplementedError(msg)
 
         # define padding for length to be power of 2
         dims = slopes.shape
@@ -448,7 +451,7 @@ class Seislet(LinearOperator):
         super().__init__(dtype=np.dtype(dtype), dims=dims, dimsd=dimsd, name=name)
 
         pad = [(0, ndimpow2 - self.dims[0])] + [(0, 0)] * (len(self.dims) - 1)
-        self.pad = Pad(self.dims, pad)
+        self.pad = Pad(self.dims, pad, dtype=self.dtype)
         self.nx, self.nt = self.dimsd
 
         # define levels
@@ -470,7 +473,9 @@ class Seislet(LinearOperator):
     def _matvec(self, x: NDArray) -> NDArray:
         x = self.pad.matvec(x)
         x = np.reshape(x, self.dimsd)
-        y = np.zeros((np.sum(self.levels_size) + self.levels_size[-1], self.nt))
+        y = np.zeros(
+            (np.sum(self.levels_size) + self.levels_size[-1], self.nt), dtype=self.dtype
+        )
         for ilevel in range(self.level):
             odd = x[1::2]
             even = x[::2]
@@ -516,7 +521,7 @@ class Seislet(LinearOperator):
                     backward=False,
                     adj=True,
                 )
-                y = np.zeros((2 * even.shape[0], self.nt))
+                y = np.zeros((2 * even.shape[0], self.nt), dtype=self.dtype)
                 y[1::2] = odd
                 y[::2] = even
             y = self.pad.rmatvec(y.ravel())
@@ -539,7 +544,7 @@ class Seislet(LinearOperator):
             odd = res + self.predict(
                 even, self.dt, self.dx, self.slopes, repeat=ilevel - 1, backward=False
             )
-            y = np.zeros((2 * even.shape[0], self.nt))
+            y = np.zeros((2 * even.shape[0], self.nt), dtype=self.dtype)
             y[1::2] = odd
             y[::2] = even
         y = self.pad.rmatvec(y.ravel())

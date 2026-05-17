@@ -2,17 +2,14 @@ import os
 
 if int(os.environ.get("TEST_CUPY_PYLOPS", 0)):
     import cupy as np
-    from cupy.testing import assert_array_almost_equal, assert_array_equal
-    from cupyx.scipy.sparse import rand
+    from cupy.testing import assert_array_almost_equal
 
     backend = "cupy"
 else:
     import numpy as np
-    from numpy.testing import assert_array_almost_equal, assert_array_equal
-    from scipy.sparse import rand
+    from numpy.testing import assert_array_almost_equal
 
     backend = "numpy"
-import itertools
 
 import pytest
 
@@ -57,7 +54,8 @@ par2f = {
 
 
 @pytest.mark.parametrize("par", [(par1), (par2)])
-def test_ChirpRadon2D(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_ChirpRadon2D(par, dtype):
     """Dot-test, forward, analytical inverse and sparse inverse
     for ChirpRadon2D operator
     """
@@ -81,29 +79,50 @@ def test_ChirpRadon2D(par):
     ]
 
     # Create axis
-    t, t2, hx, _ = makeaxis(parmod)
+    t, _, hx, _ = makeaxis(parmod)
 
     # Create wavelet
-    wav, _, wav_c = ricker(t[:41], f0=parmod["f0"])
+    wav, _, _ = ricker(t[:41], f0=parmod["f0"])
 
     # Generate model
-    x = np.asarray(linear2d(hx, t, 1500.0, t0, theta, amp, wav)[1])
-    Rop = ChirpRadon2D(np.asarray(t), np.asarray(hx), par["pxmax"], dtype="float64")
-    assert dottest(Rop, par["nhx"] * par["nt"], par["nhx"] * par["nt"], backend=backend)
+    x = np.asarray(linear2d(hx, t, 1500.0, t0, theta, amp, wav)[1].astype(dtype))
+    Rop = ChirpRadon2D(
+        np.asarray(t.astype(dtype)),
+        np.asarray(hx.astype(dtype)),
+        par["pxmax"],
+        dtype=dtype,
+    )
+    assert dottest(
+        Rop,
+        par["nhx"] * par["nt"],
+        par["nhx"] * par["nt"],
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
 
+    # Forward, adjoint inverse dtype check
     y = Rop * x.ravel()
+    xadj = Rop.H * y
     xinvana = Rop.inverse(y)
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+    assert xinvana.dtype == dtype
     assert_array_almost_equal(x.ravel(), xinvana, decimal=3)
 
+    # Sparse inverse
     xinv, _, _ = fista(Rop, y, niter=30, eps=1e0)
     assert_array_almost_equal(x.ravel(), xinv, decimal=3)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par1f), (par2f)])
-def test_ChirpRadon3D(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_ChirpRadon3D(par, dtype):
     """Dot-test, forward, analytical inverse and sparse inverse
     for ChirpRadon3D operator
     """
+    if par["engine"] == "fftw" and backend == "cupy":
+        pytest.skip("fftw does not work with CuPy arrays")
+
     parmod = {
         "ot": 0,
         "dt": 0.004,
@@ -130,33 +149,42 @@ def test_ChirpRadon3D(par):
     ]
 
     # Create axis
-    t, t2, hx, hy = makeaxis(parmod)
+    t, _, hx, hy = makeaxis(parmod)
 
     # Create wavelet
-    wav, _, wav_c = ricker(t[:41], f0=parmod["f0"])
+    wav, _, _ = ricker(t[:41], f0=parmod["f0"])
 
     # Generate model
-    x = np.asarray(linear3d(hy, hx, t, 1500.0, t0, theta, phi, amp, wav)[1])
+    x = np.asarray(
+        linear3d(hy, hx, t, 1500.0, t0, theta, phi, amp, wav)[1].astype(dtype)
+    )
 
     Rop = ChirpRadon3D(
-        np.asarray(t),
-        np.asarray(hy),
-        np.asarray(hx),
+        np.asarray(t.astype(dtype)),
+        np.asarray(hy.astype(dtype)),
+        np.asarray(hx.astype(dtype)),
         (par["pymax"], par["pxmax"]),
         engine=par["engine"],
-        dtype="float64",
-        **dict(flags=("FFTW_ESTIMATE",), threads=2)
+        dtype=dtype,
+        **dict(flags=("FFTW_ESTIMATE",), threads=2),
     )
     assert dottest(
         Rop,
         par["nhy"] * par["nhx"] * par["nt"],
         par["nhy"] * par["nhx"] * par["nt"],
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
+    # Forward, adjoint inverse dtype check
     y = Rop * x.ravel()
+    xadj = Rop.H * y
     xinvana = Rop.inverse(y)
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+    assert xinvana.dtype == dtype
     assert_array_almost_equal(x.ravel(), xinvana, decimal=3)
 
+    # Sparse inverse
     xinv, _, _ = fista(Rop, y, niter=30, eps=1e0)
     assert_array_almost_equal(x.ravel(), xinv, decimal=3)

@@ -102,13 +102,14 @@ par_2d = {
 @pytest.mark.parametrize("par", [(par_2d)])
 def test_even_filter(par):
     """Check error is raised if filter has even size"""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="must have odd length"):
         _ = NonStationaryConvolve1D(
             dims=par["nx"],
             hs=h1ns[..., :-1],
             ih=(int(par["nx"] // 4), int(2 * par["nx"] // 4), int(3 * par["nx"] // 4)),
         )
-    with pytest.raises(ValueError):
+
+    with pytest.raises(ValueError, match="must have odd length"):
         _ = NonStationaryConvolve2D(
             dims=(par["nx"], par["nz"]),
             hs=h2ns[..., :-1],
@@ -116,13 +117,14 @@ def test_even_filter(par):
             ihz=(int(par["nz"] // 4), int(3 * par["nz"] // 4)),
         )
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="must have odd length"):
         _ = NonStationaryFilters1D(
             inp=np.arange(par["nx"]),
             hsize=nfilts[0] - 1,
             ih=(int(par["nx"] // 4), int(2 * par["nx"] // 4), int(3 * par["nx"] // 4)),
         )
-    with pytest.raises(ValueError):
+
+    with pytest.raises(ValueError, match="must have odd length"):
         _ = NonStationaryFilters2D(
             inp=np.ones((par["nx"], par["nz"])),
             hshape=(nfilts[0] - 1, nfilts[1] - 1),
@@ -134,13 +136,14 @@ def test_even_filter(par):
 @pytest.mark.parametrize("par", [(par_2d)])
 def test_ih_irregular(par):
     """Check error is raised if ih (or ihx/ihz) are irregularly sampled"""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="must be regularly sampled"):
         _ = NonStationaryConvolve1D(
             dims=par["nx"],
             hs=h1ns,
             ih=(10, 11, 15),
         )
-    with pytest.raises(ValueError):
+
+    with pytest.raises(ValueError, match="must be regularly sampled"):
         _ = NonStationaryConvolve2D(
             dims=(par["nx"], par["nz"]),
             hs=h2ns,
@@ -152,7 +155,7 @@ def test_ih_irregular(par):
 @pytest.mark.parametrize("par", [(par_2d)])
 def test_unknown_engine_2d(par):
     """Check error is raised if unknown engine is passed"""
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(ValueError, match="`engine` must be numpy"):
         _ = NonStationaryConvolve2D(
             dims=(par["nx"], par["nz"]),
             hs=h2ns,
@@ -160,7 +163,8 @@ def test_unknown_engine_2d(par):
             ihz=(int(par["nz"] // 3), int(2 * par["nz"] // 3)),
             engine="foo",
         )
-    with pytest.raises(NotImplementedError):
+
+    with pytest.raises(ValueError, match="`engine` must be numpy"):
         _ = NonStationaryFilters2D(
             inp=np.ones((par["nx"], par["nz"])),
             hshape=(nfilts[0] - 1, nfilts[1] - 1),
@@ -171,23 +175,32 @@ def test_unknown_engine_2d(par):
 
 
 @pytest.mark.parametrize("par", [(par1_1d), (par2_1d)])
-def test_NonStationaryConvolve1D(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_NonStationaryConvolve1D(par, dtype):
     """Dot-test and inversion for NonStationaryConvolve1D operator"""
     # 1D
     if par["axis"] == 0:
         Cop = NonStationaryConvolve1D(
             dims=par["nx"],
-            hs=h1ns,
+            hs=h1ns.astype(dtype),
             ih=(int(par["nx"] // 4), int(2 * par["nx"] // 4), int(3 * par["nx"] // 4)),
-            dtype="float64",
+            dtype=dtype,
         )
-        assert dottest(Cop, par["nx"], par["nx"], backend=backend)
+        assert dottest(
+            Cop,
+            par["nx"],
+            par["nx"],
+            rtol=1e-4 if dtype == np.float32 else 1e-6,
+            backend=backend,
+        )
 
-        x = np.zeros((par["nx"]))
+        x = np.zeros(par["nx"], dtype=dtype)
         x[par["nx"] // 2] = 1.0
+        y = Cop * x
+        xadj = Cop.H * y
         xlsqr = lsqr(
             Cop,
-            Cop * x,
+            y,
             x0=np.zeros_like(x),
             damp=1e-20,
             niter=200,
@@ -195,28 +208,39 @@ def test_NonStationaryConvolve1D(par):
             btol=1e-8,
             show=0,
         )[0]
+
+        assert y.dtype == dtype
+        assert xadj.dtype == dtype
         assert_array_almost_equal(x, xlsqr, decimal=1)
 
     # 1D on 2D
     nfilt = par["nx"] if par["axis"] == 0 else par["nz"]
     Cop = NonStationaryConvolve1D(
         dims=(par["nx"], par["nz"]),
-        hs=h1ns,
+        hs=h1ns.astype(dtype),
         ih=(int(nfilt // 4), int(2 * nfilt // 4), int(3 * nfilt // 4)),
         axis=par["axis"],
-        dtype="float64",
+        dtype=dtype,
     )
-    assert dottest(Cop, par["nx"] * par["nz"], par["nx"] * par["nz"], backend=backend)
+    assert dottest(
+        Cop,
+        par["nx"] * par["nz"],
+        par["nx"] * par["nz"],
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
 
-    x = np.zeros((par["nx"], par["nz"]))
+    x = np.zeros((par["nx"], par["nz"]), dtype=dtype)
     x[
         int(par["nx"] / 2 - 3) : int(par["nx"] / 2 + 3),
         int(par["nz"] / 2 - 3) : int(par["nz"] / 2 + 3),
     ] = 1.0
     x = x.ravel()
+    y = Cop * x
+    xadj = Cop.H * y
     xlsqr = lsqr(
         Cop,
-        Cop * x,
+        y,
         x0=np.zeros_like(x),
         damp=1e-20,
         niter=400,
@@ -224,6 +248,9 @@ def test_NonStationaryConvolve1D(par):
         btol=1e-8,
         show=0,
     )[0]
+
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
     assert_array_almost_equal(x, xlsqr, decimal=1)
 
 
@@ -250,34 +277,46 @@ def test_StationaryConvolve1D(par):
 
 
 @pytest.mark.parametrize("par", [(par_2d)])
-def test_NonStationaryConvolve2D(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_NonStationaryConvolve2D(par, dtype):
     """Dot-test and inversion for NonStationaryConvolve2D operator"""
     Cop = NonStationaryConvolve2D(
         dims=(par["nx"], par["nz"]),
-        hs=h2ns,
+        hs=h2ns.astype(dtype),
         ihx=(int(par["nx"] // 4), int(2 * par["nx"] // 4), int(3 * par["nx"] // 4)),
         ihz=(int(par["nz"] // 4), int(3 * par["nz"] // 4)),
         engine="numpy" if backend == "numpy" else "cuda",
-        dtype="float64",
+        dtype=dtype,
     )
-    assert dottest(Cop, par["nx"] * par["nz"], par["nx"] * par["nz"], backend=backend)
+    assert dottest(
+        Cop,
+        par["nx"] * par["nz"],
+        par["nx"] * par["nz"],
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
 
-    x = np.zeros((par["nx"], par["nz"]))
+    x = np.zeros((par["nx"], par["nz"]), dtype=dtype)
     x[
         int(par["nx"] / 2 - 3) : int(par["nx"] / 2 + 3),
         int(par["nz"] / 2 - 3) : int(par["nz"] / 2 + 3),
     ] = 1.0
     x = x.ravel()
+    y = Cop * x
+    xadj = Cop.H * y
     xlsqr = lsqr(
         Cop,
-        Cop * x,
+        y,
         x0=np.zeros_like(x),
         damp=1e-20,
-        niter=300,
+        niter=400,
         atol=1e-8,
         btol=1e-8,
         show=0,
     )[0]
+
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
     assert_array_almost_equal(x, xlsqr, decimal=1)
 
 
@@ -310,21 +349,30 @@ def test_StationaryConvolve2D(par):
         (par1_1d),
     ],
 )
-def test_NonStationaryFilters1D(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_NonStationaryFilters1D(par, dtype):
     """Dot-test and inversion for NonStationaryFilters2D operator"""
-    x = np.zeros((par["nx"]))
+    x = np.zeros(par["nx"], dtype=dtype)
     x[par["nx"] // 4], x[par["nx"] // 2], x[3 * par["nx"] // 4] = 1.0, 1.0, 1.0
     Cop = NonStationaryFilters1D(
         inp=x,
         hsize=nfilts[0],
         ih=(int(par["nx"] // 4), int(2 * par["nx"] // 4), int(3 * par["nx"] // 4)),
-        dtype="float64",
+        dtype=dtype,
     )
-    assert dottest(Cop, par["nx"], 3 * nfilts[0], backend=backend)
+    assert dottest(
+        Cop,
+        par["nx"],
+        3 * nfilts[0],
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
+    )
+    y = Cop * h1ns
+    h1adj = Cop.H * y
+    h1lsqr = lsqr(Cop, y, x0=np.zeros_like(h1ns), damp=1e-20, niter=200, show=0)[0]
 
-    h1lsqr = lsqr(
-        Cop, Cop * h1ns, x0=np.zeros_like(h1ns), damp=1e-20, niter=200, show=0
-    )[0]
+    assert y.dtype == dtype
+    assert h1adj.dtype == dtype
     assert_array_almost_equal(h1ns, h1lsqr, decimal=1)
 
 
@@ -332,9 +380,10 @@ def test_NonStationaryFilters1D(par):
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
 @pytest.mark.parametrize("par", [(par_2d)])
-def test_NonStationaryFilters2D(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_NonStationaryFilters2D(par, dtype):
     """Dot-test and inversion for NonStationaryFilters2D operator"""
-    x = np.zeros((par["nx"], par["nz"]))
+    x = np.zeros((par["nx"], par["nz"]), dtype=dtype)
     x[int(par["nx"] // 4)] = 1.0
     x[int(par["nx"] // 2)] = 1.0
     x[int(3 * par["nx"] // 4)] = 1.0
@@ -344,49 +393,62 @@ def test_NonStationaryFilters2D(par):
         hshape=nfilts,
         ihx=(int(par["nx"] // 4), int(2 * par["nx"] // 4), int(3 * par["nx"] // 4)),
         ihz=(int(par["nz"] // 4), int(3 * par["nz"] // 4)),
-        dtype="float64",
+        dtype=dtype,
     )
     assert dottest(
-        Cop, par["nx"] * par["nz"], 6 * nfilts[0] * nfilts[1], backend=backend
+        Cop,
+        par["nx"] * par["nz"],
+        6 * nfilts[0] * nfilts[1],
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
+    y = Cop * h2ns.astype(dtype).ravel()
+    h2adj = Cop.H * y
     h2lsqr = lsqr(
         Cop,
-        Cop * h2ns.ravel(),
+        y,
         x0=np.zeros_like(h2ns).ravel(),
         damp=1e-20,
         niter=400,
         show=0,
     )[0]
+
+    assert y.dtype == dtype
+    assert h2adj.dtype == dtype
     assert_array_almost_equal(h2ns.ravel(), h2lsqr, decimal=1)
 
 
 @pytest.mark.parametrize("par", [(par_2d)])
-def test_NonStationaryConvolve3D(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_NonStationaryConvolve3D(par, dtype):
     """Dot-test and inversion for NonStationaryConvolve3D operator"""
     Cop = NonStationaryConvolve3D(
         dims=(par["nx"], par["nx"], par["nz"]),
-        hs=h3ns,
+        hs=h3ns.astype(dtype),
         ihx=(int(par["nx"] // 4), int(3 * par["nx"] // 4)),
         ihy=(int(par["nx"] // 4), int(3 * par["nx"] // 4)),
         ihz=(int(par["nz"] // 4), int(3 * par["nz"] // 4)),
         engine="numpy" if backend == "numpy" else "cuda",
-        dtype="float64",
+        dtype=dtype,
     )
     assert dottest(
         Cop,
         par["nx"] * par["nx"] * par["nz"],
         par["nx"] * par["nx"] * par["nz"],
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
 
-    x = np.zeros((par["nx"], par["nx"], par["nz"]))
+    x = np.zeros((par["nx"], par["nx"], par["nz"]), dtype=dtype)
     x[
         int(par["nx"] / 2 - 3) : int(par["nx"] / 2 + 3),
         int(par["nx"] / 2 - 3) : int(par["nx"] / 2 + 3),
         int(par["nz"] / 2 - 3) : int(par["nz"] / 2 + 3),
     ] = 1.0
     x = x.ravel()
+    y = Cop * x
+    xadj = Cop.H * y
     xlsqr = lsqr(
         Cop,
         Cop * x,
@@ -397,6 +459,9 @@ def test_NonStationaryConvolve3D(par):
         btol=1e-8,
         show=0,
     )[0]
+
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
     # given the size of the problem, we can only run few iterations and test accuracy up to 30%
     assert np.linalg.norm(x - xlsqr) / np.linalg.norm(x) < 0.3
 

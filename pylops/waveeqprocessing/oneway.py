@@ -3,7 +3,7 @@ __all__ = [
     "Deghosting",
 ]
 
-from typing import Callable, Optional, Sequence, Tuple, Union
+from collections.abc import Callable, Sequence
 
 import numpy as np
 from scipy.sparse.linalg import lsqr
@@ -13,7 +13,7 @@ from pylops.signalprocessing import FFT
 from pylops.utils import dottest as Dottest
 from pylops.utils.backend import to_cupy_conditional
 from pylops.utils.tapers import taper2d, taper3d
-from pylops.utils.typing import DTypeLike, NDArray
+from pylops.utils.typing import DTypeLike, NDArray, Tfftengine_nsf
 
 
 class _PhaseShift(LinearOperator):
@@ -31,7 +31,7 @@ class _PhaseShift(LinearOperator):
         dz: float,
         freq: NDArray,
         kx: NDArray,
-        ky: Optional[Union[int, NDArray]] = None,
+        ky: int | NDArray | None = None,
         dtype: str = "complex64",
     ) -> None:
         self.vel = vel
@@ -77,10 +77,10 @@ def PhaseShift(
     nt: int,
     freq: NDArray,
     kx: NDArray,
-    ky: Optional[NDArray] = None,
+    ky: NDArray | None = None,
     dtype: DTypeLike = "float64",
     name: str = "P",
-    fftengine: str = "numpy",
+    fftengine: Tfftengine_nsf = "numpy",
     **kwargs_fft,
 ) -> LinearOperator:
     r"""Phase shift operator
@@ -162,8 +162,8 @@ def PhaseShift(
 
     """
     dtypefft = (np.ones(1, dtype=dtype) + 1j * np.ones(1, dtype=dtype)).dtype
-    dims: Union[Tuple[int, int], Tuple[int, int, int]]
-    dimsfft: Union[Tuple[int, int], Tuple[int, int, int]]
+    dims: tuple[int, int] | tuple[int, int, int]
+    dimsfft: tuple[int, int] | tuple[int, int, int]
     if ky is None:
         dims = (nt, kx.size)
         dimsfft = (freq.size, kx.size)
@@ -202,23 +202,23 @@ def PhaseShift(
 def Deghosting(
     p: NDArray,
     nt: int,
-    nr: Union[int, Tuple[int, int]],
+    nr: int | tuple[int, int],
     dt: float,
     dr: Sequence[float],
     vel: float,
     zrec: float,
-    kind: Optional[str] = "p",
-    pd: Optional[NDArray] = None,
-    win: Optional[NDArray] = None,
-    npad: Union[Tuple[int], Tuple[int, int]] = (11, 11),
-    ntaper: Tuple[int, int] = (11, 11),
-    restriction: Optional[LinearOperator] = None,
-    sptransf: Optional[LinearOperator] = None,
+    kind: str | None = "p",
+    pd: NDArray | None = None,
+    win: NDArray | None = None,
+    npad: tuple[int] | tuple[int, int] = (11, 11),
+    ntaper: tuple[int, int] = (11, 11),
+    restriction: LinearOperator | None = None,
+    sptransf: LinearOperator | None = None,
     solver: Callable = lsqr,
     dottest: bool = False,
     dtype: DTypeLike = "complex128",
     **kwargs_solver,
-) -> Tuple[NDArray, NDArray]:
+) -> tuple[NDArray, NDArray]:
     r"""Wavefield deghosting.
 
     Apply seismic wavefield decomposition from single-component (pressure or
@@ -323,7 +323,8 @@ def Deghosting(
     """
     # Check kind
     if kind not in ["p", "vz"]:
-        raise ValueError("kind must be p or vz")
+        msg = f"kind must be either 'p' or 'vz', got {kind}"
+        raise ValueError(msg)
 
     # Identify dimensions
     ndims = p.ndim
