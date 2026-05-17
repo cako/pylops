@@ -301,14 +301,13 @@ class Marchenko:
 
         # Add negative time to reflection data and convert to frequency
         if not np.iscomplexobj(R):
-            dtypec = (np.empty(0, dtype=dtype) + 1j * np.empty(0, dtype=dtype)).dtype
             Rtwosided = np.concatenate(
                 (self.ncp.zeros((self.ns, self.nr, self.nt - 1), dtype=R.dtype), R),
                 axis=-1,
             )
             Rtwosided_fft = np.fft.rfft(Rtwosided, self.nt2, axis=-1) / np.sqrt(
                 self.nt2
-            ).astype(dtypec)
+            ).astype(dtype)
             self.Rtwosided_fft = Rtwosided_fft[..., :nfmax]
         else:
             self.Rtwosided_fft = R
