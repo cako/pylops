@@ -5,6 +5,18 @@ Changelog
 * Added cubic spline interpolation operator via
   `pylops.signalprocessing.interpspline.InterpCubicSpline` (also interfaceable via
   `pylops.signalprocessing.interp.Interp(..., kind="cubic_spline"`)
+* Added `pylops.medical.MRI2D` operator
+* Added `pylops.basicoperators.SmoothingND` operator
+* Added 3d extension to `pylops.utils.signalprocessing.pwd_slope_estimate`
+* Fixed unwanted upcasting in `pylops.avo.AVOLinearModelling`,
+  `pylops.Laplacian`, `pylops.signalprocessing.Bilinear`,
+  `pylops.signalprocessing.Interp`, `pylops.signalprocessing.NonStationaryFilters2D`,
+  `pylops.signalprocessing.Seislet`, `pylops.signalprocessing.Sliding1D`,
+  `pylops.signalprocessing.Sliding2D`, `pylops.signalprocessing.Sliding3D`,
+  `pylops.basicoperators.Smoothing1D`, `pylops.basicoperators.Smoothing2D`,
+  and `pylops.waveeqprocessing.Marchenko`
+* Improved typing annotations across all operators (and enforced use of
+  Literal for parameters with multiple options)
 
 # 2.6.0
 * Added `pylops.medical` module and `pylops.medical.CT2D` operator
