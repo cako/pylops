@@ -307,7 +307,7 @@ class Marchenko:
             )
             Rtwosided_fft = np.fft.rfft(Rtwosided, self.nt2, axis=-1) / np.sqrt(
                 self.nt2
-            )
+            ).astype(dtype)
             self.Rtwosided_fft = Rtwosided_fft[..., :nfmax]
         else:
             self.Rtwosided_fft = R
@@ -427,13 +427,12 @@ class Marchenko:
             shift=-1,
             dtype=self.dtype,
         )
-        Wop = Diagonal(w.T.ravel())
-        Iop = Identity(self.nr * self.nt2)
+        Wop = Diagonal(w.T.ravel(), dtype=self.dtype)
+        Iop = Identity(self.nr * self.nt2, dtype=self.dtype)
         Mop = Block(
-            [[Iop, -1 * Wop * Rop], [-1 * Wop * Rollop * R1op, Iop]]
-        ) * BlockDiag([Wop, Wop])
-        Gop = Block([[Iop, -1 * Rop], [-1 * Rollop * R1op, Iop]])
-
+            [[Iop, -1 * Wop * Rop], [-1 * Wop * Rollop * R1op, Iop]], dtype=self.dtype
+        ) * BlockDiag([Wop, Wop], dtype=self.dtype)
+        Gop = Block([[Iop, -1 * Rop], [-1 * Rollop * R1op, Iop]], dtype=self.dtype)
         if dottest:
             Dottest(
                 Gop,
@@ -443,7 +442,6 @@ class Marchenko:
                 verb=True,
                 backend=get_module_name(self.ncp),
             )
-        if dottest:
             Dottest(
                 Mop,
                 2 * self.ns * self.nt2,
@@ -457,10 +455,14 @@ class Marchenko:
         if G0 is None:
             if self.wav is not None and nfft is not None:
                 G0 = (
-                    directwave(
-                        self.wav, trav, self.nt, self.dt, nfft=nfft, derivative=True
+                    (
+                        directwave(
+                            self.wav, trav, self.nt, self.dt, nfft=nfft, derivative=True
+                        )
                     )
-                ).T
+                    .astype(self.dtype)
+                    .T
+                )
                 G0 = to_cupy_conditional(self.Rtwosided_fft, G0)
             else:
                 msg = "wav and/or nfft are not provided. Provide either G0 or wav and nfft..."
@@ -634,12 +636,12 @@ class Marchenko:
             shift=-1,
             dtype=self.dtype,
         )
-        Wop = Diagonal(w.transpose(2, 0, 1).ravel())
+        Wop = Diagonal(w.transpose(2, 0, 1).ravel(), dtype=self.dtype)
         Iop = Identity(self.nr * nvs * self.nt2)
         Mop = Block(
-            [[Iop, -1 * Wop * Rop], [-1 * Wop * Rollop * R1op, Iop]]
-        ) * BlockDiag([Wop, Wop])
-        Gop = Block([[Iop, -1 * Rop], [-1 * Rollop * R1op, Iop]])
+            [[Iop, -1 * Wop * Rop], [-1 * Wop * Rollop * R1op, Iop]], dtype=self.dtype
+        ) * BlockDiag([Wop, Wop], dtype=self.dtype)
+        Gop = Block([[Iop, -1 * Rop], [-1 * Rollop * R1op, Iop]], dtype=self.dtype)
 
         if dottest:
             Dottest(
@@ -650,7 +652,6 @@ class Marchenko:
                 verb=True,
                 backend=get_module_name(self.ncp),
             )
-        if dottest:
             Dottest(
                 Mop,
                 2 * self.ns * nvs * self.nt2,
@@ -666,15 +667,19 @@ class Marchenko:
                 G0 = np.zeros((self.nr, nvs, self.nt), dtype=self.dtype)
                 for ivs in range(nvs):
                     G0[:, ivs] = (
-                        directwave(
-                            self.wav,
-                            trav[:, ivs],
-                            self.nt,
-                            self.dt,
-                            nfft=nfft,
-                            derivative=True,
+                        (
+                            directwave(
+                                self.wav,
+                                trav[:, ivs],
+                                self.nt,
+                                self.dt,
+                                nfft=nfft,
+                                derivative=True,
+                            )
                         )
-                    ).T
+                        .astype(self.dtype)
+                        .T
+                    )
                 G0 = to_cupy_conditional(self.Rtwosided_fft, G0)
             else:
                 msg = "wav and/or nfft are not provided. Provide either G0 or wav and nfft..."

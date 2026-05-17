@@ -1,5 +1,5 @@
 from math import prod
-from typing import Final, Tuple
+from typing import Final
 
 import numpy as np
 import pytest

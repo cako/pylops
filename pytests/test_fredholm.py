@@ -83,15 +83,18 @@ par6 = {
 def test_Fredholm1(par):
     """Dot-test and inversion for Fredholm1 operator"""
     np.random.seed(10)
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
 
-    _F = np.arange(par["nsl"] * par["nx"] * par["ny"]).reshape(
-        par["nsl"], par["nx"], par["ny"]
+    _F = (
+        np.arange(par["nsl"] * par["nx"] * par["ny"])
+        .reshape(par["nsl"], par["nx"], par["ny"])
+        .astype(dtype)
     )
     F = _F - par["imag"] * _F
 
-    x = np.ones((par["nsl"], par["ny"], par["nz"])) + par["imag"] * np.ones(
-        (par["nsl"], par["ny"], par["nz"])
-    )
+    x = np.ones((par["nsl"], par["ny"], par["nz"]), dtype=dtype) + par[
+        "imag"
+    ] * np.ones((par["nsl"], par["ny"], par["nz"]), dtype=dtype)
 
     Fop = Fredholm1(
         F,
@@ -105,8 +108,15 @@ def test_Fredholm1(par):
         par["nsl"] * par["nx"] * par["nz"],
         par["nsl"] * par["ny"] * par["nz"],
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
+
+    y = Fop @ x.ravel()
+    xadj = Fop.H @ y
+    assert y.dtype == Fop.dtype
+    assert xadj.dtype == par["dtype"]
+
     xlsqr = lsqr(
         Fop,
         Fop * x.ravel(),

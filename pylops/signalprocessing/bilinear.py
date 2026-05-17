@@ -132,6 +132,7 @@ class Bilinear(LinearOperator):
         )
 
         ncp = get_array_module(iava)
+
         # check non-unique pairs (works only with numpy arrays)
         _ensure_iava_is_unique(
             iava=to_numpy(iava),
@@ -141,10 +142,10 @@ class Bilinear(LinearOperator):
         # find indices and weights
         self.iava_t = ncp.floor(iava[0]).astype(int)
         self.iava_b = self.iava_t + 1
-        self.weights_tb = iava[0] - self.iava_t
+        self.weights_tb = (iava[0] - self.iava_t).astype(self.dtype)
         self.iava_l = ncp.floor(iava[1]).astype(int)
         self.iava_r = self.iava_l + 1
-        self.weights_lr = iava[1] - self.iava_l
+        self.weights_lr = (iava[1] - self.iava_l).astype(self.dtype)
 
         # expand dims to weights for nd-arrays
         if ndims > 2:

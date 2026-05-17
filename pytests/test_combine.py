@@ -28,6 +28,13 @@ from pylops.utils import dottest
 
 par1 = {"ny": 101, "nx": 101, "imag": 0, "dtype": "float64"}  # square real
 par2 = {"ny": 301, "nx": 101, "imag": 0, "dtype": "float64"}  # overdetermined real
+par1s = {"ny": 101, "nx": 101, "imag": 0, "dtype": "float32"}  # square real (fp32)
+par2s = {
+    "ny": 301,
+    "nx": 101,
+    "imag": 0,
+    "dtype": "float32",
+}  # overdetermined real (fp32)
 par1j = {"ny": 101, "nx": 101, "imag": 1j, "dtype": "complex128"}  # square imag
 par2j = {"ny": 301, "nx": 101, "imag": 1j, "dtype": "complex128"}  # overdetermined imag
 
@@ -60,13 +67,19 @@ def test_HStack_incosistent_rows(par):
         )
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j)])
+@pytest.mark.parametrize("par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j)])
 def test_VStack(par):
     """Dot-test and inversion for VStack operator"""
     np.random.seed(0)
-    G1 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(par["dtype"])
-    G2 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(par["dtype"])
-    x = np.ones(par["nx"]) + par["imag"] * np.ones(par["nx"])
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
+    G1 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype) + par[
+        "imag"
+    ] * np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype)
+    G2 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype) + par[
+        "imag"
+    ] * np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype)
+    x = np.ones(par["nx"], dtype=dtype) + par["imag"] * np.ones(par["nx"], dtype=dtype)
 
     Vop = VStack(
         [MatrixMult(G1, dtype=par["dtype"]), MatrixMult(G2, dtype=par["dtype"])],
@@ -77,8 +90,13 @@ def test_VStack(par):
         2 * par["ny"],
         par["nx"],
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
+    y = Vop * x
+    xadj = Vop.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
 
     xlsqr = lsqr(
         Vop,
@@ -99,8 +117,13 @@ def test_VStack(par):
         2 * par["ny"],
         par["nx"],
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
+    y = Vop * x
+    xadj = Vop.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
 
     # use scipy matrix directly in the definition of the operator
     G1 = sp_random(par["ny"], par["nx"], density=0.4).astype("float32")
@@ -110,8 +133,13 @@ def test_VStack(par):
         2 * par["ny"],
         par["nx"],
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
+    y = Vop * x
+    xadj = Vop.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
 
     # use Zero operator directly in the definition of the operator
     G1 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(par["dtype"])
@@ -127,17 +155,30 @@ def test_VStack(par):
         2 * par["ny"],
         par["nx"],
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
+    y = Vop * x
+    xadj = Vop.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
 
 
-@pytest.mark.parametrize("par", [(par2), (par2j)])
+@pytest.mark.parametrize("par", [(par2), (par2s), (par2j)])
 def test_HStack(par):
     """Dot-test and inversion for HStack operator with numpy array as input"""
     np.random.seed(0)
-    G1 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype("float32")
-    G2 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype("float32")
-    x = np.ones(2 * par["nx"]) + par["imag"] * np.ones(2 * par["nx"])
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
+    G1 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype) + par[
+        "imag"
+    ] * np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype)
+    G2 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype) + par[
+        "imag"
+    ] * np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype)
+    x = np.ones(2 * par["nx"], dtype=dtype) + par["imag"] * np.ones(
+        2 * par["nx"], dtype=dtype
+    )
 
     Hop = HStack(
         [MatrixMult(G1, dtype=par["dtype"]), MatrixMult(G2, dtype=par["dtype"])],
@@ -148,8 +189,13 @@ def test_HStack(par):
         par["ny"],
         2 * par["nx"],
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
+    y = Hop * x
+    xadj = Hop.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
 
     xlsqr = lsqr(
         Hop,
@@ -169,8 +215,13 @@ def test_HStack(par):
         par["ny"],
         2 * par["nx"],
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
+    y = H1op * x
+    xadj = Hop.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
 
     # use scipy matrix directly in the definition of the operator
     G1 = sp_random(par["ny"], par["nx"], density=0.4).astype("float32")
@@ -180,8 +231,13 @@ def test_HStack(par):
         par["ny"],
         2 * par["nx"],
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
+    y = H2op * x
+    xadj = H2op.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
 
     # use Zero operator directly in the definition of the operator
     G1 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype("float32")
@@ -197,20 +253,36 @@ def test_HStack(par):
         par["ny"],
         2 * par["nx"],
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
+    y = H3op * x
+    xadj = H3op.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j)])
+@pytest.mark.parametrize("par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j)])
 def test_Block(par):
     """Dot-test and inversion for Block operator"""
     np.random.seed(0)
-    G11 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(par["dtype"])
-    G12 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(par["dtype"])
-    G21 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(par["dtype"])
-    G22 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(par["dtype"])
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
 
-    x = np.ones(2 * par["nx"]) + par["imag"] * np.ones(2 * par["nx"])
+    G11 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype) + par[
+        "imag"
+    ] * np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype)
+    G12 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype) + par[
+        "imag"
+    ] * np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype)
+    G21 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype) + par[
+        "imag"
+    ] * np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype)
+    G22 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype) + par[
+        "imag"
+    ] * np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype)
+    x = np.ones(2 * par["nx"], dtype=dtype) + par["imag"] * np.ones(
+        2 * par["nx"], dtype=dtype
+    )
 
     Bop = Block(
         [
@@ -224,8 +296,13 @@ def test_Block(par):
         2 * par["ny"],
         2 * par["nx"],
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
+    y = Bop * x
+    xadj = Bop.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
 
     xlsqr = lsqr(
         Bop,
@@ -252,8 +329,13 @@ def test_Block(par):
         2 * par["ny"],
         2 * par["nx"],
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
+    y = B1op * x
+    xadj = B1op.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
 
     # use scipy matrix directly in the definition of the operator
     G11 = sp_random(par["ny"], par["nx"], density=0.4).astype("float32")
@@ -270,7 +352,12 @@ def test_Block(par):
         2 * par["nx"],
         complexflag=0 if par["imag"] == 0 else 3,
         backend=backend,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
+    y = B2op * x
+    xadj = B2op.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
 
     # use Zero operator directly in the definition of the operator
     G11 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(par["dtype"])
@@ -289,17 +376,30 @@ def test_Block(par):
         2 * par["ny"],
         2 * par["nx"],
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
+    y = B2op * x
+    xadj = B2op.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
 
 
-@pytest.mark.parametrize("par", [(par1), (par2), (par1j), (par2j)])
+@pytest.mark.parametrize("par", [(par1), (par2), (par1s), (par2s), (par1j), (par2j)])
 def test_BlockDiag(par):
     """Dot-test and inversion for BlockDiag operator"""
     np.random.seed(0)
-    G1 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(par["dtype"])
-    G2 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(par["dtype"])
-    x = np.ones(2 * par["nx"]) + par["imag"] * np.ones(2 * par["nx"])
+    dtype = np.empty(0, dtype=par["dtype"]).real.dtype
+
+    G1 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype) + par[
+        "imag"
+    ] * np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype)
+    G2 = np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype) + par[
+        "imag"
+    ] * np.random.normal(0, 10, (par["ny"], par["nx"])).astype(dtype)
+    x = np.ones(2 * par["nx"], dtype=dtype) + par["imag"] * np.ones(
+        2 * par["nx"], dtype=dtype
+    )
 
     BDop = BlockDiag(
         [MatrixMult(G1, dtype=par["dtype"]), MatrixMult(G2, dtype=par["dtype"])],
@@ -310,8 +410,13 @@ def test_BlockDiag(par):
         2 * par["ny"],
         2 * par["nx"],
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
+    y = BDop * x
+    xadj = BDop.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
 
     xlsqr = lsqr(
         BDop,
@@ -332,8 +437,13 @@ def test_BlockDiag(par):
         2 * par["ny"],
         2 * par["nx"],
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
+    y = BD1op * x
+    xadj = BD1op.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
 
     # use scipy matrix directly in the definition of the operator
     G2 = sp_random(par["ny"], par["nx"], density=0.4).astype("float32")
@@ -343,8 +453,13 @@ def test_BlockDiag(par):
         2 * par["ny"],
         2 * par["nx"],
         complexflag=0 if par["imag"] == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
+    y = BD2op * x
+    xadj = BD2op.H * y
+    assert y.dtype == par["dtype"]
+    assert xadj.dtype == par["dtype"]
 
 
 @pytest.mark.skipif(

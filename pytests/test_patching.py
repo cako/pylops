@@ -13,6 +13,7 @@ else:
 import pytest
 
 from pylops.basicoperators import MatrixMult
+from pylops.optimization.basic import cgls
 from pylops.signalprocessing import Patch2D, Patch3D
 from pylops.signalprocessing.patch2d import patch2d_design
 from pylops.signalprocessing.patch3d import patch3d_design
@@ -135,9 +136,13 @@ par6 = {
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
-def test_Patch2D(par):
-    """Dot-test and inverse for Patch2D operator"""
-    Op = MatrixMult(np.ones((par["nwiny"] * par["nwint"], par["ny"] * par["nt"])))
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Patch2D(par, dtype):
+    """Dot-test and forward/adjoint/inverse for Patch2D operator"""
+    Op = MatrixMult(
+        np.ones((par["nwiny"] * par["nwint"], par["ny"] * par["nt"]), dtype=dtype),
+        dtype=dtype,
+    )
 
     nwins, dims, _, _ = patch2d_design(
         (par["npy"], par["npt"]),
@@ -159,20 +164,28 @@ def test_Patch2D(par):
         Pop,
         par["npy"] * par["npt"],
         par["ny"] * par["nt"] * nwins[0] * nwins[1],
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
-    x = np.ones(par["ny"] * nwins[0] * par["nt"] * nwins[1])
+    x = np.ones((nwins[0], nwins[1], par["ny"], par["nt"]), dtype=dtype)
     y = Pop * x.ravel()
+    xadj = Pop.H * y
+    xinv = cgls(Pop, y, niter=50)[0]
 
-    xinv = Pop / y
-    assert_array_almost_equal(x.ravel(), xinv)
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par4)])
-def test_Patch2D_scalings(par):
-    """Dot-test and inverse for Patch2D operator with scalings"""
-    Op = MatrixMult(np.ones((par["nwiny"] * par["nwint"], par["ny"] * par["nt"])))
-    scalings = np.arange(par["nwiny"] * par["nwint"]) + 1.0
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Patch2D_scalings(par, dtype):
+    """Dot-test and forward/adjoint/inverse for Patch2D operator with scalings"""
+    Op = MatrixMult(
+        np.ones((par["nwiny"] * par["nwint"], par["ny"] * par["nt"]), dtype=dtype),
+        dtype=dtype,
+    )
+    scalings = np.arange(par["nwiny"] * par["nwint"], dtype=dtype) + 1.0
 
     nwins, dims, _, _ = patch2d_design(
         (par["npy"], par["npt"]),
@@ -195,19 +208,27 @@ def test_Patch2D_scalings(par):
         Pop,
         par["npy"] * par["npt"],
         par["ny"] * par["nt"] * nwins[0] * nwins[1],
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
-    x = np.ones(par["ny"] * nwins[0] * par["nt"] * nwins[1])
+    x = np.ones((nwins[0], nwins[1], par["ny"], par["nt"]), dtype=dtype)
     y = Pop * x.ravel()
+    xadj = Pop.H * y
+    xinv = cgls(Pop, y, niter=50)[0]
 
-    xinv = Pop / y
-    assert_array_almost_equal(x.ravel(), xinv)
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par4)])
-def test_Patch2D_singlepatch1(par):
-    """Dot-test and inverse for Patch2D operator with single patch in fist dimension"""
-    Op = MatrixMult(np.ones((par["npy"] * par["nwint"], par["npy"] * par["nt"])))
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Patch2D_singlepatch1(par, dtype):
+    """Dot-test and inverse for Patch2D operator with single patch in first dimension"""
+    Op = MatrixMult(
+        np.ones((par["npy"] * par["nwint"], par["npy"] * par["nt"]), dtype=dtype),
+        dtype=dtype,
+    )
 
     nwins, dims, _, _ = patch2d_design(
         (par["npy"], par["npt"]),
@@ -231,19 +252,27 @@ def test_Patch2D_singlepatch1(par):
         Pop,
         par["npy"] * par["npt"],
         par["npy"] * par["nt"] * nwins[0] * nwins[1],
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
-    x = np.ones(par["npy"] * nwins[0] * par["nt"] * nwins[1])
+    x = np.ones((nwins[0], nwins[1], par["npy"], par["nt"]), dtype=dtype)
     y = Pop * x.ravel()
+    xadj = Pop.H * y
+    xinv = cgls(Pop, y, niter=50)[0]
 
-    xinv = Pop / y
-    assert_array_almost_equal(x.ravel(), xinv)
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
-def test_Patch2D_singlepatch2(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Patch2D_singlepatch2(par, dtype):
     """Dot-test and inverse for Patch2D operator with single patch in second dimension"""
-    Op = MatrixMult(np.ones((par["nwiny"] * par["npt"], par["ny"] * par["npt"])))
+    Op = MatrixMult(
+        np.ones((par["nwiny"] * par["npt"], par["ny"] * par["npt"]), dtype=dtype),
+        dtype=dtype,
+    )
 
     nwins, dims, _, _ = patch2d_design(
         (par["npy"], par["npt"]),
@@ -266,25 +295,32 @@ def test_Patch2D_singlepatch2(par):
         Pop,
         par["npy"] * par["npt"],
         par["ny"] * par["npt"] * nwins[0] * nwins[1],
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
-    x = np.ones(par["ny"] * nwins[0] * par["npt"] * nwins[1])
+    x = np.ones((nwins[0], nwins[1], par["ny"], par["nt"]), dtype=dtype)
     y = Pop * x.ravel()
+    xadj = Pop.H * y
+    xinv = cgls(Pop, y, niter=50)[0]
 
-    xinv = Pop / y
-    assert_array_almost_equal(x.ravel(), xinv)
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
-def test_Patch3D(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Patch3D(par, dtype):
     """Dot-test and inverse for Patch3D operator"""
     Op = MatrixMult(
         np.ones(
             (
                 par["nwiny"] * par["nwinx"] * par["nwint"],
                 par["ny"] * par["nx"] * par["nt"],
-            )
-        )
+            ),
+            dtype=dtype,
+        ),
+        dtype=dtype,
     )
 
     nwins, dims, _, _ = patch3d_design(
@@ -312,25 +348,34 @@ def test_Patch3D(par):
         Pop,
         par["npy"] * par["npx"] * par["npt"],
         par["ny"] * par["nx"] * par["nt"] * nwins[0] * nwins[1] * nwins[2],
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
-    x = np.ones((par["ny"] * nwins[0], par["nx"] * nwins[1], par["nt"] * nwins[2]))
+    x = np.ones(
+        (nwins[0], nwins[1], nwins[2], par["ny"], par["nx"], par["nt"]),
+    )
     y = Pop * x.ravel()
+    xadj = Pop.H * y
+    xinv = cgls(Pop, y, niter=50)[0]
 
-    xinv = Pop / y
-    assert_array_almost_equal(x.ravel(), xinv)
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
-def test_Patch3D_singlepatch1(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Patch3D_singlepatch1(par, dtype):
     """Dot-test and inverse for Patch3D operator with single patch in fist dimension"""
     Op = MatrixMult(
         np.ones(
             (
                 par["npy"] * par["nwinx"] * par["nwint"],
                 par["npy"] * par["nx"] * par["nt"],
-            )
-        )
+            ),
+            dtype=dtype,
+        ),
+        dtype=dtype,
     )
 
     nwins, dims, _, _ = patch3d_design(
@@ -355,25 +400,34 @@ def test_Patch3D_singlepatch1(par):
         Pop,
         par["npy"] * par["npx"] * par["npt"],
         par["npy"] * par["nx"] * par["nt"] * nwins[0] * nwins[1] * nwins[2],
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
-    x = np.ones((par["npy"] * nwins[0], par["nx"] * nwins[1], par["nt"] * nwins[2]))
+    x = np.ones(
+        (nwins[0], nwins[1], nwins[2], par["npy"], par["nx"], par["nt"]),
+    )
     y = Pop * x.ravel()
+    xadj = Pop.H * y
+    xinv = cgls(Pop, y, niter=50)[0]
 
-    xinv = Pop / y
-    assert_array_almost_equal(x.ravel(), xinv)
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
-def test_Patch3D_singlepatch2(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Patch3D_singlepatch2(par, dtype):
     """Dot-test and inverse for Patch3D operator with single patch in second dimension"""
     Op = MatrixMult(
         np.ones(
             (
                 par["nwiny"] * par["npx"] * par["nwint"],
                 par["ny"] * par["npx"] * par["nt"],
-            )
-        )
+            ),
+            dtype=dtype,
+        ),
+        dtype=dtype,
     )
 
     nwins, dims, _, _ = patch3d_design(
@@ -398,17 +452,24 @@ def test_Patch3D_singlepatch2(par):
         Pop,
         par["npy"] * par["npx"] * par["npt"],
         par["ny"] * par["npx"] * par["nt"] * nwins[0] * nwins[1] * nwins[2],
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
-    x = np.ones((par["ny"] * nwins[0], par["npx"] * nwins[1], par["nt"] * nwins[2]))
+    x = np.ones(
+        (nwins[0], nwins[1], nwins[2], par["ny"], par["npx"], par["nt"]),
+    )
     y = Pop * x.ravel()
+    xadj = Pop.H * y
+    xinv = cgls(Pop, y, niter=50)[0]
 
-    xinv = Pop / y
-    assert_array_almost_equal(x.ravel(), xinv)
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
-def test_Patch3D_singlepatch12(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Patch3D_singlepatch12(par, dtype):
     """Dot-test and inverse for Patch3D operator with single patch in
     fist and second dimensions"""
     Op = MatrixMult(
@@ -416,8 +477,10 @@ def test_Patch3D_singlepatch12(par):
             (
                 par["npy"] * par["npx"] * par["nwint"],
                 par["npy"] * par["npx"] * par["nt"],
-            )
-        )
+            ),
+            dtype=dtype,
+        ),
+        dtype=dtype,
     )
 
     nwins, dims, _, _ = patch3d_design(
@@ -443,25 +506,35 @@ def test_Patch3D_singlepatch12(par):
         Pop,
         par["npy"] * par["npx"] * par["npt"],
         par["npy"] * par["npx"] * par["nt"] * nwins[0] * nwins[1] * nwins[2],
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
-    x = np.ones((par["npy"] * nwins[0], par["npx"] * nwins[1], par["nt"] * nwins[2]))
+    x = np.ones(
+        (nwins[0], nwins[1], nwins[2], par["npy"], par["npx"], par["nt"]),
+        dtype=dtype,
+    )
     y = Pop * x.ravel()
+    xadj = Pop.H * y
+    xinv = cgls(Pop, y, niter=50)[0]
 
-    xinv = Pop / y
-    assert_array_almost_equal(x.ravel(), xinv)
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)
 
 
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
-def test_Patch3D_singlepatch3(par):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Patch3D_singlepatch3(par, dtype):
     """Dot-test and inverse for Patch3D operator with single patch in third dimension"""
     Op = MatrixMult(
         np.ones(
             (
                 par["nwiny"] * par["nwinx"] * par["npt"],
                 par["ny"] * par["nx"] * par["npt"],
-            )
-        )
+            ),
+            dtype=dtype,
+        ),
+        dtype=dtype,
     )
 
     nwins, dims, _, _ = patch3d_design(
@@ -485,10 +558,16 @@ def test_Patch3D_singlepatch3(par):
         Pop,
         par["npy"] * par["npx"] * par["npt"],
         par["ny"] * par["nx"] * par["npt"] * nwins[0] * nwins[1] * nwins[2],
+        rtol=1e-3 if dtype == np.float32 else 1e-6,
         backend=backend,
     )
-    x = np.ones((par["ny"] * nwins[0], par["nx"] * nwins[1], par["npt"] * nwins[2]))
+    x = np.ones(
+        (nwins[0], nwins[1], nwins[2], par["ny"], par["nx"], par["npt"]),
+    )
     y = Pop * x.ravel()
+    xadj = Pop.H * y
+    xinv = cgls(Pop, y, niter=50)[0]
 
-    xinv = Pop / y
-    assert_array_almost_equal(x.ravel(), xinv)
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
+    assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 8)

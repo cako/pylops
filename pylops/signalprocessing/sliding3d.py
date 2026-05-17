@@ -349,7 +349,7 @@ class Sliding3D(LinearOperator):
             self.taps = to_cupy_conditional(x, self.taps)
         y = ncp.zeros(self.dimsd, dtype=self.dtype)
         if self.simOp:
-            x = self.Op @ x
+            x = self.Op.matvec(x.ravel()).reshape(self.Op.dimsd)
         for iwin0 in range(self.dims[0]):
             for iwin1 in range(self.dims[1]):
                 if self.simOp:
@@ -382,7 +382,7 @@ class Sliding3D(LinearOperator):
         if self.tapertype is not None:
             ywins = ywins * self.taps
         if self.simOp:
-            y = self.Op.H @ ywins
+            y = self.Op.rmatvec(ywins.ravel()).reshape(self.dims)
         else:
             y = ncp.zeros(self.dims, dtype=self.dtype)
             for iwin0 in range(self.dims[0]):
@@ -399,7 +399,7 @@ class Sliding3D(LinearOperator):
             self.taps = to_cupy_conditional(x, self.taps)
         y = ncp.zeros(self.dimsd, dtype=self.dtype)
         if self.simOp:
-            x = self.Op @ x
+            x = self.Op.matvec(x.ravel()).reshape(self.Op.dimsd)
         for iwin0 in range(self.dims[0]):
             for iwin1 in range(self.dims[1]):
                 if self.simOp:
@@ -453,7 +453,7 @@ class Sliding3D(LinearOperator):
                 for iwin0 in range(self.dims[0]):
                     for iwin1 in range(self.dims[1]):
                         ywins = self._apply_taper(ywins, iwin0, iwin1)
-            y = self.Op.H @ ywins
+            y = self.Op.rmatvec(ywins.ravel()).reshape(self.dims)
         else:
             y = ncp.zeros(self.dims, dtype=self.dtype)
             for iwin0 in range(self.dims[0]):

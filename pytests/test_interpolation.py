@@ -20,7 +20,6 @@ class InterpolationTestParameters:
     x_num: int
     t_num: int
     imag: complex
-    dtype: Literal["float64", "complex128"]
     kind: Literal["nearest", "linear", "sinc", "cubic_spline"]
 
 
@@ -30,7 +29,6 @@ par1 = pytest.param(
         x_num=11,
         t_num=20,
         imag=0,
-        dtype="float64",
         kind="nearest",
     ),
     id="nearest - real",
@@ -41,7 +39,6 @@ par2 = pytest.param(
         x_num=11,
         t_num=20,
         imag=1j,
-        dtype="complex128",
         kind="nearest",
     ),
     id="nearest - complex",
@@ -52,7 +49,6 @@ par3 = pytest.param(
         x_num=11,
         t_num=20,
         imag=0,
-        dtype="float64",
         kind="linear",
     ),
     id="linear - real",
@@ -63,7 +59,6 @@ par4 = pytest.param(
         x_num=11,
         t_num=20,
         imag=1j,
-        dtype="complex128",
         kind="linear",
     ),
     id="linear - complex",
@@ -74,7 +69,6 @@ par5 = pytest.param(
         x_num=11,
         t_num=20,
         imag=0,
-        dtype="float64",
         kind="sinc",
     ),
     id="sinc - real",
@@ -85,7 +79,6 @@ par6 = pytest.param(
         x_num=11,
         t_num=20,
         imag=1j,
-        dtype="complex128",
         kind="sinc",
     ),
     id="sinc - complex",
@@ -96,7 +89,6 @@ par7 = pytest.param(
         x_num=11,
         t_num=20,
         imag=0,
-        dtype="float64",
         kind="cubic_spline",
     ),
     id="cubic natural spline - real",
@@ -107,7 +99,6 @@ par8 = pytest.param(
         x_num=11,
         t_num=20,
         imag=1j,
-        dtype="complex128",
         kind="cubic_spline",
     ),
     id="cubic natural spline - complex",
@@ -160,32 +151,52 @@ def test_sincinterp():
         (par8),
     ],
 )
-def test_Interp_1dsignal(par: InterpolationTestParameters):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Interp_1dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward for Interp operator for 1d signal"""
     np.random.seed(1)
-    x = np.random.normal(0, 1, par.x_num) + par.imag * np.random.normal(0, 1, par.x_num)
+    dtype = dtype if par.kind != "cubic_spline" else np.float64
+    dtype1 = (np.empty(0, dtype=dtype) + par.imag * np.empty(0, dtype=dtype)).dtype
+
+    x = np.random.normal(0, 1, par.x_num).astype(dtype) + par.imag * np.random.normal(
+        0, 1, par.x_num
+    ).astype(dtype)
 
     Nsub = int(np.round(par.x_num * SUBSAMPLING_PERCENTAGE))
     iava = np.sort(np.random.permutation(np.arange(par.x_num))[:Nsub])
 
     # fixed indeces
-    Iop, _ = Interp(par.x_num, iava, kind=par.kind, dtype=par.dtype)
-    assert dottest(Iop, Nsub, par.x_num, complexflag=0 if par.imag == 0 else 3)
+    Iop, _ = Interp(par.x_num, iava, kind=par.kind, dtype=dtype1)
+    assert dottest(
+        Iop,
+        Nsub,
+        par.x_num,
+        complexflag=0 if par.imag == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
+    )
 
     # decimal indeces
-    Idecop, _ = Interp(par.x_num, iava + 0.3, kind=par.kind, dtype=par.dtype)
-    assert dottest(Iop, Nsub, par.x_num, complexflag=0 if par.imag == 0 else 3)
+    Idecop, _ = Interp(par.x_num, iava + 0.3, kind=par.kind, dtype=dtype1)
+    assert dottest(
+        Iop,
+        Nsub,
+        par.x_num,
+        complexflag=0 if par.imag == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
+    )
 
     # repeated indeces
     with pytest.raises(ValueError, match="repeated"):
         iava_rep = iava.copy()
         iava_rep[-2] = 0
         iava_rep[-1] = 0
-        _, _ = Interp(par.x_num, iava_rep + 0.3, kind=par.kind, dtype=par.dtype)
+        _, _ = Interp(par.x_num, iava_rep + 0.3, kind=par.kind, dtype=dtype)
 
     # forward
     y = Iop * x
     ydec = Idecop * x
+    assert y.dtype == dtype1
+    assert ydec.dtype == dtype1
 
     assert_array_almost_equal(y, x[iava])
     if par.kind == "nearest":
@@ -205,12 +216,16 @@ def test_Interp_1dsignal(par: InterpolationTestParameters):
         (par8),
     ],
 )
-def test_Interp_2dsignal(par: InterpolationTestParameters):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward for Restriction operator for 2d signal"""
     np.random.seed(1)
-    x = np.random.normal(0, 1, (par.x_num, par.t_num)) + par.imag * np.random.normal(
-        0, 1, (par.x_num, par.t_num)
-    )
+    dtype = dtype if par.kind != "cubic_spline" else np.float64
+    dtype1 = (np.empty(0, dtype=dtype) + par.imag * np.empty(0, dtype=dtype)).dtype
+
+    x = np.random.normal(0, 1, (par.x_num, par.t_num)).astype(
+        dtype
+    ) + par.imag * np.random.normal(0, 1, (par.x_num, par.t_num)).astype(dtype)
 
     # 1st direction
     Nsub = int(np.round(par.x_num * SUBSAMPLING_PERCENTAGE))
@@ -222,13 +237,14 @@ def test_Interp_2dsignal(par: InterpolationTestParameters):
         iava,
         axis=0,
         kind=par.kind,
-        dtype=par.dtype,
+        dtype=dtype1,
     )
     assert dottest(
         Iop,
         Nsub * par.t_num,
         par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
     # decimal indeces
@@ -237,7 +253,7 @@ def test_Interp_2dsignal(par: InterpolationTestParameters):
         iava + 0.3,
         axis=0,
         kind=par.kind,
-        dtype=par.dtype,
+        dtype=dtype1,
     )
 
     # repeated indeces
@@ -250,7 +266,7 @@ def test_Interp_2dsignal(par: InterpolationTestParameters):
             iava_rep + 0.3,
             axis=0,
             kind=par.kind,
-            dtype=par.dtype,
+            dtype=dtype1,
         )
 
     y = (Iop * x.ravel()).reshape(Nsub, par.t_num)
@@ -270,13 +286,14 @@ def test_Interp_2dsignal(par: InterpolationTestParameters):
         iava,
         axis=1,
         kind=par.kind,
-        dtype=par.dtype,
+        dtype=dtype1,
     )
     assert dottest(
         Iop,
         par.x_num * Nsub,
         par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
     # decimal indeces
@@ -285,13 +302,14 @@ def test_Interp_2dsignal(par: InterpolationTestParameters):
         iava + 0.3,
         axis=1,
         kind=par.kind,
-        dtype=par.dtype,
+        dtype=dtype1,
     )
     assert dottest(
         Idecop,
         par.x_num * Nsub,
         par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
     y = (Iop * x.ravel()).reshape(par.x_num, Nsub)
@@ -315,12 +333,18 @@ def test_Interp_2dsignal(par: InterpolationTestParameters):
         (par8),
     ],
 )
-def test_Interp_3dsignal(par: InterpolationTestParameters):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward  for Interp operator for 3d signal"""
     np.random.seed(1)
-    x = np.random.normal(
-        0, 1, (par.y_num, par.x_num, par.t_num)
-    ) + par.imag * np.random.normal(0, 1, (par.y_num, par.x_num, par.t_num))
+    dtype = dtype if par.kind != "cubic_spline" else np.float64
+    dtype1 = (np.empty(0, dtype=dtype) + par.imag * np.empty(0, dtype=dtype)).dtype
+
+    x = np.random.normal(0, 1, (par.y_num, par.x_num, par.t_num)).astype(
+        dtype
+    ) + par.imag * np.random.normal(0, 1, (par.y_num, par.x_num, par.t_num)).astype(
+        dtype
+    )
 
     # 1st direction
     Nsub = int(np.round(par.y_num * SUBSAMPLING_PERCENTAGE))
@@ -332,13 +356,14 @@ def test_Interp_3dsignal(par: InterpolationTestParameters):
         iava,
         axis=0,
         kind=par.kind,
-        dtype=par.dtype,
+        dtype=dtype1,
     )
     assert dottest(
         Iop,
         Nsub * par.x_num * par.t_num,
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
     # decimal indeces
@@ -347,13 +372,14 @@ def test_Interp_3dsignal(par: InterpolationTestParameters):
         iava + 0.3,
         axis=0,
         kind=par.kind,
-        dtype=par.dtype,
+        dtype=dtype1,
     )
     assert dottest(
         Idecop,
         Nsub * par.x_num * par.t_num,
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
     # repeated indeces
@@ -366,7 +392,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters):
             iava_rep + 0.3,
             axis=0,
             kind=par.kind,
-            dtype=par.dtype,
+            dtype=dtype,
         )
 
     y = (Iop * x.ravel()).reshape(Nsub, par.x_num, par.t_num)
@@ -386,13 +412,14 @@ def test_Interp_3dsignal(par: InterpolationTestParameters):
         iava,
         axis=1,
         kind=par.kind,
-        dtype=par.dtype,
+        dtype=dtype1,
     )
     assert dottest(
         Iop,
         par.y_num * Nsub * par.t_num,
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
     # decimal indeces
@@ -401,13 +428,14 @@ def test_Interp_3dsignal(par: InterpolationTestParameters):
         iava + 0.3,
         axis=1,
         kind=par.kind,
-        dtype=par.dtype,
+        dtype=dtype1,
     )
     assert dottest(
         Idecop,
         par.y_num * Nsub * par.t_num,
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
     y = (Iop * x.ravel()).reshape(par.y_num, Nsub, par.t_num)
@@ -427,13 +455,14 @@ def test_Interp_3dsignal(par: InterpolationTestParameters):
         iava,
         axis=2,
         kind=par.kind,
-        dtype=par.dtype,
+        dtype=dtype1,
     )
     assert dottest(
         Iop,
         par.y_num * par.x_num * Nsub,
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
     # decimal indeces
@@ -442,13 +471,14 @@ def test_Interp_3dsignal(par: InterpolationTestParameters):
         iava + 0.3,
         axis=2,
         kind=par.kind,
-        dtype=par.dtype,
+        dtype=dtype1,
     )
     assert dottest(
         Idecop,
         par.y_num * par.x_num * Nsub,
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
     y = (Iop * x.ravel()).reshape(par.y_num, par.x_num, Nsub)
@@ -460,18 +490,25 @@ def test_Interp_3dsignal(par: InterpolationTestParameters):
 
 
 @pytest.mark.parametrize("par", [(par1), (par2)])
-def test_Bilinear_2dsignal(par: InterpolationTestParameters):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Bilinear_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward for Interp operator for 2d signal"""
     np.random.seed(1)
-    x = np.random.normal(0, 1, (par.x_num, par.t_num)) + par.imag * np.random.normal(
-        0, 1, (par.x_num, par.t_num)
-    )
+    dtype1 = (np.empty(0, dtype=dtype) + par.imag * np.empty(0, dtype=dtype)).dtype
+
+    x = np.random.normal(0, 1, (par.x_num, par.t_num)).astype(
+        dtype1
+    ) + par.imag * np.random.normal(0, 1, (par.x_num, par.t_num)).astype(dtype1)
 
     # fixed indeces
     iava = np.vstack((np.arange(0, 10), np.arange(0, 10)))
-    Iop = Bilinear(iava, dims=(par.x_num, par.t_num), dtype=par.dtype)
+    Iop = Bilinear(iava, dims=(par.x_num, par.t_num), dtype=dtype1)
     assert dottest(
-        Iop, 10, par.x_num * par.t_num, complexflag=0 if par.imag == 0 else 3
+        Iop,
+        10,
+        par.x_num * par.t_num,
+        complexflag=0 if par.imag == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
     # decimal indeces
@@ -482,39 +519,48 @@ def test_Bilinear_2dsignal(par: InterpolationTestParameters):
             np.random.uniform(0, par.t_num - 1, Nsub),
         )
     )
-    Idecop = Bilinear(iavadec, dims=(par.x_num, par.t_num), dtype=par.dtype)
+    Idecop = Bilinear(iavadec, dims=(par.x_num, par.t_num), dtype=dtype1)
     assert dottest(
-        Idecop, Nsub, par.x_num * par.t_num, complexflag=0 if par.imag == 0 else 3
+        Idecop,
+        Nsub,
+        par.x_num * par.t_num,
+        complexflag=0 if par.imag == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
     # repeated indeces
     with pytest.raises(ValueError, match="repeated"):
         iava_rep = iava.copy()
         iava_rep[::, -1] = iava_rep[::, 0]
-        _, _ = Bilinear(iava_rep, dims=(par.x_num, par.t_num), dtype=par.dtype)
+        _, _ = Bilinear(iava_rep, dims=(par.x_num, par.t_num), dtype=dtype1)
 
     y = Iop * x.ravel()
     assert_array_almost_equal(y, x[iava[0], iava[1]])
 
 
 @pytest.mark.parametrize("par", [(par1), (par2)])
-def test_Bilinear_2dsignal_flatten(par: InterpolationTestParameters):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Bilinear_2dsignal_flatten(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward for Interp operator for 2d signal with forceflat"""
     np.random.seed(1)
+    dtype1 = (np.empty(0, dtype=dtype) + par.imag * np.empty(0, dtype=dtype)).dtype
+
     dims = (par.x_num, par.t_num)
     flat_dims = par.x_num * par.t_num
     dimsd = 10
 
-    x = np.random.normal(0, 1, dims) + par.imag * np.random.normal(0, 1, dims)
+    x = np.random.normal(0, 1, dims).astype(dtype1) + par.imag * np.random.normal(
+        0, 1, dims
+    ).astype(dtype1)
 
     iava = np.vstack((np.arange(0, dimsd), np.arange(0, dimsd)))
-    Iop_True = Bilinear(iava, dims=dims, dtype=par.dtype, forceflat=True)
+    Iop_True = Bilinear(iava, dims=dims, dtype=dtype1, forceflat=True)
     y = Iop_True @ x
     xadj = Iop_True.H @ y
     assert y.shape == (dimsd,)
     assert xadj.shape == (flat_dims,)
 
-    Iop_None = Bilinear(iava, dims=dims, dtype=par.dtype)
+    Iop_None = Bilinear(iava, dims=dims, dtype=dtype1)
     y = Iop_None @ x
     xadj = Iop_None.H @ y
     assert y.shape == (dimsd,)
@@ -522,21 +568,27 @@ def test_Bilinear_2dsignal_flatten(par: InterpolationTestParameters):
 
 
 @pytest.mark.parametrize("par", [(par1), (par2)])
-def test_Bilinear_3dsignal(par: InterpolationTestParameters):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Bilinear_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward for Interp operator for 3d signal"""
     np.random.seed(1)
-    x = np.random.normal(
-        0, 1, (par.y_num, par.x_num, par.t_num)
-    ) + par.imag * np.random.normal(0, 1, (par.y_num, par.x_num, par.t_num))
+    dtype1 = (np.empty(0, dtype=dtype) + par.imag * np.empty(0, dtype=dtype)).dtype
+
+    x = np.random.normal(0, 1, (par.y_num, par.x_num, par.t_num)).astype(
+        dtype1
+    ) + par.imag * np.random.normal(0, 1, (par.y_num, par.x_num, par.t_num)).astype(
+        dtype1
+    )
 
     # fixed indeces
     iava = np.vstack((np.arange(0, 10), np.arange(0, 10)))
-    Iop = Bilinear(iava, dims=(par.y_num, par.x_num, par.t_num), dtype=par.dtype)
+    Iop = Bilinear(iava, dims=(par.y_num, par.x_num, par.t_num), dtype=dtype1)
     assert dottest(
         Iop,
         10 * par.t_num,
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
     # decimal indeces
@@ -547,21 +599,20 @@ def test_Bilinear_3dsignal(par: InterpolationTestParameters):
             np.random.uniform(0, par.x_num - 1, Nsub),
         )
     )
-    Idecop = Bilinear(iavadec, dims=(par.y_num, par.x_num, par.t_num), dtype=par.dtype)
+    Idecop = Bilinear(iavadec, dims=(par.y_num, par.x_num, par.t_num), dtype=dtype1)
     assert dottest(
         Idecop,
         Nsub * par.t_num,
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
+        rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
     # repeated indeces
     with pytest.raises(ValueError, match="repeated"):
         iava_rep = iava.copy()
         iava_rep[::, -1] = iava_rep[::, 0]
-        _, _ = Bilinear(
-            iava_rep, dims=(par.y_num, par.x_num, par.t_num), dtype=par.dtype
-        )
+        _, _ = Bilinear(iava_rep, dims=(par.y_num, par.x_num, par.t_num), dtype=dtype1)
 
     y = Iop * x.ravel()
     assert_array_almost_equal(y, x[iava[0], iava[1]].ravel())

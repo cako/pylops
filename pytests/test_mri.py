@@ -9,37 +9,31 @@ from pylops.utils import dottest, mkl_fft_enabled
 par1 = {
     "ny": 32,
     "nx": 64,
-    "dtype": "complex128",
     "fft_engine": "numpy",
 }  # even input, numpy engine
 par2 = {
     "ny": 32,
     "nx": 64,
-    "dtype": "complex128",
     "fft_engine": "scipy",
 }  # even input, scipy engine
 par3 = {
     "ny": 32,
     "nx": 64,
-    "dtype": "complex128",
     "fft_engine": "mkl_fft",
 }  # even input, mkl_fft engine
 par4 = {
     "ny": 33,
     "nx": 65,
-    "dtype": "complex128",
     "fft_engine": "numpy",
 }  # odd input, numpy engine
 par5 = {
     "ny": 33,
     "nx": 65,
-    "dtype": "complex128",
     "fft_engine": "scipy",
 }  # even input, scipy engine
 par6 = {
     "ny": 33,
     "nx": 65,
-    "dtype": "complex128",
     "fft_engine": "mkl_fft",
 }  # odd input, mkl_fft engine
 
@@ -108,36 +102,41 @@ def test_MRI2D_invalid_fft_engine():
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
-def test_MRI2D_mask_array(par):
+@pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
+def test_MRI2D_mask_array(par, dtype):
     """Dot-test and forward/adjoint for MRI2D operator with numpy array mask"""
     if par["fft_engine"] == "mkl_fft" and not mkl_fft_enabled:
         pytest.skip("mkl_fft is not installed")
     np.random.seed(10)
+    rdtype = np.empty(0, dtype=dtype).real.dtype
 
     # Create a random mask
     mask = np.zeros((par["ny"], par["nx"]), dtype=bool)
     nselected = int(par["ny"] * par["nx"] * 0.3)
     indices = np.random.choice(par["ny"] * par["nx"], nselected, replace=False)
     mask.flat[indices] = True
-    mask = mask.astype(par["dtype"])
+    mask = mask.astype(dtype)
 
     Mop = MRI2D(
         dims=(par["ny"], par["nx"]),
         mask=mask,
         fft_engine=par["fft_engine"],
-        dtype=par["dtype"],
+        dtype=dtype,
     )
     assert dottest(
         Mop,
         par["ny"] * par["nx"],
         par["ny"] * par["nx"],
         complexflag=2,
+        rtol=1e-4 if dtype == np.complex64 else 1e-6,
     )
 
-    x = np.random.normal(0, 1, (par["ny"], par["nx"]))
+    x = np.random.normal(0, 1, (par["ny"], par["nx"])).astype(rdtype)
     y = Mop * x.ravel()
     xadj = Mop.H * y
 
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
     assert y.shape[0] == par["ny"] * par["nx"]
     assert xadj.shape[0] == par["ny"] * par["nx"]
 
@@ -146,11 +145,13 @@ def test_MRI2D_mask_array(par):
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
-def test_MRI2D_vertical_reg(par):
+@pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
+def test_MRI2D_vertical_reg(par, dtype):
     """Dot-test and forward/adjoint for MRI2D operator with vertical-reg mask"""
     if par["fft_engine"] == "mkl_fft" and not mkl_fft_enabled:
         pytest.skip("mkl_fft is not installed")
     np.random.seed(10)
+    rdtype = np.empty(0, dtype=dtype).real.dtype
 
     nlines = 16
     Mop = MRI2D(
@@ -159,7 +160,7 @@ def test_MRI2D_vertical_reg(par):
         nlines=nlines,
         perc_center=0.0,
         fft_engine=par["fft_engine"],
-        dtype=par["dtype"],
+        dtype=dtype,
     )
     assert len(Mop.mask) == nlines
     assert dottest(
@@ -167,12 +168,15 @@ def test_MRI2D_vertical_reg(par):
         par["ny"] * nlines,
         par["ny"] * par["nx"],
         complexflag=2,
+        rtol=1e-4 if dtype == np.complex64 else 1e-6,
     )
 
-    x = np.random.normal(0, 1, (par["ny"], par["nx"]))
+    x = np.random.normal(0, 1, (par["ny"], par["nx"])).astype(rdtype)
     y = Mop * x.ravel()
     xadj = Mop.H * y
 
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
     assert y.shape[0] == par["ny"] * nlines
     assert xadj.shape[0] == par["ny"] * par["nx"]
 
@@ -194,7 +198,7 @@ def test_MRI2D_vertical_mask_regularity(par):
         nlines=nlines,
         perc_center=0.0,
         fft_engine=par["fft_engine"],
-        dtype=par["dtype"],
+        dtype=np.complex128,
     )
     mask_indices = Mop.mask
 
@@ -209,11 +213,13 @@ def test_MRI2D_vertical_mask_regularity(par):
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
-def test_MRI2D_vertical_uni(par):
+@pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
+def test_MRI2D_vertical_uni(par, dtype):
     """Dot-test and forward/adjoint for MRI2D operator with vertical-uni mask"""
     if par["fft_engine"] == "mkl_fft" and not mkl_fft_enabled:
         pytest.skip("mkl_fft is not installed")
     np.random.seed(10)
+    rdtype = np.empty(0, dtype=dtype).real.dtype
 
     nlines = 16
     perc_center = 0.1
@@ -223,7 +229,7 @@ def test_MRI2D_vertical_uni(par):
         nlines=nlines,
         perc_center=perc_center,
         fft_engine=par["fft_engine"],
-        dtype=par["dtype"],
+        dtype=dtype,
     )
     nlines_total = nlines + int(perc_center * par["nx"])
     assert len(Mop.mask) == nlines_total
@@ -232,12 +238,15 @@ def test_MRI2D_vertical_uni(par):
         par["ny"] * (nlines + int(perc_center * par["nx"])),
         par["ny"] * par["nx"],
         complexflag=2,
+        rtol=1e-4 if dtype == np.complex64 else 1e-6,
     )
 
-    x = np.random.normal(0, 1, (par["ny"], par["nx"]))
+    x = np.random.normal(0, 1, (par["ny"], par["nx"])).astype(rdtype)
     y = Mop * x.ravel()
     xadj = Mop.H * y
 
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
     assert y.shape[0] == par["ny"] * nlines_total
     assert xadj.shape[0] == par["ny"] * par["nx"]
 
@@ -246,11 +255,13 @@ def test_MRI2D_vertical_uni(par):
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
-def test_MRI2D_vertical_uni_no_center(par):
+@pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
+def test_MRI2D_vertical_uni_no_center(par, dtype):
     """Test MRI2D operator with vertical mask and no center lines"""
     if par["fft_engine"] == "mkl_fft" and not mkl_fft_enabled:
         pytest.skip("mkl_fft is not installed")
     np.random.seed(10)
+    rdtype = np.empty(0, dtype=dtype).real.dtype
 
     nlines = 16
     Mop = MRI2D(
@@ -259,7 +270,7 @@ def test_MRI2D_vertical_uni_no_center(par):
         nlines=nlines,
         perc_center=0.0,
         fft_engine=par["fft_engine"],
-        dtype=par["dtype"],
+        dtype=dtype,
     )
 
     assert dottest(
@@ -267,13 +278,16 @@ def test_MRI2D_vertical_uni_no_center(par):
         par["ny"] * nlines,
         par["ny"] * par["nx"],
         complexflag=2,
+        rtol=1e-4 if dtype == np.complex64 else 1e-6,
     )
     assert len(Mop.mask) == nlines
 
-    x = np.random.normal(0, 1, (par["ny"], par["nx"]))
+    x = np.random.normal(0, 1, (par["ny"], par["nx"])).astype(rdtype)
     y = Mop * x.ravel()
     xadj = Mop.H * y
 
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
     assert y.shape[0] == par["ny"] * nlines
     assert xadj.shape[0] == par["ny"] * par["nx"]
 
@@ -282,11 +296,13 @@ def test_MRI2D_vertical_uni_no_center(par):
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
-def test_MRI2D_radial_reg(par):
+@pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
+def test_MRI2D_radial_reg(par, dtype):
     """Dot-test and forward/adjoint for MRI2D operator with radial-reg mask"""
     if par["fft_engine"] == "mkl_fft" and not mkl_fft_enabled:
         pytest.skip("mkl_fft is not installed")
     np.random.seed(10)
+    rdtype = np.empty(0, dtype=dtype).real.dtype
 
     nlines = 8
     Mop = MRI2D(
@@ -294,7 +310,7 @@ def test_MRI2D_radial_reg(par):
         mask="radial-reg",
         nlines=nlines,
         fft_engine=par["fft_engine"],
-        dtype=par["dtype"],
+        dtype=dtype,
     )
 
     # For radial masks, output size depends on the number of points in the mask
@@ -304,13 +320,16 @@ def test_MRI2D_radial_reg(par):
         npoints,
         par["ny"] * par["nx"],
         complexflag=2,
+        rtol=1e-4 if dtype == np.complex64 else 1e-6,
     )
     assert Mop.mask.shape[0] == 2  # x and y coordinates
 
-    x = np.random.normal(0, 1, (par["ny"], par["nx"]))
+    x = np.random.normal(0, 1, (par["ny"], par["nx"])).astype(rdtype)
     y = Mop * x
     xadj = Mop.H * y
 
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
     assert y.size == npoints
     assert xadj.shape == (par["ny"], par["nx"])
 
@@ -319,11 +338,13 @@ def test_MRI2D_radial_reg(par):
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
 @pytest.mark.parametrize("par", [(par1), (par2), (par3), (par4), (par5), (par6)])
-def test_MRI2D_radial_uni(par):
+@pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
+def test_MRI2D_radial_uni(par, dtype):
     """Dot-test and forward/adjoint for MRI2D operator with radial-uni mask"""
     if par["fft_engine"] == "mkl_fft" and not mkl_fft_enabled:
         pytest.skip("mkl_fft is not installed")
     np.random.seed(10)
+    rdtype = np.empty(0, dtype=dtype).real.dtype
 
     nlines = 8
     Mop = MRI2D(
@@ -331,7 +352,7 @@ def test_MRI2D_radial_uni(par):
         mask="radial-uni",
         nlines=nlines,
         fft_engine=par["fft_engine"],
-        dtype=par["dtype"],
+        dtype=dtype,
     )
 
     # For radial masks, output size depends on the number of points in the mask
@@ -341,12 +362,15 @@ def test_MRI2D_radial_uni(par):
         npoints,
         par["ny"] * par["nx"],
         complexflag=2,
+        rtol=1e-4 if dtype == np.complex64 else 1e-6,
     )
     assert Mop.mask.shape[0] == 2  # x and y coordinates
 
-    x = np.random.normal(0, 1, (par["ny"], par["nx"]))
+    x = np.random.normal(0, 1, (par["ny"], par["nx"])).astype(rdtype)
     y = Mop * x
     xadj = Mop.H * y
 
+    assert y.dtype == dtype
+    assert xadj.dtype == dtype
     assert y.size == npoints
     assert xadj.shape == (par["ny"], par["nx"])

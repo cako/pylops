@@ -15,7 +15,6 @@ par1 = {
     "dx": 10,
     "dt": 0.004,
     "level": None,
-    "dtype": "float32",
 }  # nx power of 2, max level
 par2 = {
     "nx": 16,
@@ -23,7 +22,6 @@ par2 = {
     "dx": 10,
     "dt": 0.004,
     "level": 2,
-    "dtype": "float32",
 }  # nx power of 2, smaller level
 par3 = {
     "nx": 13,
@@ -31,7 +29,6 @@ par3 = {
     "dx": 10,
     "dt": 0.004,
     "level": 2,
-    "dtype": "float32",
 }  # nx not power of 2, max level
 
 np.random.seed(10)
@@ -118,9 +115,10 @@ def test_predict(par):
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
 @pytest.mark.parametrize("par", [(par1), (par2), (par3)])
-def test_Seislet(par):
-    """Dot-test and forward-inverse for Seislet"""
-    slope = np.random.normal(0, 0.1, (par["nx"], par["nt"]))
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_Seislet(par, dtype):
+    """Dot-test and forward/adjoint/inverse for Seislet"""
+    slope = np.random.normal(0, 0.1, (par["nx"], par["nt"])).astype(dtype)
 
     for kind in ("haar", "linear"):
         Sop = Seislet(
@@ -128,11 +126,19 @@ def test_Seislet(par):
             sampling=(par["dx"], par["dt"]),
             level=par["level"],
             kind=kind,
-            dtype=par["dtype"],
+            dtype=dtype,
         )
-        dottest(Sop, Sop.shape[0], par["nx"] * par["nt"])
+        dottest(
+            Sop,
+            Sop.shape[0],
+            par["nx"] * par["nt"],
+            rtol=1e-3 if dtype == np.float32 else 1e-6,
+        )
 
-        x = np.random.normal(0, 0.1, par["nx"] * par["nt"])
+        x = np.random.normal(0, 0.1, par["nx"] * par["nt"]).astype(dtype)
         y = Sop * x
+        xadj = Sop.H * y
         xinv = Sop.inverse(y)
-        assert_array_almost_equal(x, xinv)
+        assert y.dtype == dtype
+        assert xadj.dtype == dtype
+        assert_array_almost_equal(x, xinv, decimal=3 if dtype == np.float32 else 6)

@@ -18,8 +18,8 @@ if pytensor_message is None:
         pytensor.config.gcc__cxxflags = "-Wno-c++11-narrowing"
 
 
-par1 = {"ny": 11, "nx": 11, "dtype": np.float32}  # square
-par2 = {"ny": 21, "nx": 11, "dtype": np.float32}  # overdetermined
+par1 = {"ny": 11, "nx": 11}  # square
+par2 = {"ny": 21, "nx": 11}  # overdetermined
 
 np.random.seed(0)
 rng = np.random.default_rng()
@@ -28,7 +28,7 @@ rng = np.random.default_rng()
 @pytest.mark.skipif(
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
-@pytest.mark.parametrize("par", [(par1)])
+@pytest.mark.parametrize("par", [(par1), (par2)])
 def test_PyTensorOperator(par):
     """Verify output and gradient of PyTensor function obtained from a LinearOperator."""
     Dop = MatrixMult(np.random.normal(0.0, 1.0, (par["ny"], par["nx"])))
@@ -48,7 +48,7 @@ def test_PyTensorOperator(par):
 @pytest.mark.skipif(
     int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
 )
-@pytest.mark.parametrize("par", [(par1)])
+@pytest.mark.parametrize("par", [(par1), (par2)])
 def test_PyTensorOperator_nd(par):
     """Verify output and gradient of PyTensor function obtained from a LinearOperator
     using an ND-array."""

@@ -484,7 +484,7 @@ class NonStationaryFilters2D(LinearOperator):
         # the same loop (see https://numba.pydata.org/numba-doc/latest/user/parallel.html?highlight=njit).
         # Until atomic operations are provided we create a temporary filter array and store intermediate
         # results from each ix and reduce them at the end.
-        hstmp = np.zeros((xdims[0], *hs.shape))
+        hstmp = np.zeros((xdims[0], *hs.shape), dtype=x.dtype)
         for ix in prange(xdims[0]):
             for iz in range(xdims[1]):
                 # find extremes of model where to apply h (in case h is going out of model)

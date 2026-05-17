@@ -236,7 +236,9 @@ class Sliding2D(LinearOperator):
         self.tapertype = tapertype
         self.savetaper = savetaper
         if self.tapertype is not None:
-            tap = taper2d(dimsd[1], nwin, nover, tapertype=self.tapertype)
+            tap = taper2d(dimsd[1], nwin, nover, tapertype=self.tapertype).astype(
+                Op.dtype
+            )
             tapin = tap.copy()
             tapin[:nover] = 1
             tapend = tap.copy()
@@ -286,7 +288,7 @@ class Sliding2D(LinearOperator):
             self.taps = to_cupy_conditional(x, self.taps)
         y = ncp.zeros(self.dimsd, dtype=self.dtype)
         if self.simOp:
-            x = self.Op @ x
+            x = self.Op.matvec(x.ravel()).reshape(self.Op.dimsd)
         for iwin0 in range(self.dims[0]):
             if self.simOp:
                 xx = x[iwin0].reshape(self.nwin, self.dimsd[-1])
@@ -311,7 +313,7 @@ class Sliding2D(LinearOperator):
         if self.tapertype is not None:
             ywins = ywins * self.taps
         if self.simOp:
-            y = self.Op.H @ ywins
+            y = self.Op.rmatvec(ywins.ravel()).reshape(self.dims)
         else:
             y = ncp.zeros(self.dims, dtype=self.dtype)
             for iwin0 in range(self.dims[0]):
@@ -327,7 +329,7 @@ class Sliding2D(LinearOperator):
             self.taps = to_cupy_conditional(x, self.taps)
         y = ncp.zeros(self.dimsd, dtype=self.dtype)
         if self.simOp:
-            x = self.Op @ x
+            x = self.Op.matvec(x.ravel()).reshape(self.Op.dimsd)
         for iwin0 in range(self.dims[0]):
             if self.simOp:
                 xxwin = x[iwin0].reshape(self.nwin, self.dimsd[-1])
@@ -360,7 +362,7 @@ class Sliding2D(LinearOperator):
             if self.tapertype is not None:
                 for iwin0 in range(self.dims[0]):
                     ywins = self._apply_taper(ywins, iwin0)
-            y = self.Op.H @ ywins
+            y = self.Op.rmatvec(ywins.ravel()).reshape(self.dims)
         else:
             y = ncp.zeros(self.dims, dtype=self.dtype)
             for iwin0 in range(self.dims[0]):

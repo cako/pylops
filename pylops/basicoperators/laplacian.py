@@ -1,5 +1,6 @@
 __all__ = ["Laplacian"]
 
+import numpy as np
 
 from pylops import LinearOperator
 from pylops.basicoperators import SecondDerivative
@@ -124,13 +125,17 @@ class Laplacian(LinearOperator):
         kind: Tderivkind,
         dtype: DTypeLike,
     ):
+        weights = np.array(weights, dtype=dtype)
+        sampling = np.array(sampling, dtype=dtype)
         l2op = SecondDerivative(
             dims, axis=axes[0], sampling=sampling[0], edge=edge, kind=kind, dtype=dtype
         )
         dims = l2op.dims
         l2op *= weights[0]
         for ax, samp, weight in zip(axes[1:], sampling[1:], weights[1:], strict=True):
-            l2op += weight * SecondDerivative(
+            tmpop = SecondDerivative(
                 dims, axis=ax, sampling=samp, edge=edge, kind=kind, dtype=dtype
             )
+            tmpop *= weight
+            l2op += tmpop
         return l2op

@@ -79,6 +79,8 @@ def test_FunctionOperator(par):
 
     F_x = Fop @ x
     FH_y = Fop.H @ y
+    assert F_x.dtype == par["dtype"]
+    assert FH_y.dtype == par["dtype"]
 
     G_x = np.asarray(G @ x)
     GH_y = np.asarray(np.conj(G.T) @ y)
@@ -125,6 +127,7 @@ def test_FunctionOperator_NoAdjoint(par):
 
     F_x = Fop @ x
     G_x = np.asarray(G @ x)
+    assert F_x.dtype == par["dtype"]
     assert_array_equal(F_x, G_x)
 
     # check error is raised when applying the adjoint
