@@ -270,7 +270,7 @@ class Sliding1D(LinearOperator):
         if self.tapertype is not None:
             ywins = ywins * self.taps
         if self.simOp:
-            y = self.Op.rmatvec(ywins.ravel())
+            y = self.Op.rmatvec(ywins.ravel()).reshape(self.dims)
         else:
             y = ncp.zeros(self.dims, dtype=self.dtype)
             for iwin0 in range(self.dims[0]):
