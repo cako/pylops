@@ -20,13 +20,15 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Get history and tags for SCM versioning to work
       run: |
         git fetch --prune --unshallow
         git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-    - uses: conda-incubator/setup-miniconda@v3.2.0
+    - uses: conda-incubator/setup-miniconda@v4
       with:
+        # Pinned to a specific version, see https://github.com/conda-incubator/setup-miniconda/issues/501
+        miniconda-version: "py312_26.1.1-1"
         use-mamba: true
         channels: https://software.repos.intel.com/python/conda, conda-forge
         conda-remove-defaults: true
