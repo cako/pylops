@@ -106,3 +106,22 @@ class TorchOperator:
 
         """
         return self.Top(x, self.matvec, self.rmatvec, self.device, self.devicetorch)
+
+    # alias for forward pass
+    forward = apply
+
+    def adjoint(self, x: TensorTypeLike) -> TensorTypeLike:
+        """Apply adjoint pass to input vector
+
+        Parameters
+        ----------
+        x : :obj:`torch.Tensor`
+            Input array
+
+        Returns
+        -------
+        y : :obj:`torch.Tensor`
+            Output array resulting from the application of the adjoint operator to ``x``.
+
+        """
+        return self.Top(x, self.rmatvec, self.matvec, self.device, self.devicetorch)
