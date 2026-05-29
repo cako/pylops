@@ -377,6 +377,33 @@ def test_lsqr_pylops_scipy(par):
         assert_array_almost_equal(xinv_sp, x, decimal=4)
 
 
+@pytest.mark.parametrize("par", [(par3), (par4)])
+def test_lsqr_calc_var(par):
+    """LSQR ``var`` estimates the diagonal of (A^H A)^-1 element-wise (issue #639).
+
+    Each unknown must get its own variance; a regression here would make all
+    entries identical (the previous ``dot(dk, dk)`` bug). Compare against scipy's
+    LSQR and the dense ``diag(inv(A^H A))`` on a full-column-rank system.
+    """
+    np.random.seed(10)
+
+    A = np.random.normal(0, 1, (par["ny"], par["nx"]))
+    Aop = MatrixMult(A, dtype=par["dtype"])
+    y = Aop * (np.ones(par["nx"]))
+
+    niter = 10 * par["nx"]
+    var = lsqr(Aop, y, x0=None, niter=niter, atol=1e-8, btol=1e-8)[9]
+    var_sp = sp_lsqr(
+        Aop, y, iter_lim=niter, atol=1e-8, btol=1e-8, calc_var=True
+    )[9]
+    var_dense = np.diag(np.linalg.inv(np.conj(A.T) @ A))
+
+    # not all identical (the bug produced a constant vector)
+    assert not np.allclose(var, var[0])
+    assert_array_almost_equal(var, var_sp, decimal=6)
+    assert_array_almost_equal(var, var_dense, decimal=6)
+
+
 @pytest.mark.parametrize(
     "par", [(par1), (par2), (par3), (par4), (par1j), (par2j), (par3j), (par3j)]
 )
