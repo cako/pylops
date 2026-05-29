@@ -65,15 +65,9 @@ class CG(Solver):
 
     Notes
     -----
-    Solve the :math:`\mathbf{y} = \mathbf{Op}\,\mathbf{x}` problem using conjugate gradient
-    iterations [1]_.
-
-    When a non-zero damping coefficient :math:`\epsilon` is provided to ``setup``/``solve``,
-    the damped system :math:`(\mathbf{Op} + \epsilon\mathbf{I})\,\mathbf{x} = \mathbf{y}` is
-    solved instead; this is achieved by adding :math:`\epsilon\mathbf{c}` to every operator
-    application :math:`\mathbf{Op}\,\mathbf{c}` in the iterations. ``Op`` is still required to
-    be square and symmetric positive-definite (with :math:`\epsilon \geq 0` the damped
-    operator remains so).
+    Solve the :math:`\mathbf{y} = (\mathbf{Op} + \epsilon\mathbf{I})\,\mathbf{x}` problem
+    using conjugate gradient iterations [1]_, where :math:`\epsilon` is the damping
+    coefficient.
 
     .. [1] Hestenes, M R., Stiefel, E., “Methods of Conjugate Gradients for Solving
        Linear Systems”, Journal of Research of the National Bureau of Standards.
@@ -159,9 +153,7 @@ class CG(Solver):
             Number of iterations (default to ``None`` in case a user wants to
             manually step over the solver)
         damp : :obj:`float`, optional
-            Damping coefficient. When non-zero, the damped system
-            :math:`(\mathbf{Op} + \epsilon\mathbf{I})\,\mathbf{x} = \mathbf{y}`
-            is solved instead of :math:`\mathbf{Op}\,\mathbf{x} = \mathbf{y}`.
+            Damping coefficient
         tol : :obj:`float`, optional
             Absolute tolerance on residual norm. Stops the solver when the
             residual norm is below this value.
@@ -202,7 +194,10 @@ class CG(Solver):
                 self.ncp.subtract(self.y, self.Op.matvec(x), out=self.r)
             # account for the damping term in the initial residual
             if self.damp != 0.0:
-                self.r -= self.damp * x
+                if not self.preallocate:
+                    self.r = self.r - self.damp * x
+                else:
+                    self.ncp.subtract(self.r, self.damp * x, out=self.r)
         self.c = self.r.copy()
         self.kold = self.ncp.abs(self.r.dot(self.r.conj()))
 
@@ -237,8 +232,7 @@ class CG(Solver):
 
         """
         Opc = self.Op.matvec(self.c)
-        # solve the damped system (Op + damp*I) x = y by adding the damping
-        # contribution to every application of the operator
+        # add damping contribution
         if self.damp != 0.0:
             Opc = Opc + self.damp * self.c
         cOpc = self.ncp.abs(self.c.dot(Opc.conj()))
@@ -355,9 +349,7 @@ class CG(Solver):
         niter : :obj:`int`, optional
             Number of iterations
         damp : :obj:`float`, optional
-            Damping coefficient. When non-zero, the damped system
-            :math:`(\mathbf{Op} + \epsilon\mathbf{I})\,\mathbf{x} = \mathbf{y}`
-            is solved instead of :math:`\mathbf{Op}\,\mathbf{x} = \mathbf{y}`.
+            Damping coefficient
         tol : :obj:`float`, optional
             Absolute tolerance on residual norm. Stops the solver when the
             residual norm is below this value.

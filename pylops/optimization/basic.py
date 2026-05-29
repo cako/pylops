@@ -47,10 +47,7 @@ def cg(
     niter : :obj:`int`, optional
         Number of iterations
     damp : :obj:`float`, optional
-        Damping coefficient. When non-zero, the damped system
-        :math:`(\mathbf{Op} + \epsilon\mathbf{I})\,\mathbf{x} = \mathbf{y}` is
-        solved instead of :math:`\mathbf{Op}\,\mathbf{x} = \mathbf{y}`. ``Op``
-        must be square and symmetric positive-definite.
+        Damping coefficient
     tol : :obj:`float`, optional
         Absolute tolerance on residual norm. Stops the solver when the
         residual norm is below this value.

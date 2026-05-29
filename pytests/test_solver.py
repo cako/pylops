@@ -104,7 +104,7 @@ def test_cg(par):
 
 @pytest.mark.parametrize("par", [(par1), (par2)])
 def test_cg_damp(par):
-    """CG with damping solves the damped system (Op + damp*I) x = y (issue #406).
+    """CG with damping solves the damped system (Op + damp*I) x = y.
 
     Verify equivalence between internal damping, adding ``damp*I`` to the
     operator (with ``damp=0`` in the solver), and the dense solution; and that
@@ -116,16 +116,17 @@ def test_cg_damp(par):
     A = np.random.normal(0, 1, (n, n)) + par["imag"] * np.random.normal(0, 1, (n, n))
     A = np.conj(A).T @ A + np.eye(n)  # symmetric positive-definite
     Aop = MatrixMult(A, dtype=par["dtype"])
-    y = np.random.normal(0, 1, n) + par["imag"] * np.random.normal(0, 1, n)
+    x = np.ones(n) + par["imag"] * np.ones(n)
+    y = Aop * x
     damp = 0.8
 
     x_dense = np.linalg.solve(A + damp * np.eye(n), y)
     # adding damp*I to the operator and using damp=0 must match internal damping
     Aop_damped = MatrixMult(A + damp * np.eye(n), dtype=par["dtype"])
 
-    for prealloc in [False, True]:
-        x_int = cg(Aop, y, niter=4 * n, tol=1e-10, damp=damp, preallocate=prealloc)[0]
-        x_ext = cg(Aop_damped, y, niter=4 * n, tol=1e-10, preallocate=prealloc)[0]
+    for preallocate in [False, True]:
+        x_int = cg(Aop, y, niter=4 * n, tol=1e-10, damp=damp, preallocate=preallocate)[0]
+        x_ext = cg(Aop_damped, y, niter=4 * n, tol=1e-10, preallocate=preallocate)[0]
         assert_array_almost_equal(x_int, x_dense, decimal=5)
         assert_array_almost_equal(x_int, x_ext, decimal=5)
 
