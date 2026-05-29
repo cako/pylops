@@ -140,7 +140,7 @@ def test_TorchOperator_forward_adjoint(par, dtype):
     ft = Top.adjoint(yt - Top.forward(xt))
     ft.backward(vt, retain_graph=True)
     jvtt = xt.grad.cpu().numpy()
-    ft = ft.detach().numpy()
+    ft = ft.detach().cpu().numpy()
 
     assert ft.dtype == x.dtype
     assert jvtt.dtype == x.dtype
