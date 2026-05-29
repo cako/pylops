@@ -22,6 +22,7 @@ def cg(
     y: NDArray,
     x0: NDArray | None = None,
     niter: int = 10,
+    damp: float = 0.0,
     tol: float = 1e-4,
     rtol: float = 0.0,
     rtol1: float = 0.0,
@@ -45,6 +46,11 @@ def cg(
         Initial guess
     niter : :obj:`int`, optional
         Number of iterations
+    damp : :obj:`float`, optional
+        Damping coefficient. When non-zero, the damped system
+        :math:`(\mathbf{Op} + \epsilon\mathbf{I})\,\mathbf{x} = \mathbf{y}` is
+        solved instead of :math:`\mathbf{Op}\,\mathbf{x} = \mathbf{y}`. ``Op``
+        must be square and symmetric positive-definite.
     tol : :obj:`float`, optional
         Absolute tolerance on residual norm. Stops the solver when the
         residual norm is below this value.
@@ -101,6 +107,7 @@ def cg(
         x0=x0,
         tol=tol,
         niter=niter,
+        damp=damp,
         show=show,
         itershow=itershow,
         preallocate=preallocate,
