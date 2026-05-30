@@ -45,6 +45,11 @@ jobs:
           srun --account=yuxilab -n 1 -N 1 --gres=gpu:L40S:1 bash -c 'ls /u/yuxihong/workspace/cuda/'
       - name: Install CUDA 12.8 toolkit
         run: uv add nvidia-cuda-nvcc-cu12==12.8.*
+      - name: Debug NVVM path
+        run: |
+          srun --account=yuxilab -n 1 -N 1 --gres=gpu:L40S:1 bash -c '
+            uv run python -c "from numba.cuda.cudadrv import nvvm; print(nvvm.NVVM().driver)"
+          '
       - name: Test with pytest
         run: |
           srun --account=yuxilab -n 1 -N 1 --gres=gpu:L40S:1 bash -c '
