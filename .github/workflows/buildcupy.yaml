@@ -46,6 +46,7 @@ jobs:
       - name: Test with pytest
         run: |
           srun --account=yuxilab -n 1 -N 1 --gres=gpu:L40S:1 bash -c '
+            uv add nvidia-cuda-nvcc-cu12==12.8.\* &&
             export NUMBA_FORCE_CUDA_CC=8.6
             export NUMBA_CUDA_DEFAULT_PTX_CC=8.6
             export CUPY_PYLOPS=1
