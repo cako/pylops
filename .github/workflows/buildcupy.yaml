@@ -50,6 +50,13 @@ jobs:
           srun --account=yuxilab -n 1 -N 1 --gres=gpu:L40S:1 bash -c '
             uv run python -c "from numba.cuda.cudadrv import nvvm; print(nvvm.NVVM().driver)"
           '
+      - name: Debug env
+        run: |
+          srun --account=yuxilab -n 1 -N 1 --gres=gpu:L40S:1 bash -c '
+            env | grep -i cuda
+            env | grep -i nvvm
+            env | grep LD_LIBRARY
+          '
       - name: Test with pytest
         run: |
           srun --account=yuxilab -n 1 -N 1 --gres=gpu:L40S:1 bash -c '
