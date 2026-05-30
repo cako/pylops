@@ -40,6 +40,9 @@ jobs:
             ldconfig -p | grep nvvm
             uv run python -c "from numba.cuda.cudadrv import nvvm; print(nvvm.NVVM().driver)"
           '
+      - name: Check cuda versions
+        run: |
+          srun --account=yuxilab -n 1 -N 1 --gres=gpu:L40S:1 bash -c 'ls /u/yuxihong/workspace/cuda/'
       - name: Test with pytest
         run: |
           srun --account=yuxilab -n 1 -N 1 --gres=gpu:L40S:1 bash -c '
