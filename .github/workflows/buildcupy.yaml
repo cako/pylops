@@ -33,7 +33,7 @@ jobs:
           srun --account=yuxilab -n 1 -N 1 --gres=gpu:L40S:1 bash -c '
             nvcc --version &&
             nvidia-smi &&
-            uv run python -c "import numba; print(numba.__version__); from numba.cuda.cudadrv import nvvm; print(nvvm.NVVM().lib)"
+            module avail cuda 2>&1
           '
       - name: Test with pytest
         run: |
