@@ -29,18 +29,12 @@ jobs:
           '
           echo "done!"
       - name: Test numba ptx
+        env:
+          NUMBA_CUDA_DEFAULT_PTX_CC: "8.6"
+          CUPY_PYLOPS: "1"
+          TEST_CUPY_PYLOPS: "1"
         run: |
-          srun --account=yuxilab -n 1 -N 1 --gres=gpu:L40S:1 bash -c '
-            NUMBA_CUDA_DEFAULT_PTX_CC=8.6 \
-            CUPY_PYLOPS=1 \
-            TEST_CUPY_PYLOPS=1 \
-            uv run python -c "
-            import os
-            print(os.environ.get(\"NUMBA_CUDA_DEFAULT_PTX_CC\"))
-            import numba
-            print(numba.config.CUDA_DEFAULT_PTX_CC)
-            "
-          '
+          srun --account=yuxilab -n 1 -N 1 --gres=gpu:L40S:1 bash -c 'uv run python -c "import os, numba; print(os.environ.get(\"NUMBA_CUDA_DEFAULT_PTX_CC\")); print(numba.config.CUDA_DEFAULT_PTX_CC)"'
       - name: Test with pytest
         run: |
           srun --account=yuxilab -n 1 -N 1 --gres=gpu:L40S:1 bash -c '
