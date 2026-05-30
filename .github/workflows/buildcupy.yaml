@@ -34,11 +34,12 @@ jobs:
             nvcc --version &&
             nvidia-smi
           '
-      - name: Find CUDA modules
+      - name: Find CUDA installs
         run: |
           srun --account=yuxilab -n 1 -N 1 --gres=gpu:L40S:1 bash -c '
-            source /etc/profile.d/modules.sh &&
-            module avail cuda 2>&1
+            find /usr/local -maxdepth 1 -name "cuda*" 2>/dev/null &&
+            find /opt -maxdepth 2 -name "cuda*" 2>/dev/null &&
+            find /cm -maxdepth 4 -name "libnvvm.so" 2>/dev/null
           '
       - name: Test with pytest
         run: |
