@@ -33,6 +33,11 @@ jobs:
           srun --account=yuxilab -n 1 -N 1 --gres=gpu:L40S:1 bash -c '
             nvcc --version &&
             nvidia-smi &&
+          '
+      - name: Find CUDA modules
+        run: |
+          srun --account=yuxilab -n 1 -N 1 --gres=gpu:L40S:1 bash -c '
+            source /etc/profile &&
             module avail cuda 2>&1
           '
       - name: Test with pytest
