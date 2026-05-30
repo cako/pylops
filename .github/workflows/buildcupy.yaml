@@ -60,8 +60,10 @@ jobs:
       - name: Test with pytest
         run: |
           srun --account=yuxilab -n 1 -N 1 --gres=gpu:L40S:1 bash -c '
-            NVVM_PATH=$(uv run python -c "import nvidia.cuda_nvcc as n, os; print(os.path.join(os.path.dirname(n.__file__), \"nvvm\", \"lib64\", \"libnvvm.so\"))")
-            export NUMBA_NVVM_PATH=$NVVM_PATH
+            VENV_CUDA=$(uv run python -c "import nvidia.cuda_nvcc as n, os; print(os.path.dirname(n.__file__))")
+            export CUDA_HOME=$VENV_CUDA
+            export CUDAToolkit_ROOT=$VENV_CUDA
+            export LD_LIBRARY_PATH=$VENV_CUDA/nvvm/lib64:$VENV_CUDA/lib64
             export CUPY_PYLOPS=1
             export TEST_CUPY_PYLOPS=1
             uv run pytest --color=yes pytests/
