@@ -6052,7 +6052,7 @@ requires-dist = [
     { name = "jax", extras = ["cuda12"], marker = "extra == 'deep-cu128'" },
     { name = "jax", extras = ["cuda13"], marker = "extra == 'deep-cu13'" },
     { name = "llvmlite", marker = "extra == 'advanced'" },
-    { name = "numba", marker = "extra == 'advanced'", specifier = "<=0.61.0" },
+    { name = "numba", marker = "extra == 'advanced'" },
     { name = "numpy", specifier = ">=1.21.0" },
     { name = "pyfftw", marker = "extra == 'advanced'" },
     { name = "pymc", marker = "extra == 'stat'" },

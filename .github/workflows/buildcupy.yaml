@@ -37,9 +37,8 @@ jobs:
       - name: Find CUDA installs
         run: |
           srun --account=yuxilab -n 1 -N 1 --gres=gpu:L40S:1 bash -c '
-            find /usr/local -maxdepth 1 -name "cuda*" 2>/dev/null || true
-            find /opt -maxdepth 2 -name "cuda*" 2>/dev/null || true
-            find / -maxdepth 5 -name "libnvvm.so" 2>/dev/null || true
+            ldconfig -p | grep nvvm
+            uv run python -c "from numba.cuda.cudadrv import nvvm; print(nvvm.NVVM().driver)"
           '
       - name: Test with pytest
         run: |
