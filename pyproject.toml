@@ -38,7 +38,7 @@ dynamic = ["version"]
 [project.optional-dependencies]
 advanced = [
     "llvmlite",
-    "numba",
+    "numba<=0.61.0",
     "pyfftw",
     "PyWavelets",
     "scikit-fmm",
