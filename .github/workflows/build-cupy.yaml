@@ -1,4 +1,4 @@
-name: PyLops Testing (CuPy)
+name: PyLops Testing with CuPy
 
 on:
   pull_request:
@@ -28,9 +28,20 @@ jobs:
               --extra deep-cu128 --all-groups
           '
           echo "done!"
+      # Currently, the NVIDIA GPU drivers on the self-hosted runner
+      # and the CUDA installation in CUDA_HOME require different PTX versions
+      # (8.7 and 8.8, respectively). CUDA and NVCC are temporerely
+      # installed in the uv environment, and the CUDA paths are set in
+      # the test command, to work around this issue.
+      - name: Install CUDA 12.8 toolkit
+        run: uv add nvidia-cuda-nvcc-cu12==12.8.*
       - name: Test with pytest
         run: |
           srun --account=yuxilab -n 1 -N 1 --gres=gpu:L40S:1 bash -c '
+            VENV_CUDA=$(uv run python -c "import nvidia.cuda_nvcc as n, os; print(os.path.dirname(n.__file__))")
+            export CUDA_HOME=$VENV_CUDA
+            export CUDAToolkit_ROOT=$VENV_CUDA
+            export LD_LIBRARY_PATH=$VENV_CUDA/nvvm/lib64:$VENV_CUDA/lib64
             export CUPY_PYLOPS=1
             export TEST_CUPY_PYLOPS=1
             uv run pytest --color=yes pytests/
