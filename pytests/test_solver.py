@@ -102,6 +102,39 @@ def test_cg(par):
         assert_array_almost_equal(x, xinv, decimal=4)
 
 
+@pytest.mark.parametrize("par", [(par1), (par2)])
+def test_cg_damp(par):
+    """CG with damping solves the damped system (Op + damp*I) x = y.
+
+    Verify equivalence between internal damping, adding ``damp*I`` to the
+    operator (with ``damp=0`` in the solver), and the dense solution; and that
+    ``damp=0`` reproduces the undamped result.
+    """
+    np.random.seed(10)
+
+    n = par["nx"]
+    A = np.random.normal(0, 1, (n, n)) + par["imag"] * np.random.normal(0, 1, (n, n))
+    A = np.conj(A).T @ A + np.eye(n)  # symmetric positive-definite
+    Aop = MatrixMult(A, dtype=par["dtype"])
+    x = np.ones(n) + par["imag"] * np.ones(n)
+    y = Aop * x
+    damp = 0.8
+
+    x_dense = np.linalg.solve(A + damp * np.eye(n), y)
+    # adding damp*I to the operator and using damp=0 must match internal damping
+    Aop_damped = MatrixMult(A + damp * np.eye(n), dtype=par["dtype"])
+
+    for preallocate in [False, True]:
+        x_int = cg(Aop, y, niter=4 * n, tol=1e-10, damp=damp, preallocate=preallocate)[0]
+        x_ext = cg(Aop_damped, y, niter=4 * n, tol=1e-10, preallocate=preallocate)[0]
+        assert_array_almost_equal(x_int, x_dense, decimal=5)
+        assert_array_almost_equal(x_int, x_ext, decimal=5)
+
+    # damp=0 reproduces the undamped solution
+    x_undamped = cg(Aop, y, niter=4 * n, tol=1e-10, damp=0.0)[0]
+    assert_array_almost_equal(x_undamped, np.linalg.solve(A, y), decimal=5)
+
+
 @pytest.mark.parametrize(
     "par", [(par1), (par2), (par3), (par4), (par1j), (par2j), (par3j), (par3j)]
 )
