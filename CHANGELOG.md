@@ -17,6 +17,9 @@ Changelog
   and `pylops.waveeqprocessing.Marchenko`
 * Improved typing annotations across all operators (and enforced use of
   Literal for parameters with multiple options)
+* Fixed element-wise variance accumulation in `pylops.optimization.cls_basic.LSQR`
+  and `pylops.lsqr`, which previously assigned the same value to every entry of
+  `var` (#639)
 
 # 2.6.0
 * Added `pylops.medical` module and `pylops.medical.CT2D` operator

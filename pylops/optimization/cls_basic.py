@@ -1248,11 +1248,7 @@ class LSQR(Solver):
             self.ncp.add(self.v, self.w, out=self.w)
         self.ddnorm = self.ddnorm + self.ncp.linalg.norm(self.dk) ** 2.0
         if self.calc_var:
-            # ``var`` estimates the diagonal of (A^H A)^-1, so it must accumulate
-            # the *element-wise* square of ``dk`` (one variance per unknown), as in
-            # Paige & Saunders (1982) eq. on p.53 and scipy's lsqr. Using
-            # ``dot(dk, dk)`` instead adds the same scalar (sum of squares) to every
-            # entry, yielding identical, wrong variances (issue #639).
+            # accumulate the element-wise square of dk (one variance per unknown)
             self.var = self.var + to_numpy_conditional(
                 self.var, self.ncp.square(self.dk)
             )
