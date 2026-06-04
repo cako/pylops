@@ -377,6 +377,9 @@ def test_lsqr_pylops_scipy(par):
         assert_array_almost_equal(xinv_sp, x, decimal=4)
 
 
+@pytest.mark.skipif(
+    int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
+)
 @pytest.mark.parametrize("par", [(par3), (par4)])
 def test_lsqr_calc_var(par):
     """LSQR ``var`` estimates the diagonal of (A^H A)^-1 element-wise.
