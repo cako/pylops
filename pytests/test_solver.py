@@ -382,11 +382,8 @@ def test_lsqr_pylops_scipy(par):
 )
 @pytest.mark.parametrize("par", [(par3), (par4)])
 def test_lsqr_calc_var(par):
-    """LSQR ``var`` estimates the diagonal of (A^H A)^-1 element-wise.
-
-    Each unknown must get its own variance; a regression would make all entries
-    identical. scipy's LSQR is used as the reference implementation.
-    """
+    """Compare PyLops and scipy LSQR variance computation for the diagonal of
+    (A^H A)^-1 (issue #639)."""
     np.random.seed(10)
 
     A = np.random.normal(0, 1, (par["ny"], par["nx"]))
@@ -399,7 +396,6 @@ def test_lsqr_calc_var(par):
     var = lsqr(Aop, y, x0=None, niter=niter, atol=1e-8, btol=1e-8)[9]
     var_sp = sp_lsqr(Aop, y, iter_lim=niter, atol=1e-8, btol=1e-8, calc_var=True)[9]
 
-    # the dot(dk, dk) bug produced a constant vector instead (issue #639)
     assert not np.allclose(var, var[0])
     assert_array_almost_equal(var, var_sp, decimal=6)
 
