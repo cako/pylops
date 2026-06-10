@@ -410,6 +410,29 @@ def test_lsqr_pylops_scipy(par):
         assert_array_almost_equal(xinv_sp, x, decimal=4)
 
 
+@pytest.mark.skipif(
+    int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
+)
+@pytest.mark.parametrize("par", [(par3), (par4)])
+def test_lsqr_calc_var(par):
+    """Compare PyLops and scipy LSQR variance computation for the diagonal of
+    (A^H A)^-1 (issue #639)."""
+    np.random.seed(10)
+
+    A = np.random.normal(0, 1, (par["ny"], par["nx"]))
+    Aop = MatrixMult(A, dtype=par["dtype"])
+    y = Aop * (np.ones(par["nx"]))
+
+    # niter is only a ceiling (atol/btol stop earlier); use scipy's default of
+    # 2 * nx so both implementations run for the same number of iterations.
+    niter = 2 * par["nx"]
+    var = lsqr(Aop, y, x0=None, niter=niter, atol=1e-8, btol=1e-8)[9]
+    var_sp = sp_lsqr(Aop, y, iter_lim=niter, atol=1e-8, btol=1e-8, calc_var=True)[9]
+
+    assert not np.allclose(var, var[0])
+    assert_array_almost_equal(var, var_sp, decimal=6)
+
+
 @pytest.mark.parametrize(
     "par", [(par1), (par2), (par3), (par4), (par1j), (par2j), (par3j), (par3j)]
 )

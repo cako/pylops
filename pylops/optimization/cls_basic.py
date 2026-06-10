@@ -1271,8 +1271,9 @@ class LSQR(Solver):
             self.ncp.add(self.v, self.w, out=self.w)
         self.ddnorm = self.ddnorm + self.ncp.linalg.norm(self.dk) ** 2.0
         if self.calc_var:
+            # accumulate the element-wise square of dk (one variance per unknown)
             self.var = self.var + to_numpy_conditional(
-                self.var, self.ncp.dot(self.dk, self.dk)
+                self.var, self.ncp.square(self.dk)
             )
 
         # use a plane rotation on the right to eliminate the

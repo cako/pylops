@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 2.8.0
+* Fixed element-wise variance accumulation in `pylops.optimization.cls_basic.LSQR`
+  and `pylops.lsqr`, which previously assigned the same value to every entry of
+  `var` (#639)
+
 # 2.7.0
 * Added cubic spline interpolation operator via
   `pylops.signalprocessing.interpspline.InterpCubicSpline` (also interfaceable via
