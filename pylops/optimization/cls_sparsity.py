@@ -1733,7 +1733,11 @@ class ISTA(Solver):
 
         # prepare decay (if not passed)
         if perc is None and decay is None:
-            self.decay = self.ncp.ones(niter, dtype=get_real_dtype(self.Op.dtype))
+            self.decay = (
+                1.0
+                if niter is None
+                else self.ncp.ones(niter, dtype=get_real_dtype(self.Op.dtype))
+            )
 
         # step size
         if alpha is not None:
@@ -1889,9 +1893,14 @@ class ISTA(Solver):
                 self.SOpx_unthesh if self.preallocate else SOpx_unthesh
             )
         if self.perc is None:
+            decay = (
+                self.decay
+                if isinstance(self.decay, (int, float))
+                else self.decay[self.iiter]
+            ) * self.thresh  # single-valued decay when niter is not set in setup
             x = self.threshf(
                 x_unthesh_or_SOpx_unthesh,
-                self.decay[self.iiter] * self.thresh,
+                decay,
             )
         else:
             x = self.threshf(x_unthesh_or_SOpx_unthesh, 100 - self.perc)
@@ -2317,9 +2326,14 @@ class FISTA(ISTA):
                 self.SOpx_unthesh if self.preallocate else SOpx_unthesh
             )
         if self.perc is None:
+            decay = (
+                self.decay
+                if isinstance(self.decay, (int, float))
+                else self.decay[self.iiter]
+            ) * self.thresh  # single-valued decay when niter is not set in setup
             x = self.threshf(
                 x_unthesh_or_SOpx_unthesh,
-                self.decay[self.iiter] * self.thresh,
+                decay,
             )
         else:
             x = self.threshf(x_unthesh_or_SOpx_unthesh, 100 - self.perc)
