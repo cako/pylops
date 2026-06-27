@@ -28,12 +28,12 @@ def _radon_inner_3d_kernel(x, y, f, py, px, hy, hx, flim0, flim1, npy, npx, nhy,
                 # )
                 # fast computation of exp(1j * x) - see https://stackoverflow.com/questions/9860711/cucomplex-h-and-exp/9863048#9863048
                 # with local registers (no direct accumulation into global memory)
-                y_r, y_i = y[ihy, ihx, ifr].real, y[ihy, ihx, ifr].imag
+                x_r, x_i = x[ihy, ihx, ifr].real, x[ihy, ihx, ifr].imag
                 s, c = cuda.libdevice.sincosf(
                     TWO_PI_MINUS * f[ifr] * (py[ipy] * hy[ihy] + px[ipx] * hx[ihx])
                 )
-                loc_r += y_r * c - y_i * s
-                loc_i += y_r * s + y_i * c
+                loc_r += x_r * c - x_i * s
+                loc_i += x_r * s + x_i * c
         y[ihy, ihx, ifr] = loc_r + IMG * loc_i
 
 
@@ -58,13 +58,13 @@ def _aradon_inner_3d_kernel(x, y, f, py, px, hy, hx, flim0, flim1, npy, npx, nhy
 
                 # fast computation of exp(1j * x) - see https://stackoverflow.com/questions/9860711/cucomplex-h-and-exp/9863048#9863048
                 # with local registers (no direct accumulation into global memory)
-                x_r, x_i = y[ihy, ihx, ifr].real, y[ihy, ihx, ifr].imag
+                y_r, y_i = y[ihy, ihx, ifr].real, y[ihy, ihx, ifr].imag
                 s, c = cuda.libdevice.sincosf(
                     TWO_PI_PLUS * f[ifr] * (py[ipy] * hy[ihy] + px[ipx] * hx[ihx])
                 )
-                loc_r += x_r * c - x_i * s
-                loc_i += x_r * s + x_i * c
-        y[ipy, ipx, ifr] = loc_r + IMG * loc_i
+                loc_r += y_r * c - y_i * s
+                loc_i += y_r * s + y_i * c
+        x[ipy, ipx, ifr] = loc_r + IMG * loc_i
 
 
 def _radon_inner_3d_cuda(
