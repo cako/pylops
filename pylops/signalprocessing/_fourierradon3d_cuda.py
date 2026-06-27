@@ -28,7 +28,7 @@ def _radon_inner_3d_kernel(x, y, f, py, px, hy, hx, flim0, flim1, npy, npx, nhy,
                 # )
                 # fast computation of exp(1j * x) - see https://stackoverflow.com/questions/9860711/cucomplex-h-and-exp/9863048#9863048
                 # with local registers (no direct accumulation into global memory)
-                x_r, x_i = x[ihy, ihx, ifr].real, x[ihy, ihx, ifr].imag
+                x_r, x_i = x[ipy, ipx, ifr].real, x[ipy, ipx, ifr].imag
                 s, c = cuda.libdevice.sincosf(
                     TWO_PI_MINUS * f[ifr] * (py[ipy] * hy[ihy] + px[ipx] * hx[ihx])
                 )
