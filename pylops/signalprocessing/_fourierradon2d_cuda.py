@@ -21,7 +21,7 @@ def _radon_inner_2d_kernel(x, y, f, px, h, flim0, flim1, npx, nh):
     if ih < nh and ifr >= flim0 and ifr <= flim1:
         loc_r, loc_i = 0, 0
         for ipx in range(npx):
-            # slow computation with exp(1j * x) for reference
+            # slow computation of exp(1j * x) for reference
             # y[ih, ifr] += x[ipx, ifr] * exp(TWO_PI_MINUS * f[ifr] * px[ipx] * h[ih])
 
             # fast computation of exp(1j * x) - see https://stackoverflow.com/questions/9860711/cucomplex-h-and-exp/9863048#9863048
@@ -46,7 +46,7 @@ def _aradon_inner_2d_kernel(x, y, f, px, h, flim0, flim1, npx, nh):
     if ipx < npx and ifr >= flim0 and ifr <= flim1:
         loc_r, loc_i = 0, 0
         for ih in range(nh):
-            # slow computation with exp(1j * x) for reference
+            # slow computation of exp(1j * x) for reference
             # x[ipx, ifr] += y[ih, ifr] * exp(TWO_PI_I_PLUS * f[ifr] * px[ipx] * h[ih])
 
             # fast computation of exp(1j * x) - see https://stackoverflow.com/questions/9860711/cucomplex-h-and-exp/9863048#9863048
