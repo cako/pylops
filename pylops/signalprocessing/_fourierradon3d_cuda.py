@@ -64,7 +64,7 @@ def _aradon_inner_3d_kernel(x, y, f, py, px, hy, hx, flim0, flim1, npy, npx, nhy
                 )
                 loc_r += x_r * c - x_i * s
                 loc_i += x_r * s + x_i * c
-        x[ipy, ipx, ifr] = loc_r + IMG * loc_i
+        y[ipy, ipx, ifr] = loc_r + IMG * loc_i
 
 
 def _radon_inner_3d_cuda(
