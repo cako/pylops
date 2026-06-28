@@ -3,6 +3,7 @@ __all__ = ["Interp"]
 from typing import Literal
 
 import numpy as np
+from scipy.sparse import csr_matrix
 
 from pylops import LinearOperator, aslinearoperator
 from pylops.basicoperators import Diagonal, MatrixMult, Restriction, Transpose
@@ -70,6 +71,7 @@ def _sincinterp(
     dims: InputDimsLike,
     iava: SamplingLike,
     axis: int = 0,
+    tol: float | None = None,
     dtype: DTypeLike = "float64",
 ):
     """Sinc interpolation."""
@@ -82,6 +84,11 @@ def _sincinterp(
     ireg = ncp.arange(nreg)
     sinc = ncp.tile(iava[:, np.newaxis], (1, nreg)) - ncp.tile(ireg, (len(iava), 1))
     sinc = ncp.sinc(sinc).astype(dtype)
+
+    # sparsify sinc interpolation matrix
+    if tol is not None:
+        sinc[np.abs(sinc) < tol] = 0.0
+        sinc = csr_matrix(sinc)
 
     # identify additional dimensions and create MatrixMult operator
     otherdims = np.array(dims)
@@ -106,6 +113,7 @@ def Interp(
     iava: SamplingLike,
     axis: int = -1,
     kind: Literal["linear", "nearest", "sinc", "cubic_spline"] = "linear",
+    tol: float | None = None,
     dtype: DTypeLike = "float64",
     name: str = "I",
 ) -> tuple[LinearOperator, IntNDArray]:
@@ -162,6 +170,13 @@ def Interp(
         .. versionadded:: 2.7.0
 
         The ``"cubic_spline"``-interpolation was added.
+
+    tol : :obj:`float`, optional
+        .. versionadded:: 2.9.0
+
+        Tolerance for sinc interpolation values to be retained (values
+        below ``tol`` are set to zero and a sparse matrix is created). If ``None``,
+        all values are retained and a dense matrix is created.
     dtype : :obj:`str`, optional
         Type of elements in input array.
     name : :obj:`str`, optional
@@ -236,7 +251,7 @@ def Interp(
     elif kind == "linear":
         interpop, iava, dims, dimsd = _linearinterp(dims, iava, axis=axis, dtype=dtype)
     elif kind == "sinc":
-        interpop, dims, dimsd = _sincinterp(dims, iava, axis=axis, dtype=dtype)
+        interpop, dims, dimsd = _sincinterp(dims, iava, axis=axis, tol=tol, dtype=dtype)
     elif kind == "cubic_spline":
         interpop = InterpCubicSpline(
             dims=dims,
