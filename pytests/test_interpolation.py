@@ -119,8 +119,8 @@ def test_sincinterp():
     ntsub = 10
     dtsub = dt / ntsub
     tsub = np.arange(nt * ntsub) * dtsub
-    tsub = tsub[: np.where(tsub == t[-1])[0][0] + 1]
-
+    tsub = tsub[: np.where(tsub == t[-1])[0][0]]
+    tsub += dt / 4
     x = (
         np.sin(2 * np.pi * 10 * t)
         + 0.4 * np.sin(2 * np.pi * 20 * t)
@@ -133,9 +133,10 @@ def test_sincinterp():
     )
 
     iava = tsub[20:-20] / (dtsub * ntsub)  # exclude edges
-    SI1op, iava = Interp(nt, iava, kind="sinc", dtype="float64")
-    y = SI1op * x
-    assert_array_almost_equal(xsub[20:-20], y, decimal=1)
+    for tol in [None, 1e-2]:
+        SI1op, iava = Interp(nt, iava, kind="sinc", tol=tol, dtype="float64")
+        y = SI1op * x
+        assert_array_almost_equal(xsub[20:-20], y, decimal=1)
 
 
 @pytest.mark.parametrize(
@@ -165,7 +166,7 @@ def test_Interp_1dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     Nsub = int(np.round(par.x_num * SUBSAMPLING_PERCENTAGE))
     iava = np.sort(np.random.permutation(np.arange(par.x_num))[:Nsub])
 
-    # fixed indeces
+    # fixed indices
     Iop, _ = Interp(par.x_num, iava, kind=par.kind, dtype=dtype1)
     assert dottest(
         Iop,
@@ -175,7 +176,7 @@ def test_Interp_1dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
-    # decimal indeces
+    # decimal indices
     Idecop, _ = Interp(par.x_num, iava + 0.3, kind=par.kind, dtype=dtype1)
     assert dottest(
         Iop,
@@ -185,7 +186,7 @@ def test_Interp_1dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
-    # repeated indeces
+    # repeated indices
     with pytest.raises(ValueError, match="repeated"):
         iava_rep = iava.copy()
         iava_rep[-2] = 0
@@ -231,7 +232,7 @@ def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     Nsub = int(np.round(par.x_num * SUBSAMPLING_PERCENTAGE))
     iava = np.sort(np.random.permutation(np.arange(par.x_num))[:Nsub])
 
-    # fixed indeces
+    # fixed indices
     Iop, _ = Interp(
         (par.x_num, par.t_num),
         iava,
@@ -247,7 +248,7 @@ def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
-    # decimal indeces
+    # decimal indices
     Idecop, _ = Interp(
         (par.x_num, par.t_num),
         iava + 0.3,
@@ -256,7 +257,7 @@ def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         dtype=dtype1,
     )
 
-    # repeated indeces
+    # repeated indices
     with pytest.raises(ValueError, match="repeated"):
         iava_rep = iava.copy()
         iava_rep[-2] = 0
@@ -280,7 +281,7 @@ def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     Nsub = int(np.round(par.t_num * SUBSAMPLING_PERCENTAGE))
     iava = np.sort(np.random.permutation(np.arange(par.t_num))[:Nsub])
 
-    # fixed indeces
+    # fixed indices
     Iop, _ = Interp(
         (par.x_num, par.t_num),
         iava,
@@ -296,7 +297,7 @@ def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
-    # decimal indeces
+    # decimal indices
     Idecop, _ = Interp(
         (par.x_num, par.t_num),
         iava + 0.3,
@@ -350,7 +351,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     Nsub = int(np.round(par.y_num * SUBSAMPLING_PERCENTAGE))
     iava = np.sort(np.random.permutation(np.arange(par.y_num))[:Nsub])
 
-    # fixed indeces
+    # fixed indices
     Iop, _ = Interp(
         (par.y_num, par.x_num, par.t_num),
         iava,
@@ -366,7 +367,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
-    # decimal indeces
+    # decimal indices
     Idecop, _ = Interp(
         (par.y_num, par.x_num, par.t_num),
         iava + 0.3,
@@ -382,7 +383,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
-    # repeated indeces
+    # repeated indices
     with pytest.raises(ValueError, match="repeated"):
         iava_rep = iava.copy()
         iava_rep[-2] = 0
@@ -406,7 +407,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     Nsub = int(np.round(par.x_num * SUBSAMPLING_PERCENTAGE))
     iava = np.sort(np.random.permutation(np.arange(par.x_num))[:Nsub])
 
-    # fixed indeces
+    # fixed indices
     Iop, _ = Interp(
         (par.y_num, par.x_num, par.t_num),
         iava,
@@ -422,7 +423,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
-    # decimal indeces
+    # decimal indices
     Idecop, _ = Interp(
         (par.y_num, par.x_num, par.t_num),
         iava + 0.3,
@@ -449,7 +450,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     Nsub = int(np.round(par.t_num * SUBSAMPLING_PERCENTAGE))
     iava = np.sort(np.random.permutation(np.arange(par.t_num))[:Nsub])
 
-    # fixed indeces
+    # fixed indices
     Iop, _ = Interp(
         (par.y_num, par.x_num, par.t_num),
         iava,
@@ -465,7 +466,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
-    # decimal indeces
+    # decimal indices
     Idecop, _ = Interp(
         (par.y_num, par.x_num, par.t_num),
         iava + 0.3,
@@ -500,7 +501,7 @@ def test_Bilinear_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         dtype1
     ) + par.imag * np.random.normal(0, 1, (par.x_num, par.t_num)).astype(dtype1)
 
-    # fixed indeces
+    # fixed indices
     iava = np.vstack((np.arange(0, 10), np.arange(0, 10)))
     Iop = Bilinear(iava, dims=(par.x_num, par.t_num), dtype=dtype1)
     assert dottest(
@@ -511,7 +512,7 @@ def test_Bilinear_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
-    # decimal indeces
+    # decimal indices
     Nsub = int(np.round(par.x_num * par.t_num * SUBSAMPLING_PERCENTAGE))
     iavadec = np.vstack(
         (
@@ -528,7 +529,7 @@ def test_Bilinear_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
-    # repeated indeces
+    # repeated indices
     with pytest.raises(ValueError, match="repeated"):
         iava_rep = iava.copy()
         iava_rep[::, -1] = iava_rep[::, 0]
@@ -580,7 +581,7 @@ def test_Bilinear_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         dtype1
     )
 
-    # fixed indeces
+    # fixed indices
     iava = np.vstack((np.arange(0, 10), np.arange(0, 10)))
     Iop = Bilinear(iava, dims=(par.y_num, par.x_num, par.t_num), dtype=dtype1)
     assert dottest(
@@ -591,7 +592,7 @@ def test_Bilinear_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
-    # decimal indeces
+    # decimal indices
     Nsub = int(np.round(par.y_num * par.t_num * SUBSAMPLING_PERCENTAGE))
     iavadec = np.vstack(
         (
@@ -608,7 +609,7 @@ def test_Bilinear_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         rtol=1e-4 if dtype == np.float32 else 1e-6,
     )
 
-    # repeated indeces
+    # repeated indices
     with pytest.raises(ValueError, match="repeated"):
         iava_rep = iava.copy()
         iava_rep[::, -1] = iava_rep[::, 0]
