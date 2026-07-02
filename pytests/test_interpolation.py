@@ -197,6 +197,7 @@ def test_Interp_1dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.x_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # repeated indices
@@ -262,6 +263,7 @@ def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # decimal indices
@@ -311,6 +313,7 @@ def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # decimal indices
@@ -327,6 +330,7 @@ def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     y = (Iop * x.ravel()).reshape(par.x_num, Nsub)
@@ -384,6 +388,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # decimal indices
@@ -400,6 +405,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # repeated indices
@@ -440,6 +446,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # decimal indices
@@ -456,6 +463,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     y = (Iop * x.ravel()).reshape(par.y_num, Nsub, par.t_num)
@@ -483,6 +491,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # decimal indices
@@ -499,6 +508,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     y = (Iop * x.ravel()).reshape(par.y_num, par.x_num, Nsub)
@@ -529,6 +539,7 @@ def test_Bilinear_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # decimal indices
@@ -546,6 +557,7 @@ def test_Bilinear_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # repeated indices
@@ -609,6 +621,7 @@ def test_Bilinear_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # decimal indices
@@ -626,6 +639,7 @@ def test_Bilinear_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # repeated indices
