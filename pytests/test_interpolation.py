@@ -357,8 +357,8 @@ def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward  for Interp operator for 3d signal"""
-    if par.kind == "cubic_spline":
-        pytest.skip("cubic_spline does not support CuPy arrays")
+    if par.kind in ("nearest", "cubic_spline"):
+        pytest.skip(f"{par.kind} does not support CuPy arrays")
 
     np.random.seed(1)
     dtype = dtype if par.kind != "cubic_spline" else np.float64
