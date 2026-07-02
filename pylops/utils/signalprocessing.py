@@ -18,13 +18,15 @@ from pylops.utils._internal import _value_or_sized_to_tuple
 from pylops.utils._pwd2d import _conv_allpass, _triangular_smoothing_from_boxcars
 from pylops.utils.backend import (
     get_array_module,
+    get_csr_matrix,
+    get_dia_matrix,
     get_normalize_axis_index,
     get_toeplitz,
 )
 from pylops.utils.typing import NDArray, Tpwdsmoothing
 
 
-def convmtx(h: NDArray, n: int, offset: int = 0) -> NDArray:
+def convmtx(h: NDArray, n: int, offset: int = 0, sparse: bool = False) -> NDArray:
     r"""Convolution matrix
 
     Makes a dense convolution matrix :math:`\mathbf{C}`
@@ -42,12 +44,16 @@ def convmtx(h: NDArray, n: int, offset: int = 0) -> NDArray:
         Convolution filter (1D array)
     n : :obj:`int`
         Number of columns of convolution matrix
-    offset : :obj:`int`
+    offset : :obj:`int`, optional
         Index of the center of the filter
+    sparse : :obj:`bool`, optional
+        .. versionadded:: 2.9.0
+
+        Return dense (``False``) or sparse (``True``) matrix
 
     Returns
     -------
-    C : :obj:`numpy.ndarray`
+    C : :obj:`numpy.ndarray` or :obj:`scipy.sparse.spmatrix`
         Convolution matrix of size :math:`\text{len}(h)+n-1 \times n`
 
     """
@@ -62,12 +68,26 @@ def convmtx(h: NDArray, n: int, offset: int = 0) -> NDArray:
     )
 
     ncp = get_array_module(h)
+
+    # create Toeplitz matrix
     nh = len(h)
     col_1 = ncp.r_[h, ncp.zeros(n + nh - 2, dtype=h.dtype)]
     row_1 = ncp.r_[h[0], ncp.zeros(n - 1, dtype=h.dtype)]
     C = get_toeplitz(h)(col_1, row_1)
+
     # apply offset
     C = C[offset : offset + nh + n - 1]
+
+    # convert to sparse using the following rule-of-thumb:
+    # - DIA format very short filters (<= 11)
+    # - CSR format for other filters
+    if sparse:
+        if ncp == np:
+            C = get_dia_matrix(h)(C) if nh <= 11 else get_csr_matrix(h)(C)
+        else:
+            # For CuPy DIA cannot take a dense matrix, so the dense matrix is
+            # always converted to CSR format
+            C = get_csr_matrix(h)(C)
     return C
 
 
@@ -76,6 +96,7 @@ def nonstationary_convmtx(
     n: int,
     hc: int = 0,
     pad: tuple[int] = (0, 0),
+    sparse: bool = False,
 ) -> NDArray:
     r"""Convolution matrix from a bank of filters
 
@@ -97,18 +118,35 @@ def nonstationary_convmtx(
         Zero-padding to apply to the bank of filters before and after the
         provided values (use it to avoid wrap-around or pass filters with
         enough padding)
+    sparse : :obj:`bool`, optional
+        .. versionadded:: 2.9.0
+
+        Return dense (``False``) or sparse (``True``) matrix
 
     Returns
     -------
-    C : :obj:`numpy.ndarray`
+    C : :obj:`numpy.ndarray` or :obj:`scipy.sparse.spmatrix`
         Convolution matrix
 
     """
     ncp = get_array_module(H)
 
+    # create Toeplitz matrix
+    nh = H.shape[1]
     H = ncp.pad(H, ((0, 0), pad), mode="constant")
     C = ncp.array([ncp.roll(h, ih) for ih, h in enumerate(H)])
     C = C[:, pad[0] + hc : pad[0] + hc + n].T  # take away edges
+
+    # convert to sparse using the following rule-of-thumb:
+    # - DIA format very short filters (<= 11)
+    # - CSR format for other filters
+    if sparse:
+        if ncp == np:
+            C = get_dia_matrix(H)(C) if nh <= 11 else get_csr_matrix(H)(C)
+        else:
+            # For CuPy DIA cannot take a dense matrix, so the dense matrix is
+            # always converted to CSR format
+            C = get_csr_matrix(H)(C)
     return C
 
 
