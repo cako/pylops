@@ -82,8 +82,12 @@ def convmtx(h: NDArray, n: int, offset: int = 0, sparse: bool = False) -> NDArra
     # - DIA format very short filters (<= 11)
     # - CSR format for other filters
     if sparse:
-        C = get_dia_matrix(h)(C) if nh <= 11 else get_csr_matrix(h)(C)
-
+        if ncp == np:
+            C = get_dia_matrix(h)(C) if nh <= 11 else get_csr_matrix(h)(C)
+        else:
+            # For CuPy DIA cannot take a dense matrix, so the dense matrix is
+            # always converted to CSR format
+            C = get_csr_matrix(h)(C)
     return C
 
 
