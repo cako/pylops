@@ -357,8 +357,8 @@ def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward  for Interp operator for 3d signal"""
-    if par.kind in ("nearest", "cubic_spline"):
-        pytest.skip(f"{par.kind} does not support CuPy arrays")
+    if par.kind == "cubic_spline":
+        pytest.skip("cubic_spline does not support CuPy arrays")
 
     np.random.seed(1)
     dtype = dtype if par.kind != "cubic_spline" else np.float64
@@ -609,6 +609,11 @@ def test_Bilinear_2dsignal_flatten(par: InterpolationTestParameters, dtype: np.d
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_Bilinear_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward for Interp operator for 3d signal"""
+    if par.imag == 1j:
+        pytest.skip("cupy.add.at currently does not support complex numbers")
+    if par.kind == "nearest":
+        pytest.skip("nearest does not support CuPy arrays")
+
     np.random.seed(1)
     dtype1 = (np.empty(0, dtype=dtype) + par.imag * np.empty(0, dtype=dtype)).dtype
 
