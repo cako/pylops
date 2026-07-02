@@ -1,9 +1,18 @@
+import os
 from dataclasses import dataclass
 from typing import Final, Literal
 
-import numpy as np
+if int(os.environ.get("TEST_CUPY_PYLOPS", 0)):
+    import cupy as np
+    from cupy.testing import assert_array_almost_equal
+
+    backend = "cupy"
+else:
+    import numpy as np
+    from numpy.testing import assert_array_almost_equal
+
+    backend = "numpy"
 import pytest
-from numpy.testing import assert_array_almost_equal
 
 from pylops.signalprocessing import Bilinear, Interp
 from pylops.utils import dottest
@@ -155,6 +164,9 @@ def test_sincinterp():
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_Interp_1dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward for Interp operator for 1d signal"""
+    if par.kind == "cubic_spline":
+        pytest.skip("cubic_spline does not support CuPy arrays")
+
     np.random.seed(1)
     dtype = dtype if par.kind != "cubic_spline" else np.float64
     dtype1 = (np.empty(0, dtype=dtype) + par.imag * np.empty(0, dtype=dtype)).dtype
@@ -174,6 +186,7 @@ def test_Interp_1dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.x_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # decimal indices
@@ -220,6 +233,9 @@ def test_Interp_1dsignal(par: InterpolationTestParameters, dtype: np.dtype):
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward for Restriction operator for 2d signal"""
+    if par.kind == "cubic_spline":
+        pytest.skip("cubic_spline does not support CuPy arrays")
+
     np.random.seed(1)
     dtype = dtype if par.kind != "cubic_spline" else np.float64
     dtype1 = (np.empty(0, dtype=dtype) + par.imag * np.empty(0, dtype=dtype)).dtype
@@ -337,6 +353,9 @@ def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward  for Interp operator for 3d signal"""
+    if par.kind == "cubic_spline":
+        pytest.skip("cubic_spline does not support CuPy arrays")
+
     np.random.seed(1)
     dtype = dtype if par.kind != "cubic_spline" else np.float64
     dtype1 = (np.empty(0, dtype=dtype) + par.imag * np.empty(0, dtype=dtype)).dtype
