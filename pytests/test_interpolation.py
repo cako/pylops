@@ -543,9 +543,6 @@ def test_Bilinear_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_Bilinear_2dsignal_flatten(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward for Interp operator for 2d signal with forceflat"""
-    if par.imag == 1j:
-        pytest.skip("cupy.add.at currently does not support complex numbers")
-
     np.random.seed(1)
     dtype1 = (np.empty(0, dtype=dtype) + par.imag * np.empty(0, dtype=dtype)).dtype
 
@@ -575,9 +572,6 @@ def test_Bilinear_2dsignal_flatten(par: InterpolationTestParameters, dtype: np.d
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_Bilinear_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward for Interp operator for 3d signal"""
-    if par.imag == 1j:
-        pytest.skip("cupy.add.at currently does not support complex numbers")
-
     np.random.seed(1)
     dtype1 = (np.empty(0, dtype=dtype) + par.imag * np.empty(0, dtype=dtype)).dtype
 
