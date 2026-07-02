@@ -12,6 +12,8 @@ __all__ = [
     "get_block_diag",
     "get_toeplitz",
     "get_csc_matrix",
+    "get_csr_matrix",
+    "get_dia_matrix",
     "get_sparse_eye",
     "get_lstsq",
     "get_sp_fft",
@@ -35,7 +37,7 @@ import numpy as np
 import scipy.fft as sp_fft
 from scipy.linalg import block_diag, lstsq, toeplitz
 from scipy.signal import convolve, correlate, fftconvolve, oaconvolve
-from scipy.sparse import csc_matrix, eye
+from scipy.sparse import csc_matrix, csr_matrix, dia_matrix, eye
 
 from pylops.utils import deps
 from pylops.utils.typing import ArrayLike, DTypeLike, NDArray, Tfftengine_ncj
@@ -51,6 +53,8 @@ if deps.cupy_enabled:
     from cupyx.scipy.signal import fftconvolve as cp_fftconvolve
     from cupyx.scipy.signal import oaconvolve as cp_oaconvolve
     from cupyx.scipy.sparse import csc_matrix as cp_csc_matrix
+    from cupyx.scipy.sparse import csr_matrix as cp_csr_matrix
+    from cupyx.scipy.sparse import dia_matrix as cp_dia_matrix
     from cupyx.scipy.sparse import eye as cp_eye
 
 if deps.jax_enabled:
@@ -380,6 +384,52 @@ def get_csc_matrix(x: ArrayLike) -> Callable:
         return csc_matrix
     else:
         return cp_csc_matrix
+
+
+def get_csr_matrix(x: ArrayLike) -> Callable:
+    """Returns correct csr_matrix module based on input
+
+    Parameters
+    ----------
+    x : :obj:`numpy.ndarray`
+        Array
+
+    Returns
+    -------
+    f : :obj:`callable`
+        Function to be used to process array
+
+    """
+    if not deps.cupy_enabled:
+        return csr_matrix
+
+    if cp.get_array_module(x) == np:
+        return csr_matrix
+    else:
+        return cp_csr_matrix
+
+
+def get_dia_matrix(x: ArrayLike) -> Callable:
+    """Returns correct dia_matrix module based on input
+
+    Parameters
+    ----------
+    x : :obj:`numpy.ndarray`
+        Array
+
+    Returns
+    -------
+    f : :obj:`callable`
+        Function to be used to process array
+
+    """
+    if not deps.cupy_enabled:
+        return dia_matrix
+
+    if cp.get_array_module(x) == np:
+        return dia_matrix
+    else:
+        return cp_dia_matrix
 
 
 def get_sparse_eye(x: ArrayLike) -> Callable:
