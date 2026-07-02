@@ -87,7 +87,7 @@ def _sincinterp(
     # sparsify sinc interpolation matrix
     if tol is not None:
         sinc[np.abs(sinc) < tol] = 0.0
-        sinc = get_csr_matrix()(sinc)
+        sinc = get_csr_matrix(sinc)(sinc)
 
     # identify additional dimensions and create MatrixMult operator
     otherdims = np.array(dims)
