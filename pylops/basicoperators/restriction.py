@@ -152,14 +152,33 @@ class Restriction(LinearOperator):
         if not self.inplace:
             x = x.copy()
         x = ncp.reshape(x, self.dimsd)
-        y = ncp.zeros(self.dims, dtype=self.dtype)
-        ncp.add.at(
-            y,
-            tuple(
-                self.iava if ax == self.axis else slice(None) for ax in range(y.ndim)
-            ),
-            x,
+        indices = tuple(
+            self.iava if ax == self.axis else slice(None) for ax in range(x.ndim)
         )
+        if ncp == np or not self.dtype.kind == "c":
+            y = ncp.zeros(self.dims, dtype=self.dtype)
+            ncp.add.at(
+                y,
+                indices,
+                x,
+            )
+        else:
+            # work on real/image separately for cupy arrays as cp.add.at does
+            # not support complex dtype
+            rdtype = ncp.real(ncp.ones(1, self.dtype)).dtype
+            y_real = ncp.zeros(self.dims, dtype=rdtype)
+            y_imag = ncp.zeros(self.dims, dtype=rdtype)
+            ncp.add.at(
+                y_real,
+                indices,
+                x.real,
+            )
+            ncp.add.at(
+                y_imag,
+                indices,
+                x.imag,
+            )
+            y = y_real + 1j * y_imag
         y = y.ravel()
         return y
 
