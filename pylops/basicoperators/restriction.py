@@ -11,25 +11,10 @@ from pylops.utils._internal import _value_or_sized_to_tuple
 from pylops.utils.backend import (
     get_array_module,
     get_normalize_axis_index,
-    inplace_set,
-    to_numpy,
 )
 from pylops.utils.typing import DTypeLike, InputDimsLike, IntNDArray, NDArray
 
 logger = logging.getLogger(__name__)
-
-
-def _compute_iavamask(dims, axis, iava, ncp):
-    """Compute restriction mask when using cupy arrays"""
-    otherdims = np.array(dims)
-    otherdims = np.delete(otherdims, axis)
-    iavamask = np.zeros(int(dims[axis]), dtype=int)
-    iavamask[iava] = 1
-    iavamask = np.moveaxis(
-        np.broadcast_to(iavamask, list(otherdims) + [dims[axis]]), -1, axis
-    )
-    iavamask = np.where(iavamask.ravel() == 1)[0]
-    return ncp.asarray(iavamask)
 
 
 class Restriction(LinearOperator):
@@ -149,17 +134,8 @@ class Restriction(LinearOperator):
             name=name,
         )
 
-        iavareshape = np.ones(len(self.dims), dtype=int)
-        iavareshape[axis] = len(iava)
-
-        # currently cupy does not support put_along_axis, so we need to
-        # explicitly create a list of indices in the n-dimensional
-        # model space which will be used in _rmatvec to place the input
-        if ncp != np:
-            self.iavamask = _compute_iavamask(self.dims, axis, to_numpy(iava), ncp)
         self.inplace = inplace
         self.axis = axis
-        self.iavareshape = iavareshape
         self.iava = ncp.asarray(iava)
 
     def _matvec(self, x: NDArray) -> NDArray:
@@ -176,24 +152,22 @@ class Restriction(LinearOperator):
         if not self.inplace:
             x = x.copy()
         x = ncp.reshape(x, self.dimsd)
-        if ncp == np:
-            y = ncp.zeros(self.dims, dtype=self.dtype)
-            ncp.put_along_axis(
-                y, ncp.reshape(self.iava, self.iavareshape), x, axis=self.axis
-            )
-        else:
-            if not hasattr(self, "iavamask"):
-                self.iavamask = _compute_iavamask(
-                    self.dims, self.axis, to_numpy(self.iava), ncp
-                )
-            y = ncp.zeros(int(self.shape[-1]), dtype=self.dtype)
-            y = inplace_set(x.ravel(), y, self.iavamask)
+        y = ncp.zeros(self.dims, dtype=self.dtype)
+        ncp.add.at(
+            y,
+            tuple(
+                self.iava if ax == self.axis else slice(None) for ax in range(y.ndim)
+            ),
+            x,
+        )
         y = y.ravel()
         return y
 
     def mask(self, x: NDArray) -> NDArray:
         """Apply mask to input signal returning a signal of same size with
         values at ``iava`` locations and ``0`` at other locations
+
+        If any location is repeated in ``iava``, an error is raised.
 
         Parameters
         ----------
@@ -205,12 +179,20 @@ class Restriction(LinearOperator):
         y : :obj:`numpy.ma.core.MaskedArray`
             Masked array.
 
+        Raises
+        ------
+        ValueError
+            If any index is repeated in iava
         """
         ncp = get_array_module(x)
         if ncp != np:
             iava = ncp.asnumpy(self.iava)
         else:
             iava = self.iava.copy()
+
+        if np.unique(iava).size != iava.size:
+            msg = "At least one index in iava is repeated, mask is not enabled..."
+            raise ValueError(msg)
 
         y = np_ma.array(np.zeros(self.dims), mask=np.ones(self.dims), dtype=self.dtype)
         x = np.reshape(x, self.dims)
