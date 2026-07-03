@@ -3,7 +3,6 @@ __all__ = ["Interp"]
 from typing import Literal
 
 import numpy as np
-from scipy.sparse import csr_matrix
 
 from pylops import LinearOperator, aslinearoperator
 from pylops.basicoperators import Diagonal, MatrixMult, Restriction, Transpose
@@ -13,7 +12,7 @@ from pylops.signalprocessing._interp_utils import (
 )
 from pylops.signalprocessing.interpspline import InterpCubicSpline
 from pylops.utils._internal import _value_or_sized_to_tuple
-from pylops.utils.backend import get_array_module
+from pylops.utils.backend import get_array_module, get_csr_matrix
 from pylops.utils.typing import DTypeLike, InputDimsLike, IntNDArray, SamplingLike
 
 
@@ -88,7 +87,7 @@ def _sincinterp(
     # sparsify sinc interpolation matrix
     if tol is not None:
         sinc[np.abs(sinc) < tol] = 0.0
-        sinc = csr_matrix(sinc)
+        sinc = get_csr_matrix(sinc)(sinc)
 
     # identify additional dimensions and create MatrixMult operator
     otherdims = np.array(dims)

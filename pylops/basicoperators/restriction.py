@@ -183,7 +183,9 @@ class Restriction(LinearOperator):
             )
         else:
             if not hasattr(self, "iavamask"):
-                self.iavamask = _compute_iavamask(self.dims, self.axis, self.iava, ncp)
+                self.iavamask = _compute_iavamask(
+                    self.dims, self.axis, to_numpy(self.iava), ncp
+                )
             y = ncp.zeros(int(self.shape[-1]), dtype=self.dtype)
             y = inplace_set(x.ravel(), y, self.iavamask)
         y = y.ravel()

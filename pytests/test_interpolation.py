@@ -1,9 +1,18 @@
+import os
 from dataclasses import dataclass
 from typing import Final, Literal
 
-import numpy as np
+if int(os.environ.get("TEST_CUPY_PYLOPS", 0)):
+    import cupy as np
+    from cupy.testing import assert_array_almost_equal
+
+    backend = "cupy"
+else:
+    import numpy as np
+    from numpy.testing import assert_array_almost_equal
+
+    backend = "numpy"
 import pytest
-from numpy.testing import assert_array_almost_equal
 
 from pylops.signalprocessing import Bilinear, Interp
 from pylops.utils import dottest
@@ -155,6 +164,9 @@ def test_sincinterp():
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_Interp_1dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward for Interp operator for 1d signal"""
+    if par.kind == "cubic_spline":
+        pytest.skip("cubic_spline does not support CuPy arrays")
+
     np.random.seed(1)
     dtype = dtype if par.kind != "cubic_spline" else np.float64
     dtype1 = (np.empty(0, dtype=dtype) + par.imag * np.empty(0, dtype=dtype)).dtype
@@ -164,7 +176,7 @@ def test_Interp_1dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     ).astype(dtype)
 
     Nsub = int(np.round(par.x_num * SUBSAMPLING_PERCENTAGE))
-    iava = np.sort(np.random.permutation(np.arange(par.x_num))[:Nsub])
+    iava = np.sort(np.random.permutation(np.arange(par.x_num - 1))[:Nsub])
 
     # fixed indices
     Iop, _ = Interp(par.x_num, iava, kind=par.kind, dtype=dtype1)
@@ -174,6 +186,7 @@ def test_Interp_1dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.x_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # decimal indices
@@ -184,6 +197,7 @@ def test_Interp_1dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.x_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # repeated indices
@@ -220,6 +234,9 @@ def test_Interp_1dsignal(par: InterpolationTestParameters, dtype: np.dtype):
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward for Restriction operator for 2d signal"""
+    if par.kind == "cubic_spline":
+        pytest.skip("cubic_spline does not support CuPy arrays")
+
     np.random.seed(1)
     dtype = dtype if par.kind != "cubic_spline" else np.float64
     dtype1 = (np.empty(0, dtype=dtype) + par.imag * np.empty(0, dtype=dtype)).dtype
@@ -230,7 +247,7 @@ def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
 
     # 1st direction
     Nsub = int(np.round(par.x_num * SUBSAMPLING_PERCENTAGE))
-    iava = np.sort(np.random.permutation(np.arange(par.x_num))[:Nsub])
+    iava = np.sort(np.random.permutation(np.arange(par.x_num - 1))[:Nsub])
 
     # fixed indices
     Iop, _ = Interp(
@@ -246,6 +263,7 @@ def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # decimal indices
@@ -279,7 +297,7 @@ def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
 
     # 2nd direction
     Nsub = int(np.round(par.t_num * SUBSAMPLING_PERCENTAGE))
-    iava = np.sort(np.random.permutation(np.arange(par.t_num))[:Nsub])
+    iava = np.sort(np.random.permutation(np.arange(par.t_num - 1))[:Nsub])
 
     # fixed indices
     Iop, _ = Interp(
@@ -295,6 +313,7 @@ def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # decimal indices
@@ -311,6 +330,7 @@ def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     y = (Iop * x.ravel()).reshape(par.x_num, Nsub)
@@ -337,6 +357,9 @@ def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward  for Interp operator for 3d signal"""
+    if par.kind == "cubic_spline":
+        pytest.skip("cubic_spline does not support CuPy arrays")
+
     np.random.seed(1)
     dtype = dtype if par.kind != "cubic_spline" else np.float64
     dtype1 = (np.empty(0, dtype=dtype) + par.imag * np.empty(0, dtype=dtype)).dtype
@@ -349,7 +372,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
 
     # 1st direction
     Nsub = int(np.round(par.y_num * SUBSAMPLING_PERCENTAGE))
-    iava = np.sort(np.random.permutation(np.arange(par.y_num))[:Nsub])
+    iava = np.sort(np.random.permutation(np.arange(par.y_num - 1))[:Nsub])
 
     # fixed indices
     Iop, _ = Interp(
@@ -365,6 +388,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # decimal indices
@@ -381,6 +405,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # repeated indices
@@ -405,7 +430,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
 
     # 2nd direction
     Nsub = int(np.round(par.x_num * SUBSAMPLING_PERCENTAGE))
-    iava = np.sort(np.random.permutation(np.arange(par.x_num))[:Nsub])
+    iava = np.sort(np.random.permutation(np.arange(par.x_num - 1))[:Nsub])
 
     # fixed indices
     Iop, _ = Interp(
@@ -421,6 +446,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # decimal indices
@@ -437,6 +463,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     y = (Iop * x.ravel()).reshape(par.y_num, Nsub, par.t_num)
@@ -448,7 +475,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
 
     # 3rd direction
     Nsub = int(np.round(par.t_num * SUBSAMPLING_PERCENTAGE))
-    iava = np.sort(np.random.permutation(np.arange(par.t_num))[:Nsub])
+    iava = np.sort(np.random.permutation(np.arange(par.t_num - 1))[:Nsub])
 
     # fixed indices
     Iop, _ = Interp(
@@ -464,6 +491,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # decimal indices
@@ -480,6 +508,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     y = (Iop * x.ravel()).reshape(par.y_num, par.x_num, Nsub)
@@ -494,6 +523,9 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_Bilinear_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward for Interp operator for 2d signal"""
+    if par.imag == 1j:
+        pytest.skip("cupy.add.at currently does not support complex numbers")
+
     np.random.seed(1)
     dtype1 = (np.empty(0, dtype=dtype) + par.imag * np.empty(0, dtype=dtype)).dtype
 
@@ -510,6 +542,7 @@ def test_Bilinear_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # decimal indices
@@ -527,6 +560,7 @@ def test_Bilinear_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # repeated indices
@@ -543,6 +577,9 @@ def test_Bilinear_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_Bilinear_2dsignal_flatten(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward for Interp operator for 2d signal with forceflat"""
+    if par.imag == 1j:
+        pytest.skip("cupy.add.at currently does not support complex numbers")
+
     np.random.seed(1)
     dtype1 = (np.empty(0, dtype=dtype) + par.imag * np.empty(0, dtype=dtype)).dtype
 
@@ -572,6 +609,11 @@ def test_Bilinear_2dsignal_flatten(par: InterpolationTestParameters, dtype: np.d
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_Bilinear_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     """Dot-test and forward for Interp operator for 3d signal"""
+    if par.imag == 1j:
+        pytest.skip("cupy.add.at currently does not support complex numbers")
+    if par.kind == "nearest":
+        pytest.skip("nearest does not support CuPy arrays")
+
     np.random.seed(1)
     dtype1 = (np.empty(0, dtype=dtype) + par.imag * np.empty(0, dtype=dtype)).dtype
 
@@ -590,6 +632,7 @@ def test_Bilinear_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # decimal indices
@@ -607,6 +650,7 @@ def test_Bilinear_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
         par.y_num * par.x_num * par.t_num,
         complexflag=0 if par.imag == 0 else 3,
         rtol=1e-4 if dtype == np.float32 else 1e-6,
+        backend=backend,
     )
 
     # repeated indices
