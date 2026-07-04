@@ -63,11 +63,8 @@ class Restriction(LinearOperator):
         Shape of the array after the forward, but before flattening.
 
         For example, ``y_reshaped = (Op * x.ravel()).reshape(Op.dimsd)``.
-    iavamask : :obj:`numpy.ndarray`
-        Mask of indices used in adjoint mode when ``iava`` is a
-        CuPy array.
-    iavareshape : :obj:`numpy.ndarray`
-        Shape used to reshape ``iava`` to be compatible with ``dims``.
+    repeated : :obj:`bool`
+        Indicates whether there are repeated indices in ``iava``.
     shape : :obj:`tuple`
         Operator shape.
 
@@ -140,6 +137,9 @@ class Restriction(LinearOperator):
         self.axis = axis
         self.iava = ncp.asarray(iava)
 
+        # check whether any index in iava is repeated
+        self.repeated = np.unique(self.iava).size != self.iava.size
+
     def _matvec(self, x: NDArray) -> NDArray:
         ncp = get_array_module(x)
         if not self.inplace:
@@ -176,7 +176,7 @@ class Restriction(LinearOperator):
             y = y_real + 1j * y_imag
         else:
             y = ncp.zeros(self.dims, dtype=self.dtype)
-            y = inplace_add(x, y, indices, accumulate=True)
+            y = inplace_add(x, y, indices, accumulate=self.repeated)
         y = y.ravel()
         return y
 
