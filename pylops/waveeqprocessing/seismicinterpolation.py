@@ -209,7 +209,11 @@ def SeismicInterpolation(
           in 3-dimensional case
 
     """
+    # identify dtypes
     dtype = data.dtype
+    cdtype = (np.ones(1, dtype=dtype) + 1j * np.ones(1, dtype=dtype)).dtype
+    ropdtype = cdtype if kind == "fk" else dtype
+
     ndims = data.ndim
     if ndims == 1 or ndims > 3:
         msg = f"data must have 2 or 3 dimensions, got {ndims}"
@@ -231,16 +235,16 @@ def SeismicInterpolation(
 
     # create restriction/interpolation operator
     if iava.dtype == float:
-        Rop = Interp(dims, iava, axis=0, kind="linear", dtype=dtype)
+        Rop = Interp(dims, iava, axis=0, kind="linear", dtype=ropdtype)
         if ndims == 3 and iava1 is not None:
             dims1 = (len(iava), nrec[1], dimsd[2])
-            Rop1 = Interp(dims1, iava1, axis=1, kind="linear", dtype=dtype)
+            Rop1 = Interp(dims1, iava1, axis=1, kind="linear", dtype=ropdtype)
             Rop = Rop1 * Rop
     else:
-        Rop = Restriction(dims, iava, axis=0, dtype=dtype)
+        Rop = Restriction(dims, iava, axis=0, dtype=ropdtype)
         if ndims == 3 and iava1 is not None:
             dims1 = (len(iava), nrec[1], dimsd[2])
-            Rop1 = Restriction(dims1, iava1, axis=1, dtype=dtype)
+            Rop1 = Restriction(dims1, iava1, axis=1, dtype=ropdtype)
             Rop = Rop1 * Rop
 
     # create other operators for inversion
