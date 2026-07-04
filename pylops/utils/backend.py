@@ -651,7 +651,9 @@ def inplace_set(x: ArrayLike, y: ArrayLike, idx: list) -> NDArray:
         return y
 
 
-def inplace_add(x: ArrayLike, y: ArrayLike, idx: list) -> NDArray:
+def inplace_add(
+    x: ArrayLike, y: ArrayLike, idx: list, accumulate: bool = False
+) -> NDArray:
     """Perform inplace add based on input
 
     Parameters
@@ -662,6 +664,10 @@ def inplace_add(x: ArrayLike, y: ArrayLike, idx: list) -> NDArray:
         Output array
     idx : :obj:`list`
         Indices to sum at
+    accumulate : :obj:`bool`, optional
+        Whether to accumulate the values (``True``) or not (``False``).
+        Defaults to ``False``, which is faster. However, select ``True``
+        when ``idx`` has repeated values.
 
     Returns
     -------
@@ -673,7 +679,15 @@ def inplace_add(x: ArrayLike, y: ArrayLike, idx: list) -> NDArray:
         y = y.at[idx].add(x)
         return y
     else:
-        y[idx] += x
+        if accumulate:
+            ncp = get_array_module(x)
+            ncp.add.at(
+                y,
+                idx,
+                x,
+            )
+        else:
+            y[idx] += x
         return y
 
 

@@ -10,7 +10,9 @@ from pylops import LinearOperator
 from pylops.utils._internal import _value_or_sized_to_tuple
 from pylops.utils.backend import (
     get_array_module,
+    get_module_name,
     get_normalize_axis_index,
+    inplace_add,
 )
 from pylops.utils.typing import DTypeLike, InputDimsLike, IntNDArray, NDArray
 
@@ -155,15 +157,8 @@ class Restriction(LinearOperator):
         indices = tuple(
             self.iava if ax == self.axis else slice(None) for ax in range(x.ndim)
         )
-        if ncp == np or not self.dtype.kind == "c":
-            y = ncp.zeros(self.dims, dtype=self.dtype)
-            ncp.add.at(
-                y,
-                indices,
-                x,
-            )
-        else:
-            # work on real/image separately for cupy arrays as cp.add.at does
+        if get_module_name(ncp) == "cupy" and self.dtype.kind == "c":
+            # work on real/imag separately for cupy arrays as cp.add.at does
             # not support complex dtype
             rdtype = ncp.real(ncp.ones(1, self.dtype)).dtype
             y_real = ncp.zeros(self.dims, dtype=rdtype)
@@ -179,6 +174,9 @@ class Restriction(LinearOperator):
                 x.imag,
             )
             y = y_real + 1j * y_imag
+        else:
+            y = ncp.zeros(self.dims, dtype=self.dtype)
+            y = inplace_add(x, y, indices, accumulate=True)
         y = y.ravel()
         return y
 
@@ -202,6 +200,7 @@ class Restriction(LinearOperator):
         ------
         ValueError
             If any index is repeated in iava
+
         """
         ncp = get_array_module(x)
         if ncp != np:
