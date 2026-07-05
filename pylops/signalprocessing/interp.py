@@ -37,9 +37,6 @@ def _linearinterp(
     """Linear interpolation."""
     ncp = get_array_module(iava)
 
-    if np.issubdtype(iava.dtype, np.integer):
-        iava = iava.astype(np.float64)
-
     sample_size = dims[axis]
     dimsd = list(dims)
     dimsd[axis] = len(iava)
@@ -47,6 +44,8 @@ def _linearinterp(
 
     # ensure that samples are not beyond the last sample, in that case set to
     # penultimate sample and raise a warning
+    if ncp.issubdtype(iava.dtype, ncp.integer):
+        iava = iava.astype(ncp.float64)
     iava = _clip_iava_above_last_sample_index(  # type: ignore
         iava=iava,  # type: ignore
         sample_size=sample_size,
@@ -171,7 +170,7 @@ def Interp(
         The ``"cubic_spline"``-interpolation was added.
 
     tol : :obj:`float`, optional
-        .. versionadded:: 2.9.0
+        .. versionadded:: 2.8.0
 
         Tolerance for sinc interpolation values to be retained (values
         below ``tol`` are set to zero and a sparse matrix is created). If ``None``,

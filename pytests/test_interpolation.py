@@ -176,7 +176,7 @@ def test_Interp_1dsignal(par: InterpolationTestParameters, dtype: np.dtype):
     ).astype(dtype)
 
     Nsub = int(np.round(par.x_num * SUBSAMPLING_PERCENTAGE))
-    iava = np.sort(np.random.permutation(np.arange(par.x_num - 1))[:Nsub])
+    iava = np.sort(np.random.permutation(np.arange(par.x_num))[:Nsub])
 
     # fixed indices
     Iop, _ = Interp(par.x_num, iava, kind=par.kind, dtype=dtype1)
@@ -247,7 +247,7 @@ def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
 
     # 1st direction
     Nsub = int(np.round(par.x_num * SUBSAMPLING_PERCENTAGE))
-    iava = np.sort(np.random.permutation(np.arange(par.x_num - 1))[:Nsub])
+    iava = np.sort(np.random.permutation(np.arange(par.x_num))[:Nsub])
 
     # fixed indices
     Iop, _ = Interp(
@@ -297,7 +297,7 @@ def test_Interp_2dsignal(par: InterpolationTestParameters, dtype: np.dtype):
 
     # 2nd direction
     Nsub = int(np.round(par.t_num * SUBSAMPLING_PERCENTAGE))
-    iava = np.sort(np.random.permutation(np.arange(par.t_num - 1))[:Nsub])
+    iava = np.sort(np.random.permutation(np.arange(par.t_num))[:Nsub])
 
     # fixed indices
     Iop, _ = Interp(
@@ -372,7 +372,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
 
     # 1st direction
     Nsub = int(np.round(par.y_num * SUBSAMPLING_PERCENTAGE))
-    iava = np.sort(np.random.permutation(np.arange(par.y_num - 1))[:Nsub])
+    iava = np.sort(np.random.permutation(np.arange(par.y_num))[:Nsub])
 
     # fixed indices
     Iop, _ = Interp(
@@ -430,7 +430,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
 
     # 2nd direction
     Nsub = int(np.round(par.x_num * SUBSAMPLING_PERCENTAGE))
-    iava = np.sort(np.random.permutation(np.arange(par.x_num - 1))[:Nsub])
+    iava = np.sort(np.random.permutation(np.arange(par.x_num))[:Nsub])
 
     # fixed indices
     Iop, _ = Interp(
@@ -475,7 +475,7 @@ def test_Interp_3dsignal(par: InterpolationTestParameters, dtype: np.dtype):
 
     # 3rd direction
     Nsub = int(np.round(par.t_num * SUBSAMPLING_PERCENTAGE))
-    iava = np.sort(np.random.permutation(np.arange(par.t_num - 1))[:Nsub])
+    iava = np.sort(np.random.permutation(np.arange(par.t_num))[:Nsub])
 
     # fixed indices
     Iop, _ = Interp(

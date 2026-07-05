@@ -47,7 +47,7 @@ def convmtx(h: NDArray, n: int, offset: int = 0, sparse: bool = False) -> NDArra
     offset : :obj:`int`, optional
         Index of the center of the filter
     sparse : :obj:`bool`, optional
-        .. versionadded:: 2.9.0
+        .. versionadded:: 2.8.0
 
         Return dense (``False``) or sparse (``True``) matrix
 
@@ -119,7 +119,7 @@ def nonstationary_convmtx(
         provided values (use it to avoid wrap-around or pass filters with
         enough padding)
     sparse : :obj:`bool`, optional
-        .. versionadded:: 2.9.0
+        .. versionadded:: 2.8.0
 
         Return dense (``False``) or sparse (``True``) matrix
 
