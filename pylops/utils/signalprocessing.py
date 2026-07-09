@@ -10,7 +10,6 @@ import warnings
 from collections.abc import Sequence
 
 import numpy as np
-from scipy.ndimage import gaussian_filter
 
 from pylops.basicoperators import Diagonal, Smoothing2D, SmoothingND
 from pylops.optimization.leastsquares import preconditioned_inversion
@@ -20,6 +19,7 @@ from pylops.utils.backend import (
     get_array_module,
     get_csr_matrix,
     get_dia_matrix,
+    get_gaussian_filter,
     get_normalize_axis_index,
     get_toeplitz,
 )
@@ -266,27 +266,29 @@ def slope_estimate(
         anisotropy in digitized images", Journal ASCI Imaging Workshop. 1995.
 
     """
-    slopes = np.zeros_like(d)
-    anisos = np.zeros_like(d)
+    ncp = get_array_module(d)
 
-    gz, gx = np.gradient(d, dz, dx)
+    slopes = ncp.zeros_like(d)
+    anisos = ncp.zeros_like(d)
+
+    gz, gx = ncp.gradient(d, dz, dx)
     gzz, gzx, gxx = gz * gz, gz * gx, gx * gx
 
     # smoothing
-    gzz = gaussian_filter(gzz, sigma=smooth)
-    gzx = gaussian_filter(gzx, sigma=smooth)
-    gxx = gaussian_filter(gxx, sigma=smooth)
+    gzz = get_gaussian_filter(d)(gzz, sigma=smooth)
+    gzx = get_gaussian_filter(d)(gzx, sigma=smooth)
+    gxx = get_gaussian_filter(d)(gxx, sigma=smooth)
 
-    gmax = max(gzz.max(), gxx.max(), np.abs(gzx).max())
+    gmax = max(gzz.max(), gxx.max(), ncp.abs(gzx).max())
     if gmax <= eps:
-        return np.zeros_like(d), anisos
+        return ncp.zeros_like(d), anisos
 
     gzz /= gmax
     gzx /= gmax
     gxx /= gmax
 
     lcommon1 = 0.5 * (gzz + gxx)
-    lcommon2 = 0.5 * np.sqrt((gzz - gxx) ** 2 + 4 * gzx**2)
+    lcommon2 = 0.5 * ncp.sqrt((gzz - gxx) ** 2 + 4 * gzx**2)
     l1 = lcommon1 + lcommon2
     l2 = lcommon1 - lcommon2
 
@@ -294,9 +296,9 @@ def slope_estimate(
     anisos[regdata] = 1 - l2[regdata] / l1[regdata]
 
     if dips:
-        slopes = 0.5 * np.arctan2(2 * gzx, gzz - gxx)
+        slopes = 0.5 * ncp.arctan2(2 * gzx, gzz - gxx)
     else:
-        regdata = np.abs(gzx) > eps
+        regdata = ncp.abs(gzx) > eps
         slopes[regdata] = (l1 - gzz)[regdata] / gzx[regdata]
 
     return slopes, anisos

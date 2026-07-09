@@ -112,9 +112,6 @@ def test_nonstationary_convmtx(par, sparse):
     assert_array_almost_equal(y, y1, decimal=4)
 
 
-@pytest.mark.skipif(
-    int(os.environ.get("TEST_CUPY_PYLOPS", 0)) == 1, reason="Not CuPy enabled"
-)
 def test_slope_estimation_dips():
     """Slope estimation using the Structure tensor algorithm should
     apply regularisation (some slopes are set to zero)
